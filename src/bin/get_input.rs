@@ -1,7 +1,13 @@
 use chrono::{Datelike, FixedOffset, TimeZone, Utc};
 use reqwest::{blocking::ClientBuilder, Url};
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
-use std::{env, fmt::Display, fs, path::PathBuf, sync::Arc};
+use std::{
+    env,
+    fmt::Display,
+    fs,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 const URL: &str = "https://adventofcode.com";
 const DOMAIN: &str = "adventofcode.com";
@@ -52,6 +58,7 @@ fn main() {
     };
     show_preview(&data);
     write_file(file, data);
+    create_day(year, day);
 }
 
 #[derive(Debug, PartialEq)]
@@ -156,6 +163,44 @@ fn get_args() -> Option<(i32, u32)> {
         }
         _ => None,
     }
+}
+
+fn create_day(year: i32, day: u32) {
+    let filename = format!("src/bin/aoc{year}{day:02}.rs");
+    let file = Path::new(&filename);
+    let template = format!(
+        r#"use aoc::runner::{{output, run_solution, Runner}};
+
+fn main() {{
+    let mut day = AocDay::default();
+    run_solution(&mut day);
+}}
+
+#[derive(Default)]
+struct AocDay {{
+    // Add some data structure
+}}
+
+impl Runner for AocDay {{
+    fn name(&self) -> (usize, usize) {{
+        ({year}, {day})
+    }}
+
+    fn parse(&self) {{
+        // Parse the input
+    }}
+
+    fn part1(&self) -> Vec<String> {{
+        output("Unsolved")
+    }}
+
+    fn part2(&self) -> Vec<String> {{
+        output("Unsolved")
+    }}
+}}
+        "#
+    );
+    let _ = fs::write(file, template);
 }
 
 #[cfg(test)]

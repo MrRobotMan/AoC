@@ -3,12 +3,6 @@ use std::{
     time::{Duration, Instant},
 };
 
-pub enum Selector {
-    All,
-    One(usize),
-    Last,
-}
-
 pub trait Runner {
     fn name(&self) -> (usize, usize);
     fn parse(&self);
@@ -22,7 +16,7 @@ pub fn output<T: Display>(output: T) -> Vec<String> {
 
 pub fn run_solution<T: Runner + ?Sized>(solution: &mut T) {
     let (year, day) = solution.name();
-    println!("---- {year}: {day} ----");
+    println!("---- {year}: {day:02} ----");
 
     let start = Instant::now();
     solution.parse();

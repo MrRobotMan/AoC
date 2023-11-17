@@ -1,7 +1,6 @@
 use std::{fmt::Debug, fs::read_to_string, path::Path, str::FromStr};
 
-mod runner;
-pub use runner::{output, run_solution, Runner, Selector};
+pub mod runner;
 
 /// Read the text of a file to a vec of strings
 pub fn read_lines<T: AsRef<Path> + Debug>(path: T) -> Vec<String> {
