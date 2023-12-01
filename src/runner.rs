@@ -5,9 +5,9 @@ use std::{
 
 pub trait Runner {
     fn name(&self) -> (usize, usize);
-    fn parse(&self);
-    fn part1(&self) -> Vec<String>;
-    fn part2(&self) -> Vec<String>;
+    fn parse(&mut self);
+    fn part1(&mut self) -> Vec<String>;
+    fn part2(&mut self) -> Vec<String>;
 }
 
 pub fn output<T: Display>(output: T) -> Vec<String> {

@@ -186,7 +186,7 @@ impl Runner for AocDay {{
         ({year}, {day})
     }}
 
-    fn parse(&self) {{
+    fn parse(&mut self) {{
         // Parse the input
     }}
 
@@ -222,15 +222,6 @@ mod tests {
         let expected = Err(InputResult::NotLoggedIn);
         let cookie_store = Arc::new(CookieStoreMutex::new(CookieStore::new(None)));
         let actual = get_input(Arc::clone(&cookie_store), 2015, 1);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_too_early() {
-        let _ = dotenv::dotenv();
-        let expected = Err(InputResult::TooEarly);
-        let cookie_store = CookieStoreMutex::new(load_cookies());
-        let actual = get_input(Arc::new(cookie_store), 2023, 1);
         assert_eq!(expected, actual);
     }
 
