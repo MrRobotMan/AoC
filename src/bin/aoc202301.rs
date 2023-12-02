@@ -39,7 +39,7 @@ impl Runner for AocDay {
                 ("9", 9),
             ]),
         );
-        output(format!("{result}"))
+        output(result)
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -66,7 +66,7 @@ impl Runner for AocDay {
                 ("nine", 9),
             ]),
         );
-        output(format!("{result}"))
+        output(result)
     }
 }
 

@@ -119,6 +119,12 @@ fn load_cookies() -> CookieStore {
 }
 
 fn show_preview(data: &str) {
+    let count = data
+        .chars()
+        .filter(|chr| *chr == '\n')
+        .collect::<Vec<_>>()
+        .len();
+    println!("{count} Lines Downloaded");
     let lines = data
         .lines()
         .map(|l| l.chars().take(PREVIEW).collect::<String>())
@@ -190,11 +196,11 @@ impl Runner for AocDay {{
         // Parse the input
     }}
 
-    fn part1(&self) -> Vec<String> {{
+    fn part1(&mut self) -> Vec<String> {{
         output("Unsolved")
     }}
 
-    fn part2(&self) -> Vec<String> {{
+    fn part2(&mut self) -> Vec<String> {{
         output("Unsolved")
     }}
 }}
