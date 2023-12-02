@@ -74,7 +74,12 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(
+            self.games
+                .values()
+                .map(|game| game.red * game.blue * game.green)
+                .sum::<u32>(),
+        )
     }
 }
 
@@ -151,6 +156,57 @@ mod tests {
                     None
                 }
             })
+            .sum();
+        assert_eq!(expected, actual);
+    }
+    #[test]
+    fn test_part2() {
+        let expected = 2286u32;
+        let games = HashMap::from([
+            (
+                1,
+                Game {
+                    red: 4,
+                    blue: 6,
+                    green: 2,
+                },
+            ),
+            (
+                2,
+                Game {
+                    red: 1,
+                    blue: 4,
+                    green: 3,
+                },
+            ),
+            (
+                3,
+                Game {
+                    red: 20,
+                    blue: 6,
+                    green: 13,
+                },
+            ),
+            (
+                4,
+                Game {
+                    red: 14,
+                    blue: 15,
+                    green: 3,
+                },
+            ),
+            (
+                5,
+                Game {
+                    red: 6,
+                    blue: 2,
+                    green: 3,
+                },
+            ),
+        ]);
+        let actual = games
+            .values()
+            .map(|game| game.red * game.green * game.blue)
             .sum();
         assert_eq!(expected, actual);
     }
