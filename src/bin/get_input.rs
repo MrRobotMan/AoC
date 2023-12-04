@@ -59,6 +59,7 @@ fn main() {
     show_preview(&data);
     write_file(file, data);
     create_day(year, day);
+    update_bacon(format!("aoc{year}{day:02}"));
 }
 
 #[derive(Debug, PartialEq)]
@@ -207,6 +208,13 @@ impl Runner for AocDay {{
         "#
     );
     let _ = fs::write(file, template);
+}
+
+fn update_bacon(day: String) {
+    let mut bacon = fs::read_to_string("bacon.toml").unwrap();
+    let loc = bacon.find("aoc").unwrap();
+    bacon.replace_range(loc..loc + day.len(), &day);
+    let _ = fs::write("bacon.toml", bacon);
 }
 
 #[cfg(test)]
