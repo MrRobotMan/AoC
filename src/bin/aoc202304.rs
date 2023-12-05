@@ -1,3 +1,5 @@
+use std::collections::{HashMap, VecDeque};
+
 use aoc::{
     read_lines,
     runner::{output, run_solution, Runner},
@@ -30,7 +32,24 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.total_cards())
+    }
+}
+
+impl AocDay {
+    fn total_cards(&self) -> usize {
+        let mut remaining = VecDeque::from((0..self.cards.len()).collect::<Vec<_>>());
+        let mut counter = HashMap::new();
+        for c in 0..self.cards.len() {
+            counter.insert(c, 1);
+        }
+        while let Some(card) = remaining.pop_front() {
+            for idx in 1..=self.cards[card].matches() {
+                *counter.entry(card + idx).or_default() += 1;
+                remaining.push_back(card + idx);
+            }
+        }
+        counter.values().sum()
     }
 }
 
@@ -49,6 +68,13 @@ impl Card {
             }
         }
         score
+    }
+
+    fn matches(&self) -> usize {
+        self.plays
+            .iter()
+            .filter(|p| self.winners.contains(p))
+            .count()
     }
 }
 
@@ -108,6 +134,22 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"
             .collect::<Vec<Card>>();
         let expected = 13;
         let actual = cards.iter().map(Card::score).sum::<i64>();
+        assert_eq!(expected, actual);
+    }
+    #[test]
+    fn test_part2() {
+        let cards = "Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
+Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
+Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
+Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"
+            .split('\n')
+            .map(|l| l.into())
+            .collect::<Vec<Card>>();
+        let day = AocDay { cards };
+        let expected = 30;
+        let actual = day.total_cards();
         assert_eq!(expected, actual);
     }
 }
