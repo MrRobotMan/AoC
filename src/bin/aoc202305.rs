@@ -11,9 +11,9 @@ fn main() {
     run_solution(&mut day);
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct AocDay {
-    seeds: HashSet<u64>,
+    seeds: Vec<u64>,
     seed_soil: HashSet<(u64, u64, u64)>,
     soil_fertilizer: HashSet<(u64, u64, u64)>,
     fertilizer_water: HashSet<(u64, u64, u64)>,
@@ -38,7 +38,14 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut lowest = u64::MAX;
+        let chuncks = self.seeds.chunks_exact(2);
+        for pair in chuncks {
+            let mut cur = self.clone();
+            cur.seeds = (pair[0]..pair[0] + pair[1]).collect::<Vec<_>>();
+            lowest = lowest.min(cur.get_lowest());
+        }
+        output(lowest)
     }
 }
 
@@ -189,7 +196,7 @@ humidity-to-location map:
     fn test_pasrse() {
         let mut actual = AocDay::default();
         actual.process_lines(INPUT.lines().map(str::to_string).collect::<Vec<String>>());
-        assert_eq!(actual.seeds, HashSet::from_iter([79, 14, 55, 13]));
+        assert_eq!(actual.seeds, vec![79, 14, 55, 13]);
         assert!(actual.humidity_location.contains(&(56, 93, 4)));
     }
 
