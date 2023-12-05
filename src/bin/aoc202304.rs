@@ -43,8 +43,13 @@ impl AocDay {
         for c in 0..self.cards.len() {
             counter.insert(c, 1);
         }
+        let matches = self
+            .cards
+            .iter()
+            .map(|c| c.matches())
+            .collect::<Vec<usize>>();
         while let Some(card) = remaining.pop_front() {
-            for idx in 1..=self.cards[card].matches() {
+            for idx in 1..=matches[card] {
                 *counter.entry(card + idx).or_default() += 1;
                 remaining.push_back(card + idx);
             }
