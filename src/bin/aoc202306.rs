@@ -39,7 +39,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output(self.races.iter().map(get_best_times).product::<usize>())
+        output(self.races.iter().map(get_best_times).product::<i64>())
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -54,11 +54,22 @@ impl Runner for AocDay {
     }
 }
 
-fn get_best_times(race: &(i64, i64)) -> usize {
-    (0..race.0)
-        .map(|c| c * (race.0 - c))
-        .filter(|v| *v > race.1)
-        .count()
+fn get_best_times(race: &(i64, i64)) -> i64 {
+    // Instead of brute forcing to get each time and comparing.
+    // Solve the quadratic.
+    // race_time: race.0
+    // distance: race.1
+    // distance < time * (race_time - time)
+    // 0 < -time^2 + time * race_time - distance
+    // For the quadratic a = -1, signs involving a have been flipped.
+    let race_time = race.0 as f64;
+    let distance = -race.1 as f64;
+    let mut root1 = (-race_time + (race_time.powi(2) + 4. * distance).sqrt()) / -2.;
+    let root2 = (-race_time - (race_time.powi(2) + 4. * distance).sqrt()) / -2.;
+    if root1.fract() == 0. {
+        root1 += 1.;
+    }
+    root2.ceil() as i64 - root1.ceil() as i64
 }
 
 #[cfg(test)]
@@ -71,7 +82,7 @@ mod tests {
             races: vec![(7, 9), (15, 40), (30, 200)],
         };
         let expected = vec![4, 8, 9];
-        let actual = day.races.iter().map(get_best_times).collect::<Vec<usize>>();
+        let actual = day.races.iter().map(get_best_times).collect::<Vec<i64>>();
         assert_eq!(expected, actual);
     }
 }
