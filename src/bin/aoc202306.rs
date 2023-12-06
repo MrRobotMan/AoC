@@ -39,10 +39,32 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.races.iter().map(get_best_times).product::<usize>())
     }
 
     fn part2(&mut self) -> Vec<String> {
         output("Unsolved")
+    }
+}
+
+fn get_best_times(race: &(i64, i64)) -> usize {
+    (0..race.0)
+        .map(|c| c * (race.0 - c))
+        .filter(|v| *v > race.1)
+        .count()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_hold_times() {
+        let day = AocDay {
+            races: vec![(7, 9), (15, 40), (30, 200)],
+        };
+        let expected = vec![4, 8, 9];
+        let actual = day.races.iter().map(get_best_times).collect::<Vec<usize>>();
+        assert_eq!(expected, actual);
     }
 }
