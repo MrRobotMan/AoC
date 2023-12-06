@@ -43,7 +43,14 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut time = String::new();
+        let mut dist = String::new();
+        for race in &self.races {
+            time.push_str(&race.0.to_string());
+            dist.push_str(&race.1.to_string());
+        }
+        let race = (time.parse::<i64>().unwrap(), dist.parse::<i64>().unwrap());
+        output(get_best_times(&race))
     }
 }
 
