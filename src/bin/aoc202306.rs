@@ -1,4 +1,7 @@
-use aoc::runner::{output, run_solution, Runner};
+use aoc::{
+    read_lines,
+    runner::{output, run_solution, Runner},
+};
 
 fn main() {
     let mut day = AocDay::default();
@@ -7,7 +10,7 @@ fn main() {
 
 #[derive(Default)]
 struct AocDay {
-    // Add some data structure
+    races: Vec<(i64, i64)>,
 }
 
 impl Runner for AocDay {
@@ -16,7 +19,23 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        // Parse the input
+        let lines = read_lines("inputs/2023/day06.txt")
+            .iter()
+            .map(|l| {
+                let (_, nums) = l.split_once(':').unwrap();
+                nums.trim()
+            })
+            .map(|l| {
+                l.split_ascii_whitespace()
+                    .map(|v| v.parse::<i64>().unwrap())
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        self.races = lines[0]
+            .iter()
+            .zip(lines[1].iter())
+            .map(|(t, d)| (*t, *d))
+            .collect::<Vec<(i64, i64)>>();
     }
 
     fn part1(&mut self) -> Vec<String> {
@@ -27,4 +46,3 @@ impl Runner for AocDay {
         output("Unsolved")
     }
 }
-        
