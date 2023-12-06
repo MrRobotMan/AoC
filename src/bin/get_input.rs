@@ -212,8 +212,13 @@ impl Runner for AocDay {{
 
 fn update_bacon(day: String) {
     let mut bacon = fs::read_to_string("bacon.toml").unwrap();
-    let loc = bacon.find("aoc").unwrap();
-    bacon.replace_range(loc..loc + day.len(), &day);
+    let locs = bacon
+        .match_indices("aoc")
+        .map(|(l, _)| l)
+        .collect::<Vec<usize>>();
+    for loc in locs {
+        bacon.replace_range(loc..loc + day.len(), &day);
+    }
     let _ = fs::write("bacon.toml", bacon);
 }
 
