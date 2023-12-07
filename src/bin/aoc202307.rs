@@ -1,3 +1,5 @@
+use std::{cmp::Ordering, fmt::Display};
+
 use aoc::{
     read_lines,
     runner::{output, run_solution, Runner},
@@ -22,14 +24,18 @@ impl Runner for AocDay {
         for line in read_lines("inputs/2023/day07.txt") {
             self.hands.push(line.as_str().into())
         }
-        for hand in &self.hands[..10] {
-            println!("{hand:?}");
-        }
-        println!("{:?}", self.hands.last());
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut hands = self.hands.clone();
+        hands.sort();
+        output(
+            hands
+                .iter()
+                .enumerate()
+                .map(|(idx, hand)| (idx + 1) as i32 * hand.bid)
+                .sum::<i32>(),
+        )
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -37,10 +43,54 @@ impl Runner for AocDay {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 struct Hand {
     cards: [u8; 5],
     bid: i32,
+    score: Score,
+}
+
+impl Display for Hand {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for c in &self.cards {
+            write!(
+                f,
+                "{}",
+                match c {
+                    c if c < &10 => (*c + b'0') as char,
+                    10 => 'T',
+                    11 => 'J',
+                    12 => 'Q',
+                    13 => 'K',
+                    14 => 'A',
+                    _ => panic!(),
+                }
+            )?;
+        }
+        Ok(())
+    }
+}
+
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.score as u8 == other.score as u8 {
+            for pairs in self.cards.iter().zip(other.cards.iter()) {
+                match pairs.0.cmp(pairs.1) {
+                    Ordering::Less => return Ordering::Less,
+                    Ordering::Equal => (),
+                    Ordering::Greater => return Ordering::Greater,
+                }
+            }
+            Ordering::Equal
+        } else {
+            (self.score as u8).cmp(&(other.score as u8))
+        }
+    }
+}
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl From<&str> for Hand {
@@ -58,9 +108,44 @@ impl From<&str> for Hand {
                 c => panic!("Unknown card {c}"),
             })
             .collect::<Vec<u8>>();
+        let score = cards.as_slice().into();
         Self {
             cards: cards.try_into().unwrap(),
             bid: bid.parse().unwrap(),
+            score,
+        }
+    }
+}
+
+#[repr(u8)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+enum Score {
+    HighCard,
+    OnePair,
+    TwoPair,
+    ThreeOfAKind,
+    FullHouse,
+    FourOfAKind,
+    FiveOfAKind,
+}
+
+impl From<&[u8]> for Score {
+    fn from(value: &[u8]) -> Self {
+        let mut counts = [0; 15];
+        for card in value.iter() {
+            counts[*card as usize] += 1;
+        }
+        counts.sort();
+        counts.reverse();
+        match counts[..5] {
+            [5, 0, 0, 0, 0] => Self::FiveOfAKind,
+            [4, 1, 0, 0, 0] => Self::FourOfAKind,
+            [3, 2, 0, 0, 0] => Self::FullHouse,
+            [3, 1, 1, 0, 0] => Self::ThreeOfAKind,
+            [2, 2, 1, 0, 0] => Self::TwoPair,
+            [2, 1, 1, 1, 0] => Self::OnePair,
+            [1, 1, 1, 1, 1] => Self::HighCard,
+            _ => panic!("Unknown Hand Type {:?}", &counts[..5]),
         }
     }
 }
@@ -81,25 +166,39 @@ QQQJA 483";
             Hand {
                 cards: [3, 2, 10, 3, 13],
                 bid: 765,
+                score: Score::OnePair,
             },
             Hand {
                 cards: [10, 5, 5, 11, 5],
                 bid: 684,
+                score: Score::ThreeOfAKind,
             },
             Hand {
                 cards: [13, 13, 6, 7, 7],
                 bid: 28,
+                score: Score::TwoPair,
             },
             Hand {
                 cards: [13, 10, 11, 11, 10],
                 bid: 220,
+                score: Score::TwoPair,
             },
             Hand {
                 cards: [12, 12, 12, 11, 14],
                 bid: 483,
+                score: Score::ThreeOfAKind,
             },
         ];
         let actual = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part1() {
+        let hands = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
+        let mut day = AocDay { hands };
+        let expected = 6440;
+        let actual = day.part1()[0].parse().unwrap();
         assert_eq!(expected, actual);
     }
 }
