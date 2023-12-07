@@ -139,6 +139,9 @@ fn show_preview(data: &str) {
 
 fn write_file(file: PathBuf, data: String) {
     let parent = file.parent().unwrap();
+    if parent.exists() {
+        return;
+    }
     let _ = fs::create_dir_all(parent);
     let _ = fs::write(file, data);
 }
@@ -175,6 +178,9 @@ fn get_args() -> Option<(i32, u32)> {
 fn create_day(year: i32, day: u32) {
     let filename = format!("src/bin/aoc{year}{day:02}.rs");
     let file = Path::new(&filename);
+    if file.exists() {
+        return;
+    }
     let template = format!(
         r#"use aoc::runner::{{output, run_solution, Runner}};
 
