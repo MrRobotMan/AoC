@@ -13,14 +13,14 @@ fn main() {
 
 #[derive(Default, Clone)]
 struct AocDay {
-    seeds: Vec<u64>,
-    seed_soil: HashSet<(u64, u64, u64)>,
-    soil_fertilizer: HashSet<(u64, u64, u64)>,
-    fertilizer_water: HashSet<(u64, u64, u64)>,
-    water_light: HashSet<(u64, u64, u64)>,
-    light_temperature: HashSet<(u64, u64, u64)>,
-    temperature_humidity: HashSet<(u64, u64, u64)>,
-    humidity_location: HashSet<(u64, u64, u64)>,
+    seeds: Vec<i64>,
+    seed_soil: HashSet<(i64, i64, i64)>,
+    soil_fertilizer: HashSet<(i64, i64, i64)>,
+    fertilizer_water: HashSet<(i64, i64, i64)>,
+    water_light: HashSet<(i64, i64, i64)>,
+    light_temperature: HashSet<(i64, i64, i64)>,
+    temperature_humidity: HashSet<(i64, i64, i64)>,
+    humidity_location: HashSet<(i64, i64, i64)>,
 }
 
 impl Runner for AocDay {
@@ -38,20 +38,14 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        let mut lowest = u64::MAX;
-        let chuncks = self.seeds.chunks_exact(2);
-        for pair in chuncks {
-            let mut cur = self.clone();
-            cur.seeds = (pair[0]..pair[0] + pair[1]).collect::<Vec<_>>();
-            lowest = lowest.min(cur.get_lowest());
-        }
-        output(lowest)
+        output(self.get_lowest_rev())
     }
 }
 
 impl AocDay {
-    fn get_index(&self, item: u64, state: &State) -> u64 {
+    fn get_index(&self, item: i64, state: &State) -> i64 {
         let table = match state {
+            State::Seeds => {return item},
             State::Soils => &self.seed_soil,
             State::Fertilizers => &self.soil_fertilizer,
             State::Waters => &self.fertilizer_water,
@@ -68,8 +62,27 @@ impl AocDay {
         item
     }
 
-    fn get_lowest(&self) -> u64 {
-        let mut lowest = u64::MAX;
+    fn get_index_reverse(&self, item: i64, state: &State) -> i64 {
+        let table = match state {
+            State::Seeds => {return item},
+            State::Soils => &self.seed_soil,
+            State::Fertilizers => &self.soil_fertilizer,
+            State::Waters => &self.fertilizer_water,
+            State::Lights => &self.water_light,
+            State::Temperatures => &self.light_temperature,
+            State::Humidities => &self.temperature_humidity,
+            State::Locations => &self.humidity_location,
+        };
+        for val in table.iter() {
+            if (val.0..val.0 + val.2).contains(&item) {
+                return item + (val.1 - val.0);
+            };
+        }
+        item
+    }
+
+    fn get_lowest(&self) -> i64 {
+        let mut lowest = i64::MAX;
         for seed in &self.seeds {
             let mut state = State::default();
             let mut index = *seed;
@@ -82,6 +95,30 @@ impl AocDay {
         lowest
     }
 
+    fn get_lowest_rev(&self) -> i64 {
+        let ranges = self
+            .seeds
+            .chunks_exact(2)
+            .map(|c| c[0]..c[0] + c[1])
+            .collect::<Vec<_>>();
+        let mut loc = 0;
+        loop {
+            let mut state = State::Locations;
+            let mut index = loc;
+            while state != State::Seeds {
+                index = self.get_index_reverse(index, &state);
+                state = state.prev();
+            }
+            
+            for range in &ranges {
+                if range.contains(&index) {
+                    return loc;
+                }
+            }
+            loc += 1;
+        }
+    }
+    
     fn process_lines(&mut self, lines: Vec<String>) {
         let mut lines = lines.iter();
         self.seeds = lines
@@ -113,6 +150,7 @@ impl AocDay {
                     State::Temperatures => self.light_temperature.insert(get_parts(line)),
                     State::Humidities => self.temperature_humidity.insert(get_parts(line)),
                     State::Locations => self.humidity_location.insert(get_parts(line)),
+                    _ => panic!("Unknown key"),
                 };
             }
         }
@@ -129,11 +167,13 @@ enum State {
     Temperatures,
     Humidities,
     Locations,
+    Seeds
 }
 
 impl State {
     fn next(self) -> Self {
         match self {
+            Self::Seeds => Self::Soils,
             Self::Soils => Self::Fertilizers,
             Self::Fertilizers => Self::Waters,
             Self::Waters => Self::Lights,
@@ -143,9 +183,21 @@ impl State {
             Self::Locations => Self::Soils,
         }
     }
+    fn prev(self) -> Self {
+        match self {
+            Self::Seeds => Self::Locations,
+            Self::Soils => Self::Seeds,
+            Self::Fertilizers => Self::Soils,
+            Self::Waters => Self::Fertilizers,
+            Self::Lights => Self::Waters,
+            Self::Temperatures => Self::Lights,
+            Self::Humidities => Self::Temperatures,
+            Self::Locations => Self::Humidities,
+        }
+    }
 }
 
-fn get_parts(value: &str) -> (u64, u64, u64) {
+fn get_parts(value: &str) -> (i64, i64, i64) {
     let mut numbers = value.split(' ').map(|c| c.parse::<_>().unwrap());
     (
         numbers.next().unwrap(),
@@ -206,5 +258,12 @@ humidity-to-location map:
         let mut actual = AocDay::default();
         actual.process_lines(INPUT.lines().map(str::to_string).collect::<Vec<String>>());
         assert_eq!(expected, actual.get_lowest())
+    }
+    #[test]
+    fn test_part2() {
+        let expected = 46;
+        let mut actual = AocDay::default();
+        actual.process_lines(INPUT.lines().map(str::to_string).collect::<Vec<String>>());
+        assert_eq!(expected, actual.get_lowest_rev())
     }
 }
