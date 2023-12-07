@@ -39,7 +39,15 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut hands = self.hands.iter().map(|h| h.jokers()).collect::<Vec<_>>();
+        hands.sort();
+        output(
+            hands
+                .iter()
+                .enumerate()
+                .map(|(idx, hand)| (idx + 1) as i32 * hand.bid)
+                .sum::<i32>(),
+        )
     }
 }
 
@@ -50,6 +58,23 @@ struct Hand {
     score: Score,
 }
 
+impl Hand {
+    fn jokers(&self) -> Self {
+        let mut cards = self.cards;
+        for (i, c) in self.cards.iter().enumerate() {
+            if c == &11 {
+                cards[i] = 0;
+            }
+        }
+        let score = Score::best(&cards);
+        Self {
+            cards,
+            bid: self.bid,
+            score: score,
+        }
+    }
+}
+
 impl Display for Hand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for c in &self.cards {
@@ -57,6 +82,7 @@ impl Display for Hand {
                 f,
                 "{}",
                 match c {
+                    0 => 'J',
                     c if c < &10 => (*c + b'0') as char,
                     10 => 'T',
                     11 => 'J',
@@ -129,6 +155,33 @@ enum Score {
     FiveOfAKind,
 }
 
+impl Score {
+    fn best(cards: &[u8]) -> Self {
+        if !cards.contains(&0) {
+            return cards.into();
+        }
+        let mut counts = [0; 15];
+        for card in cards.iter() {
+            counts[*card as usize] += 1;
+        }
+        let jokers = counts[0];
+        counts[0] = 0;
+        counts.sort();
+        counts.reverse();
+        counts[0] += jokers;
+        match counts[..5] {
+            [5, 0, 0, 0, 0] => Self::FiveOfAKind,
+            [4, 1, 0, 0, 0] => Self::FourOfAKind,
+            [3, 2, 0, 0, 0] => Self::FullHouse,
+            [3, 1, 1, 0, 0] => Self::ThreeOfAKind,
+            [2, 2, 1, 0, 0] => Self::TwoPair,
+            [2, 1, 1, 1, 0] => Self::OnePair,
+            [1, 1, 1, 1, 1] => Self::HighCard,
+            _ => panic!("Unknown Hand Type {:?}", &counts[..5]),
+        }
+    }
+}
+
 impl From<&[u8]> for Score {
     fn from(value: &[u8]) -> Self {
         let mut counts = [0; 15];
@@ -199,6 +252,14 @@ QQQJA 483";
         let mut day = AocDay { hands };
         let expected = 6440;
         let actual = day.part1()[0].parse().unwrap();
+        assert_eq!(expected, actual);
+    }
+    #[test]
+    fn test_part2() {
+        let hands = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
+        let mut day = AocDay { hands };
+        let expected = 5905;
+        let actual = day.part2()[0].parse().unwrap();
         assert_eq!(expected, actual);
     }
 }
