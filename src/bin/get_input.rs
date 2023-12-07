@@ -139,7 +139,7 @@ fn show_preview(data: &str) {
 
 fn write_file(file: PathBuf, data: String) {
     let parent = file.parent().unwrap();
-    if parent.exists() {
+    if file.exists() {
         return;
     }
     let _ = fs::create_dir_all(parent);
