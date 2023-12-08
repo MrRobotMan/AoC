@@ -29,14 +29,26 @@ impl Runner for AocDay {
             .map(|l| {
                 let (node, dirs) = l.split_once(" = ").unwrap();
                 let (left, right) = dirs[1..dirs.len() - 1].split_once(", ").unwrap();
-                println!("{node} -> ({left}, {right})");
                 (node.into(), (left.into(), right.into()))
             })
             .collect::<HashMap<String, (String, String)>>();
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut cycle = self.instructions.iter().cycle();
+        let mut current = "AAA".into();
+        let mut steps = 0;
+        loop {
+            match cycle.next().unwrap() {
+                'L' => current = self.nodes[&current].0.clone(),
+                'R' => current = self.nodes[&current].1.clone(),
+                _ => panic!("Unknown instruction"),
+            };
+            steps += 1;
+            if current == "ZZZ" {
+                return output(steps);
+            }
+        }
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -58,4 +70,41 @@ mod tests {
         "GGG = (GGG, GGG)",
         "ZZZ = (ZZZ, ZZZ)",
     ];
+
+    #[test]
+    fn test_part1() {
+        let expected = 2;
+        let mut day = AocDay {
+            nodes: NODES
+                .iter()
+                .map(|l| {
+                    let (node, dirs) = l.split_once(" = ").unwrap();
+                    let (left, right) = dirs[1..dirs.len() - 1].split_once(", ").unwrap();
+                    println!("{node} -> ({left}, {right})");
+                    (node.into(), (left.into(), right.into()))
+                })
+                .collect::<HashMap<String, (String, String)>>(),
+            instructions: CYCLE.chars().collect(),
+        };
+        let actual = day.part1()[0].parse().unwrap();
+        assert_eq!(expected, actual)
+    }
+    #[test]
+    fn test_part1_alt_input() {
+        let expected = 6;
+        let mut day = AocDay {
+            nodes: ["AAA = (BBB, BBB)", "BBB = (AAA, ZZZ)", "ZZZ = (ZZZ, ZZZ)"]
+                .iter()
+                .map(|l| {
+                    let (node, dirs) = l.split_once(" = ").unwrap();
+                    let (left, right) = dirs[1..dirs.len() - 1].split_once(", ").unwrap();
+                    println!("{node} -> ({left}, {right})");
+                    (node.into(), (left.into(), right.into()))
+                })
+                .collect::<HashMap<String, (String, String)>>(),
+            instructions: "LLR".chars().collect(),
+        };
+        let actual = day.part1()[0].parse().unwrap();
+        assert_eq!(expected, actual)
+    }
 }
