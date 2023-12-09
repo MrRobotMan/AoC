@@ -7,7 +7,7 @@ fn main() {
 
 #[derive(Default)]
 struct AocDay {
-    // Add some data structure
+    histories: Vec<Vec<i64>>,
 }
 
 impl Runner for AocDay {
@@ -16,7 +16,17 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        // Parse the input
+        self.histories = aoc::read_lines("inputs/2023/day09.txt")
+            .iter()
+            .map(|l| {
+                l.split_ascii_whitespace()
+                    .map(|n| n.parse().unwrap())
+                    .collect()
+            })
+            .collect();
+        for hist in &self.histories[..10] {
+            println!("{hist:?}");
+        }
     }
 
     fn part1(&mut self) -> Vec<String> {
@@ -27,4 +37,3 @@ impl Runner for AocDay {
         output("Unsolved")
     }
 }
-        
