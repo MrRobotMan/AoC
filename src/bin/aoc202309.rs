@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use aoc::runner::{output, run_solution, Runner};
 
 fn main() {
@@ -29,38 +31,49 @@ impl Runner for AocDay {
         }
         output(
             last.iter()
-                .fold(0, |acc, hist| acc + hist.values.last().unwrap()),
+                .fold(0, |acc, hist| acc + hist.values.back().unwrap()),
         )
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut last = self.histories.clone();
+        for hist in last.iter_mut() {
+            hist.build_next();
+        }
+        output(
+            last.iter()
+                .fold(0, |acc, hist| acc + hist.values.front().unwrap()),
+        )
     }
 }
 
 #[derive(Debug, Default, Clone)]
 struct History {
-    values: Vec<i64>,
+    values: VecDeque<i64>,
 }
 
 impl History {
     fn build_next(&mut self) {
+        self.values.make_contiguous();
         let mut temp = self.values.clone();
         let mut last = Vec::new();
-        while !zeroes(&temp) {
-            match temp.last() {
-                Some(v) => last.push(*v),
-                None => break,
-            }
+        let mut first = Vec::new();
+        while !zeroes(temp.as_slices().0) {
+            last.push(*temp.back().unwrap());
+            first.push(*temp.front().unwrap());
             temp = temp
-                .as_slice()
+                .as_slices()
+                .0
                 .windows(2)
                 .map(|vals| vals[1] - vals[0])
                 .collect();
         }
         last.reverse();
+        first.reverse();
         self.values
-            .push(last.into_iter().reduce(|acc, v| acc + v).unwrap());
+            .push_back(last.into_iter().reduce(|acc, v| acc + v).unwrap());
+        self.values
+            .push_front(first.into_iter().reduce(|acc, v| v - acc).unwrap());
     }
 }
 fn zeroes(values: &[i64]) -> bool {
@@ -93,7 +106,9 @@ mod tests {
         let mut day = AocDay {
             histories: INPUT
                 .iter()
-                .map(|l| History { values: l.to_vec() })
+                .map(|l| History {
+                    values: l.to_vec().into(),
+                })
                 .collect(),
         };
         let actual = day.part1()[0].parse().unwrap_or(0);
@@ -101,10 +116,25 @@ mod tests {
     }
 
     #[test]
+    fn test_part2() {
+        let expected = 2;
+        let mut day = AocDay {
+            histories: INPUT
+                .iter()
+                .map(|l| History {
+                    values: l.to_vec().into(),
+                })
+                .collect(),
+        };
+        let actual = day.part2()[0].parse().unwrap_or(0);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_build_next() {
-        let expected = vec![1, 3, 6, 10, 15, 21, 28];
+        let expected = VecDeque::from(vec![0, 1, 3, 6, 10, 15, 21, 28]);
         let mut history = History {
-            values: vec![1, 3, 6, 10, 15, 21],
+            values: vec![1, 3, 6, 10, 15, 21].into(),
         };
         history.build_next();
         let actual = history.values;
