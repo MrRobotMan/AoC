@@ -47,6 +47,21 @@ where
         .collect()
 }
 
+/// Reads the text of a file to a vector of vector of numbers.
+pub fn read_number_lists<T: AsRef<Path> + Debug, U: FromStr>(path: T, sep: &str) -> Vec<Vec<U>>
+where
+    <U as FromStr>::Err: Debug,
+{
+    read_lines(path)
+        .iter()
+        .map(|l| {
+            l.split(sep)
+                .map(|l| l.parse::<U>().expect("Could not parse number {l:?}"))
+                .collect()
+        })
+        .collect()
+}
+
 /// Reads the file to a list of chars.
 pub fn read_line<T: AsRef<Path> + Debug>(path: T) -> Vec<char> {
     read_to_string(path)
