@@ -38,7 +38,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output((self.mainloop.len() + 1) / 2)
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -48,7 +48,8 @@ impl Runner for AocDay {
 
 impl AocDay {
     fn make_loop(&mut self) {
-        let neighbors = [(-1, 0), (0, 1), (1, 0), (0, -1)] // Above, right, below, left
+        let offsets = [(-1, 0), (0, 1), (1, 0), (0, -1)]; // Above, right, below, left
+        let neighbors = offsets
             .iter()
             .map(|(row, col)| self.grid.get(&(self.start.0 + row, self.start.1 + col)))
             .collect::<Vec<_>>();
@@ -112,19 +113,62 @@ impl AocDay {
                 matches.push((2, 1, Pipe::Horizontal))
             }
         }
-
         if matches.len() == 1 {
-            todo!()
+            let (start_node, pipe) = (offsets[matches[0].1], matches[0].2);
+            self.grid.insert(self.start, pipe);
+            let mut current = (self.start.0 + start_node.0, self.start.1 + start_node.1);
+            let mut prev = self.start;
+            while current != self.start {
+                self.mainloop.insert(prev, self.grid[&prev]);
+                (prev, current) = (current, self.get_next(&prev, &current));
+            }
         } else {
             panic!("Multiple Options for loop start");
+        }
+    }
+
+    fn get_next(&self, prev: &(i32, i32), current: &(i32, i32)) -> (i32, i32) {
+        let delta_row = current.0 - prev.0;
+        let delta_col = current.1 - prev.1;
+        match self.grid[&current] {
+            Pipe::Vertical => (current.0 + delta_row, current.1),
+            Pipe::Horizontal => (current.0, current.1 + delta_col),
+            Pipe::NeElbow => {
+                if delta_row == 0 {
+                    (current.0 - 1, current.1) // West to Up
+                } else {
+                    (current.0, current.1 + 1) // Down to East
+                }
+            }
+            Pipe::NwElbow => {
+                if delta_row == 0 {
+                    (current.0 - 1, current.1) // East to Up
+                } else {
+                    (current.0, current.1 - 1) // Down to West
+                }
+            }
+            Pipe::SwElbow => {
+                if delta_row == 0 {
+                    (current.0 + 1, current.1) // East to Down
+                } else {
+                    (current.0, current.1 - 1) // Up to West
+                }
+            }
+            Pipe::SeElbow => {
+                if delta_row == 0 {
+                    (current.0 + 1, current.1) // West to Down
+                } else {
+                    (current.0, current.1 + 1) // Up to East
+                }
+            }
         }
     }
 }
 
 impl Display for AocDay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for col in 0..self.size.1 {
-            for row in 0..self.size.0 {
+        for row in 0..self.size.1 {
+            for col in 0..self.size.0 {
                 match self.grid.get(&(row, col)) {
                     None => write!(f, "{}", if (row, col) == self.start { 'S' } else { '.' })?,
                     Some(pipe) => write!(f, "{pipe}")?,
@@ -206,8 +250,9 @@ mod tests {
             mainloop: HashMap::new(),
         };
         day.make_loop();
-        let expected = 16;
-        let actual = day.mainloop.len();
+
+        let expected = 8;
+        let actual = day.part1()[0].parse::<i32>().unwrap();
         assert_eq!(expected, actual);
     }
 }
