@@ -76,3 +76,7 @@ where
 pub fn read_line<T: AsRef<Path> + Display>(path: T) -> Vec<char> {
     lines(path).chars().filter(|&chr| chr != '\n').collect()
 }
+
+pub fn read_chars<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
+    lines(path).lines().map(|l| l.chars().collect()).collect()
+}
