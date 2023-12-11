@@ -185,13 +185,13 @@ fn create_day(year: i32, day: u32) {
         r#"use aoc::runner::{{output, run_solution, Runner}};
 
 fn main() {{
-    let mut day = AocDay::default();
+    let mut day = AocDay{{input: "inputs/{year}/day{day:02}.txt", ..Default::default()}};
     run_solution(&mut day);
 }}
 
 #[derive(Default)]
 struct AocDay {{
-    // Add some data structure
+    input: String,
 }}
 
 impl Runner for AocDay {{

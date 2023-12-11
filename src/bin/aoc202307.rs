@@ -70,7 +70,7 @@ impl Hand {
         Self {
             cards,
             bid: self.bid,
-            score: score,
+            score,
         }
     }
 }
