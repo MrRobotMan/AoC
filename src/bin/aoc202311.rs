@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use aoc::runner::{output, run_solution, Runner};
+use itertools::Itertools;
 
 fn main() {
     let mut day = AocDay {
@@ -13,7 +14,9 @@ fn main() {
 #[derive(Default)]
 struct AocDay {
     input: String,
-    galaxies: HashSet<(i32, i32)>,
+    galaxies: HashSet<(i64, i64)>,
+    cols: Vec<i64>,
+    rows: Vec<i64>,
 }
 
 impl Runner for AocDay {
@@ -24,35 +27,51 @@ impl Runner for AocDay {
     fn parse(&mut self) {
         let lines = aoc::read_chars(&self.input);
         let mut galaxies = HashSet::new();
-        let mut cols = vec![1; lines[0].len()];
-        let mut rows = vec![1; lines.len()];
+        self.cols = vec![1; lines[0].len()];
+        self.rows = vec![1; lines.len()];
         for (row, line) in lines.into_iter().enumerate() {
             for (col, chr) in line.iter().enumerate() {
                 if matches!(chr, '#') {
-                    cols[col] = 0;
-                    rows[row] = 0;
-                    galaxies.insert((row, col));
+                    self.cols[col] = 0;
+                    self.rows[row] = 0;
+                    galaxies.insert((row as i64, col as i64));
                 }
             }
         }
-        self.galaxies = galaxies
-            .into_iter()
-            .map(|g| {
-                (
-                    g.0 as i32 + rows[0..g.0].iter().sum::<i32>(),
-                    g.1 as i32 + cols[0..g.1].iter().sum::<i32>(),
-                )
-            })
-            .collect();
+        self.galaxies = galaxies;
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(
+            self.galaxies
+                .iter()
+                .combinations(2)
+                .map(|combo| diff(&combo, 2, &self.cols, &self.rows))
+                .sum::<i64>(),
+        )
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(
+            self.galaxies
+                .iter()
+                .combinations(2)
+                .map(|combo| diff(&combo, 1_000_000, &self.cols, &self.rows))
+                .sum::<i64>(),
+        )
     }
+}
+
+fn diff(points: &[&(i64, i64)], factor: i64, empty_cols: &[i64], empty_rows: &[i64]) -> i64 {
+    let left = points[0].1.min(points[1].1);
+    let right = points[0].1.max(points[1].1);
+    let top = points[0].0.min(points[1].0);
+    let bottom = points[0].0.max(points[1].0);
+    let rows = top as usize..bottom as usize;
+    let cols = left as usize..right as usize;
+    right - left + bottom - top
+        + (factor - 1)
+            * (empty_rows[rows].iter().sum::<i64>() + empty_cols[cols].iter().sum::<i64>())
 }
 
 #[cfg(test)]
@@ -64,15 +83,15 @@ mod tests {
     #[test]
     fn test_parsing() {
         let expected = HashSet::from_iter([
-            (0, 4),
-            (1, 9),
+            (0, 3),
+            (1, 7),
             (2, 0),
-            (5, 8),
-            (6, 1),
-            (7, 12),
-            (10, 9),
-            (11, 0),
-            (11, 5),
+            (4, 6),
+            (5, 1),
+            (6, 9),
+            (8, 7),
+            (9, 0),
+            (9, 4),
         ]);
         let mut day = AocDay {
             input: INPUT.to_string(),
@@ -81,6 +100,64 @@ mod tests {
 
         day.parse();
         let actual = day.galaxies;
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_distance() {
+        let mut day = AocDay {
+            input: INPUT.to_string(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 9;
+        let actual = diff(&[&(5, 1), &(9, 4)], 2, &day.cols, &day.rows);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part1() {
+        let expected = 374;
+        let mut day = AocDay {
+            input: INPUT.to_string(),
+            ..Default::default()
+        };
+        day.parse();
+        let actual = day.part1()[0].parse::<i64>().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2_small() {
+        let expected = 1030;
+        let mut day = AocDay {
+            input: INPUT.to_string(),
+            ..Default::default()
+        };
+        day.parse();
+        let actual = day
+            .galaxies
+            .iter()
+            .combinations(2)
+            .map(|combo| diff(&combo, 10, &day.cols, &day.rows))
+            .sum::<i64>();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2_lg() {
+        let expected = 8410;
+        let mut day = AocDay {
+            input: INPUT.to_string(),
+            ..Default::default()
+        };
+        day.parse();
+        let actual = day
+            .galaxies
+            .iter()
+            .combinations(2)
+            .map(|combo| diff(&combo, 100, &day.cols, &day.rows))
+            .sum::<i64>();
         assert_eq!(expected, actual);
     }
 }
