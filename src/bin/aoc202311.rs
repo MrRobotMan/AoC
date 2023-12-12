@@ -62,7 +62,7 @@ impl Runner for AocDay {
     }
 }
 
-fn diff(points: &[&(i64, i64)], factor: i64, empty_cols: &[i64], empty_rows: &[i64]) -> i64 {
+fn diff(points: &[&(i64, i64)], scale: i64, empty_cols: &[i64], empty_rows: &[i64]) -> i64 {
     let left = points[0].1.min(points[1].1);
     let right = points[0].1.max(points[1].1);
     let top = points[0].0.min(points[1].0);
@@ -70,7 +70,7 @@ fn diff(points: &[&(i64, i64)], factor: i64, empty_cols: &[i64], empty_rows: &[i
     let rows = top as usize..bottom as usize;
     let cols = left as usize..right as usize;
     right - left + bottom - top
-        + (factor - 1)
+        + (scale - 1)
             * (empty_rows[rows].iter().sum::<i64>() + empty_cols[cols].iter().sum::<i64>())
 }
 
