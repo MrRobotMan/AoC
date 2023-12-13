@@ -93,12 +93,21 @@ impl Record {
             '#' => {
                 let group = self.groups[0];
                 if self.springs.len() < group {
+                    if history.insert(self.clone(), res).is_some() {
+                        panic!("Tried to re-insert key");
+                    };
                     return 0;
                 }
                 if self.springs[..group].iter().any(|c| c == &'.') {
+                    if history.insert(self.clone(), res).is_some() {
+                        panic!("Tried to re-insert key");
+                    };
                     return 0;
                 }
                 if matches!(self.springs.get(group), Some('#')) {
+                    if history.insert(self.clone(), res).is_some() {
+                        panic!("Tried to re-insert key");
+                    };
                     return 0;
                 }
                 let mut springs = self.springs.clone();
