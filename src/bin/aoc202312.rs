@@ -1,3 +1,6 @@
+use core::panic;
+use std::collections::HashMap;
+
 use aoc::runner::{output, run_solution, Runner};
 fn main() {
     let mut day = AocDay {
@@ -11,6 +14,7 @@ fn main() {
 struct AocDay {
     input: String,
     records: Vec<Record>,
+    history: HashMap<Record, usize>,
 }
 
 impl Runner for AocDay {
@@ -26,23 +30,45 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        let records = self.records.iter().map(|r| r.options()).sum::<usize>();
+        let records = self
+            .records
+            .iter()
+            .map(|r| r.options(&mut self.history))
+            .sum::<usize>();
         output(records)
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let records = self
+            .records
+            .iter()
+            .map(|r| r.factor().options(&mut self.history))
+            .sum::<usize>();
+        output(records)
     }
 }
 
-#[derive(Default, Debug, PartialEq)]
+#[derive(Default, Debug, PartialEq, Clone, Eq, Hash)]
 struct Record {
     springs: Vec<char>,
     groups: Vec<usize>,
 }
 
 impl Record {
-    fn options(&self) -> usize {
+    fn factor(&self) -> Self {
+        let mut springs = self.springs.clone();
+        let mut groups = self.groups.clone();
+        for _ in 0..4 {
+            springs.push('?');
+            springs.extend_from_slice(&self.springs);
+            groups.extend_from_slice(&self.groups);
+        }
+        Self { springs, groups }
+    }
+    fn options(&self, history: &mut HashMap<Record, usize>) -> usize {
+        if let Some(res) = history.get(self) {
+            return *res;
+        }
         match (self.springs.is_empty(), self.groups.is_empty()) {
             (true, true) => return 1,
             (true, false) => return 0,
@@ -62,7 +88,7 @@ impl Record {
                     springs: self.springs[1..].to_vec(),
                     groups: self.groups.clone(),
                 };
-                res += new.options();
+                res += new.options(history);
             }
             '#' => {
                 let group = self.groups[0];
@@ -83,7 +109,7 @@ impl Record {
                     springs: springs[group..].to_vec(),
                     groups: self.groups[1..].to_vec(),
                 };
-                res += new.options();
+                res += new.options(history);
             }
             '?' => {
                 let mut springs = self.springs.clone();
@@ -92,16 +118,20 @@ impl Record {
                     springs: springs.clone(),
                     groups: self.groups.clone(),
                 };
-                res += good.options();
+                res += good.options(history);
                 springs[0] = '#';
                 let bad = Record {
                     springs,
                     groups: self.groups.clone(),
                 };
-                res += bad.options();
+                res += bad.options(history);
             }
             c => panic!("Unknown record {c}"),
         }
+        if history.insert(self.clone(), res).is_some() {
+            panic!("Tried to re-insert key");
+        };
+
         res
     }
 }
@@ -147,7 +177,8 @@ mod tests {
     fn test_get_options() {
         let record: Record = INPUT.lines().last().unwrap().into();
         let expected = 10;
-        let actual = record.options();
+        let mut history = HashMap::new();
+        let actual = record.options(&mut history);
         assert_eq!(expected, actual);
     }
 
@@ -160,6 +191,18 @@ mod tests {
         day.parse();
         let expected = 21;
         let actual = day.part1()[0].parse::<i32>().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 525152;
+        let actual = day.part2()[0].parse::<i32>().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }
