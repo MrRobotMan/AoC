@@ -33,7 +33,12 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(
+            self.patterns
+                .iter()
+                .map(Pattern::smudge_score)
+                .sum::<usize>(),
+        )
     }
 }
 
@@ -59,19 +64,93 @@ impl Pattern {
     }
 
     fn score(&self) -> usize {
-        if let Some(row) = self.mirror_idx(Orientation::Rows) {
-            row * 100
-        } else if let Some(col) = self.mirror_idx(Orientation::Cols) {
-            col
+        if let Some(s) = self.base_score(None) {
+            s
         } else {
             panic!("No mirror line found for\n{self}");
         }
     }
 
-    fn mirror_idx(&self, orientation: Orientation) -> Option<usize> {
-        let arr = match orientation {
-            Orientation::Rows => &self.rows,
-            Orientation::Cols => &self.cols,
+    fn base_score(&self, base: Option<usize>) -> Option<usize> {
+        if let Some(row) = self.mirror_idx(Orientation::Rows, base) {
+            Some(row * 100)
+        } else {
+            self.mirror_idx(Orientation::Cols, base)
+        }
+    }
+
+    fn smudge_score(&self) -> usize {
+        let base_score = self.score();
+        if cfg!(test) {
+            println!("Score = {base_score}");
+            println!("{}", self.smudgable().len());
+        }
+        for option in self.smudgable() {
+            if let Some(score) = option.base_score(Some(base_score)) {
+                if score != base_score {
+                    return score;
+                }
+                if base_score >= 100 {
+                    if let Some(score) = option.mirror_idx(Orientation::Cols, Some(base_score)) {
+                        return score;
+                    }
+                }
+            }
+        }
+        panic!("No new score for\n{self}");
+    }
+
+    fn smudgable(&self) -> Vec<Self> {
+        let mut options = Vec::new();
+        for (idx, row) in self.rows.iter().enumerate() {
+            for (line, other) in self.rows.iter().enumerate() {
+                if line == idx {
+                    continue;
+                }
+                let indices = row
+                    .iter()
+                    .enumerate()
+                    .zip(other.iter())
+                    .filter_map(|((idx, a), b)| if a != b { Some(idx) } else { None })
+                    .collect::<Vec<_>>();
+                if indices.len() == 1 {
+                    let col = indices[0];
+                    let mut rows = self.rows.clone();
+                    let mut cols = self.cols.clone();
+                    rows[idx][col] = other[col];
+                    cols[col][idx] = other[col];
+                    options.push(Self { rows, cols });
+                }
+            }
+        }
+        for (idx, col) in self.cols.iter().enumerate() {
+            for (line, other) in self.cols.iter().enumerate() {
+                if line == idx {
+                    continue;
+                }
+                let indices = col
+                    .iter()
+                    .enumerate()
+                    .zip(other.iter())
+                    .filter_map(|((idx, a), b)| if a != b { Some(idx) } else { None })
+                    .collect::<Vec<_>>();
+                if indices.len() == 1 {
+                    let row = indices[0];
+                    let mut rows = self.rows.clone();
+                    let mut cols = self.cols.clone();
+                    rows[row][idx] = other[row];
+                    cols[idx][row] = other[row];
+                    options.push(Self { rows, cols });
+                }
+            }
+        }
+        options
+    }
+
+    fn mirror_idx(&self, orientation: Orientation, base: Option<usize>) -> Option<usize> {
+        let (arr, base) = match orientation {
+            Orientation::Rows => (&self.rows, base.map(|base| base / 100)),
+            Orientation::Cols => (&self.cols, base),
         };
         let mut candidates = Vec::new();
         for (idx, loc) in arr.iter().enumerate() {
@@ -104,7 +183,11 @@ impl Pattern {
                 continue;
             }
             if candidates[left..right].iter().all(|c| c.contains(&o)) {
-                return Some(o + 1);
+                let score = Some(o + 1);
+                if base == score {
+                    continue;
+                }
+                return score;
             }
         }
         None
@@ -120,10 +203,11 @@ impl Display for Pattern {
             }
             lines.push('\n');
         }
-        write!(f, "{lines}")
+        write!(f, "{}", lines.trim())
     }
 }
 
+#[derive(Debug)]
 enum Orientation {
     Rows,
     Cols,
@@ -225,6 +309,18 @@ mod tests {
         };
         day.parse();
         let actual = day.part1()[0].parse::<i32>().unwrap_or(0);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let expected = 400;
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let actual = day.part2()[0].parse::<i32>().unwrap_or(0);
         assert_eq!(expected, actual);
     }
 }
