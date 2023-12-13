@@ -25,7 +25,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = aoc::read_chars(&self.input);
+        let lines = aoc::read_grid(&self.input);
         let mut galaxies = HashSet::new();
         self.cols = vec![1; lines[0].len()];
         self.rows = vec![1; lines.len()];

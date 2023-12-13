@@ -17,7 +17,7 @@ pub fn read_lines<T: AsRef<Path> + Display>(path: T) -> Vec<String> {
 }
 
 /// Gather a string of text or file name to a string
-fn lines<T: AsRef<Path> + Display>(path: T) -> String {
+pub fn lines<T: AsRef<Path> + Display>(path: T) -> String {
     match path.as_ref().exists() {
         false => path.to_string(),
         true => read_to_string(path).expect("Failed to open file {path}"),
@@ -77,6 +77,34 @@ pub fn read_line<T: AsRef<Path> + Display>(path: T) -> Vec<char> {
     lines(path).chars().filter(|&chr| chr != '\n').collect()
 }
 
-pub fn read_chars<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
+/// Reads the file to a grid (vec of vec) of chars
+pub fn read_grid<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
     lines(path).lines().map(|l| l.chars().collect()).collect()
+}
+
+/// Reads the file to grids (vec of vec) of char records line delineated
+/// ```
+/// let input = "..##.
+/// .#...
+///
+/// ..#..
+/// ....#";
+/// let expected = vec![
+///     vec![
+///         vec!['.', '.', '#', '#', '.'],
+///         vec!['.', '#', '.', '.', '.']
+///         ],
+///     vec![
+///         vec!['.', '.', '#', '.', '.'],
+///         vec!['.', '.', '.', '.', '#']
+///         ]
+///     ];
+/// let actual = aoc::read_grid_records(input);
+/// assert_eq!(expected, actual);
+/// ```
+pub fn read_grid_records<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<Vec<char>>> {
+    lines(path)
+        .split("\n\n")
+        .map(|l| l.lines().map(|r| r.chars().collect()).collect())
+        .collect()
 }
