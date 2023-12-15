@@ -59,6 +59,7 @@ impl Runner for AocDay {
             self.step_cycle(&mut grid);
             cycle_time += 1;
         }
+
         // Do math!
         let remaining_cycles = (1_000_000_000 - first_repeat_time) % cycle_time;
 
@@ -66,6 +67,7 @@ impl Runner for AocDay {
         for _ in 0..remaining_cycles {
             self.step_cycle(&mut grid);
         }
+
         output(
             grid.iter()
                 .rev()
