@@ -74,9 +74,6 @@ impl LensBox {
     }
 
     fn focusing_power(&self, base: usize) -> usize {
-        if self.lenses.is_empty() {
-            return 0;
-        }
         self.lenses
             .iter()
             .enumerate()
