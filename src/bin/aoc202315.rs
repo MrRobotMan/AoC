@@ -27,12 +27,16 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.initialization.iter().map(|v| score(v)).sum::<u32>())
     }
 
     fn part2(&mut self) -> Vec<String> {
         output("Unsolved")
     }
+}
+
+fn score(chars: &[char]) -> u32 {
+    chars.iter().fold(0, |acc, c| (acc + *c as u32) * 17 % 256)
 }
 
 #[cfg(test)]
@@ -62,6 +66,18 @@ mod tests {
             vec!['o', 't', '=', '7'],
         ];
         let actual = day.initialization;
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part1() {
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 1320;
+        let actual = day.part1()[0].parse::<u32>().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }
