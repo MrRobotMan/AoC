@@ -20,7 +20,6 @@ fn main() {
 struct AocDay {
     input: String,
     grid: HashMap<(i32, i32), Cave>,
-    energized: HashSet<(i32, i32)>,
     size: (i32, i32),
 }
 
@@ -41,17 +40,46 @@ impl Runner for AocDay {
     fn part1(&mut self) -> Vec<String> {
         let mut visited = HashSet::new();
         self.light_path((0, 0), Dir::East, &mut visited);
-        output(self.energized.len())
+        let energized = visited.iter().map(|v| v.0).collect::<HashSet<_>>();
+        output(energized.len())
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut res = 0;
+        let mut visited = HashSet::new();
+
+        for row in 0..self.size.0 {
+            // First col going east
+            visited.clear();
+            // energized.clear();
+            self.light_path((row, 0), Dir::East, &mut visited);
+            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+
+            // Last col going west
+            visited.clear();
+            // energized.clear();
+            self.light_path((row, self.size.1 - 1), Dir::West, &mut visited);
+            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+        }
+        for col in 0..self.size.1 {
+            // First row going south
+            visited.clear();
+            // energized.clear();
+            self.light_path((0, col), Dir::South, &mut visited);
+            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+
+            // Last row going north
+            visited.clear();
+            // energized.clear();
+            self.light_path((self.size.0 - 1, col), Dir::North, &mut visited);
+            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+        }
+        output(res)
     }
 }
 
 impl AocDay {
     fn light_path(&mut self, pos: (i32, i32), dir: Dir, visited: &mut HashSet<((i32, i32), Dir)>) {
-        self.energized.insert(pos);
         if visited.insert((pos, dir)) {
             if let Some(cave) = self.grid.get(&pos) {
                 for dir in cave.do_step(dir) {
@@ -178,6 +206,18 @@ mod tests {
         day.parse();
         let expected = 46;
         let actual = day.part1()[0].parse::<i32>().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 51;
+        let actual = day.part2()[0].parse::<i32>().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }
