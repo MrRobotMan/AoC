@@ -38,64 +38,52 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        let mut visited = HashSet::new();
-        self.light_path((0, 0), Dir::East, &mut visited);
-        let energized = visited.iter().map(|v| v.0).collect::<HashSet<_>>();
-        output(energized.len())
+        output(self.light_path((0, 0), Dir::East))
     }
 
     fn part2(&mut self) -> Vec<String> {
         let mut res = 0;
-        let mut visited = HashSet::new();
-
         for row in 0..self.size.0 {
             // First col going east
-            visited.clear();
-            // energized.clear();
-            self.light_path((row, 0), Dir::East, &mut visited);
-            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+            res = res.max(self.light_path((row, 0), Dir::East));
 
             // Last col going west
-            visited.clear();
-            // energized.clear();
-            self.light_path((row, self.size.1 - 1), Dir::West, &mut visited);
-            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+            res = res.max(self.light_path((row, self.size.1 - 1), Dir::West));
         }
         for col in 0..self.size.1 {
             // First row going south
-            visited.clear();
-            // energized.clear();
-            self.light_path((0, col), Dir::South, &mut visited);
-            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+            res = res.max(self.light_path((0, col), Dir::South));
 
             // Last row going north
-            visited.clear();
-            // energized.clear();
-            self.light_path((self.size.0 - 1, col), Dir::North, &mut visited);
-            res = res.max(visited.iter().map(|v| v.0).collect::<HashSet<_>>().len());
+            res = res.max(self.light_path((self.size.0 - 1, col), Dir::North));
         }
         output(res)
     }
 }
 
 impl AocDay {
-    fn light_path(&mut self, pos: (i32, i32), dir: Dir, visited: &mut HashSet<((i32, i32), Dir)>) {
-        if visited.insert((pos, dir)) {
-            if let Some(cave) = self.grid.get(&pos) {
-                for dir in cave.do_step(dir) {
-                    let delta = dir.delta();
-                    let new_pos = (pos.0 + delta.0, pos.1 + delta.1);
-                    if new_pos.0 < 0
-                        || new_pos.0 >= self.size.0
-                        || new_pos.1 < 0
-                        || new_pos.1 >= self.size.1
-                    {
-                        continue;
+    fn light_path(&mut self, start_point: (i32, i32), dir: Dir) -> usize {
+        let mut to_visit = vec![(start_point, dir)];
+        let mut visited = HashSet::new();
+        let mut energized = HashSet::new();
+        while let Some((pos, dir)) = to_visit.pop() {
+            if visited.insert((pos, dir)) {
+                energized.insert(pos);
+                if let Some(cave) = self.grid.get(&pos) {
+                    for dir in cave.do_step(dir) {
+                        let new_pos = dir.delta(&pos);
+                        if new_pos.0 >= 0
+                            && new_pos.0 < self.size.0
+                            && new_pos.1 >= 0
+                            && new_pos.1 < self.size.1
+                        {
+                            to_visit.push((new_pos, dir));
+                        };
                     }
-                    self.light_path(new_pos, dir, visited);
-                }
-            }
+                };
+            };
         }
+        energized.len()
     }
 }
 
