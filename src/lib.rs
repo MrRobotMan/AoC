@@ -108,3 +108,23 @@ pub fn read_grid_records<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<Vec<char>
         .map(|l| l.lines().map(|r| r.chars().collect()).collect())
         .collect()
 }
+
+/// Directions you can move in a grid
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+pub enum Dir {
+    North,
+    South,
+    East,
+    West,
+}
+
+impl Dir {
+    pub fn delta(&self) -> (i32, i32) {
+        match self {
+            Dir::North => (-1, 0),
+            Dir::South => (1, 0),
+            Dir::East => (0, 1),
+            Dir::West => (0, -1),
+        }
+    }
+}
