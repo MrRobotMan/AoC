@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     hash::Hash,
 };
 
@@ -10,7 +10,11 @@ pub trait Searcher: Eq + Hash + Clone {
     fn is_done(&self) -> bool;
 }
 
-pub fn dfs<T: Searcher>(start: &T) -> Option<VecDeque<T>> {
+pub trait Weighted {
+    fn weight(&self, other: &Self) -> usize;
+}
+
+pub fn dfs<T: Searcher>(start: &T) -> Option<Vec<T>> {
     let mut path = HashMap::new();
     let mut to_visit = vec![start.clone()];
     while let Some(node) = to_visit.pop() {
@@ -28,7 +32,7 @@ pub fn dfs<T: Searcher>(start: &T) -> Option<VecDeque<T>> {
     None
 }
 
-pub fn bfs<T: Searcher>(start: &T) -> Option<VecDeque<T>> {
+pub fn bfs<T: Searcher>(start: &T) -> Option<Vec<T>> {
     let mut path = HashMap::new();
     let mut to_visit = VecDeque::new();
     to_visit.push_front(start.clone());
@@ -47,11 +51,63 @@ pub fn bfs<T: Searcher>(start: &T) -> Option<VecDeque<T>> {
     None
 }
 
-fn get_path<T: Searcher>(moves: HashMap<T, T>, end: T) -> VecDeque<T> {
-    let mut found = VecDeque::new();
-    found.push_front(end);
-    while let Some(node) = moves.get(found.front().unwrap()) {
-        found.push_front(node.clone());
+pub fn dijkstra<T: Searcher + Weighted>(start: &T) -> Option<Vec<T>> {
+    let mut queue: HashSet<T> = HashSet::new();
+    let mut dist: HashMap<T, usize> = HashMap::new();
+    let mut path: HashMap<T, T> = HashMap::new();
+    let mut index: HashSet<T> = HashSet::new();
+    let mut target = None;
+
+    index.insert(start.clone());
+    queue.insert(start.clone());
+    dist.insert(start.clone(), 0);
+
+    while !queue.is_empty() {
+        let shortest = queue
+            .iter()
+            .map(|item| (item, dist.get(item).unwrap()))
+            .min_by(|a, b| a.1.cmp(b.1))
+            .unwrap()
+            .0
+            .clone();
+
+        if shortest.is_done() {
+            // Found target. Let's build the path.
+            target = Some(shortest);
+            break;
+        }
+
+        if !queue.remove(&shortest) {
+            panic!("Tried to remove shortest from queue but it was not found.")
+        }
+
+        for next_move in shortest.moves() {
+            let step = if queue.contains(next_move) {
+                next_move
+            } else if index.insert(next_move.clone()) {
+                dist.insert(next_move.clone(), usize::MAX);
+                queue.insert(next_move.clone());
+                next_move
+            } else {
+                continue;
+            };
+            let alt = dist[&shortest] + shortest.weight(next_move);
+            if alt < dist[&step] {
+                dist.insert(step.clone(), alt);
+                path.insert(step.clone(), shortest.clone());
+            }
+        }
     }
+
+    target.map(|node| get_path(path, node))
+}
+
+fn get_path<T: Searcher>(moves: HashMap<T, T>, end: T) -> Vec<T> {
+    let mut found = Vec::new();
+    found.push(end);
+    while let Some(node) = moves.get(found.last().unwrap()) {
+        found.push(node.clone());
+    }
+    found.reverse();
     found
 }
