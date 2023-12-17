@@ -6,6 +6,7 @@ use std::{
 };
 
 pub mod runner;
+pub mod search;
 
 /// Read the text of a file to a vec of strings
 pub fn read_lines<T: AsRef<Path> + Display>(path: T) -> Vec<String> {
