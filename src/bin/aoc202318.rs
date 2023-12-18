@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 use aoc::{
     runner::{output, run_solution, Runner},
@@ -17,6 +17,8 @@ fn main() {
 struct AocDay {
     input: String,
     instructions: Vec<Instruction>,
+    border: HashSet<(i32, i32)>,
+    dimensions: (i32, i32, i32, i32),
 }
 
 impl Runner for AocDay {
@@ -32,7 +34,32 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        self.build_map();
+        let mut vol = 0;
+        let mut inside = false;
+        for row in self.dimensions.0..=self.dimensions.1 {
+            let mut to_flip = false;
+            for col in self.dimensions.2..=self.dimensions.3 + 1 {
+                if self.border.contains(&(row, col)) {
+                    vol += 1;
+                    if !inside && !self.border.contains(&(row, col - 1)) {
+                        to_flip = false;
+                        inside = !inside;
+                        // println!("Flipped to {inside} at ({row},{col})");
+                    } else if inside
+                        && ((!self.border.contains(&(row, col + 1)) && to_flip)
+                            || self.remaining_empty(row, col))
+                    {
+                        inside = !inside;
+                        // println!("Flipped to {inside} at ({row},{col})");
+                    };
+                } else if inside {
+                    to_flip = true;
+                    vol += 1;
+                }
+            }
+        }
+        output(vol)
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -40,10 +67,53 @@ impl Runner for AocDay {
     }
 }
 
+impl AocDay {
+    fn build_map(&mut self) {
+        let mut cur = (0, 0);
+        let mut min_row = 0;
+        let mut max_row = 0;
+        let mut min_col = 0;
+        let mut max_col = 0;
+        self.border.insert(cur);
+        for instruction in &self.instructions {
+            for _ in 0..instruction.distance {
+                cur = instruction.direction.delta(&cur);
+                min_row = min_row.min(cur.0);
+                max_row = max_row.max(cur.0);
+                min_col = min_col.min(cur.1);
+                max_col = max_col.max(cur.1);
+                self.border.insert(cur);
+            }
+        }
+        self.dimensions = (min_row, max_row, min_col, max_col);
+        // for row in min_row..=max_row {
+        //     for col in min_col..=max_col {
+        //         print!(
+        //             "{}",
+        //             if self.border.contains(&(row, col)) {
+        //                 '#'
+        //             } else {
+        //                 '.'
+        //             }
+        //         );
+        //     }
+        //     println!();
+        // }
+    }
+
+    fn remaining_empty(&self, row: i32, col: i32) -> bool {
+        self.border
+            .iter()
+            .filter(|p| p.0 == row && p.1 > col)
+            .count()
+            == 0
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 struct Instruction {
     direction: Dir,
-    distance: usize,
+    distance: i32,
     color: String,
 }
 
@@ -53,7 +123,7 @@ impl FromStr for Instruction {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut parts = s.split_ascii_whitespace();
         let direction = parts.next().unwrap().parse()?;
-        let distance = parts.next().unwrap().parse::<usize>().unwrap();
+        let distance = parts.next().unwrap().parse().unwrap();
         let color = parts.next().unwrap().into();
         Ok(Self {
             direction,
@@ -111,5 +181,17 @@ U 2 (#7a21e3)";
             },
             day.instructions.last().unwrap()
         );
+    }
+
+    #[test]
+    fn test_part1() {
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 62;
+        let actual = day.part1()[0].parse().unwrap_or_default();
+        assert_eq!(expected, actual);
     }
 }
