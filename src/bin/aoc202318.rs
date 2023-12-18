@@ -1,4 +1,4 @@
-use std::{collections::HashSet, str::FromStr};
+use std::{collections::HashMap, str::FromStr};
 
 use aoc::{
     runner::{output, run_solution, Runner},
@@ -17,7 +17,7 @@ fn main() {
 struct AocDay {
     input: String,
     instructions: Vec<Instruction>,
-    border: HashSet<(i32, i32)>,
+    border: HashMap<(i32, i32), char>,
     dimensions: (i32, i32, i32, i32),
 }
 
@@ -37,25 +37,45 @@ impl Runner for AocDay {
         self.build_map();
         let mut vol = 0;
         let mut inside = false;
+        let mut cur = '.';
         for row in self.dimensions.0..=self.dimensions.1 {
-            let mut to_flip = false;
             for col in self.dimensions.2..=self.dimensions.3 + 1 {
-                if self.border.contains(&(row, col)) {
-                    vol += 1;
-                    if !inside && !self.border.contains(&(row, col - 1)) {
-                        to_flip = false;
+                match self.border.get(&(row, col)) {
+                    Some('|') => {
+                        vol += 1;
                         inside = !inside;
-                        // println!("Flipped to {inside} at ({row},{col})");
-                    } else if inside
-                        && ((!self.border.contains(&(row, col + 1)) && to_flip)
-                            || self.remaining_empty(row, col))
-                    {
+                    }
+                    Some('F') => {
+                        vol += 1;
                         inside = !inside;
-                        // println!("Flipped to {inside} at ({row},{col})");
-                    };
-                } else if inside {
-                    to_flip = true;
-                    vol += 1;
+                        cur = 'F';
+                    }
+                    Some('L') => {
+                        vol += 1;
+                        inside = !inside;
+                        cur = 'L';
+                    }
+                    Some('J') => {
+                        vol += 1;
+                        if cur == 'L' {
+                            inside = !inside;
+                            cur = '.';
+                        }
+                    }
+                    Some('7') => {
+                        vol += 1;
+                        if cur == 'F' {
+                            inside = !inside;
+                            cur = '.';
+                        }
+                    }
+                    Some('-') => vol += 1,
+                    None => {
+                        if inside {
+                            vol += 1;
+                        }
+                    }
+                    c => panic!("Unknown option {:?}", c),
                 }
             }
         }
@@ -74,39 +94,42 @@ impl AocDay {
         let mut max_row = 0;
         let mut min_col = 0;
         let mut max_col = 0;
-        self.border.insert(cur);
+        let mut prev = self.instructions[0].direction;
+        self.border.insert(
+            cur,
+            border_symbol(self.instructions.last().unwrap().direction, prev),
+        );
         for instruction in &self.instructions {
+            self.border
+                .insert(cur, border_symbol(prev, instruction.direction));
+            prev = instruction.direction;
             for _ in 0..instruction.distance {
                 cur = instruction.direction.delta(&cur);
                 min_row = min_row.min(cur.0);
                 max_row = max_row.max(cur.0);
                 min_col = min_col.min(cur.1);
                 max_col = max_col.max(cur.1);
-                self.border.insert(cur);
+                self.border
+                    .insert(cur, border_symbol(prev, instruction.direction));
             }
         }
+        if cur == (0, 0) {
+            self.border
+                .insert(cur, border_symbol(prev, self.instructions[0].direction));
+        }
         self.dimensions = (min_row, max_row, min_col, max_col);
-        // for row in min_row..=max_row {
-        //     for col in min_col..=max_col {
-        //         print!(
-        //             "{}",
-        //             if self.border.contains(&(row, col)) {
-        //                 '#'
-        //             } else {
-        //                 '.'
-        //             }
-        //         );
-        //     }
-        //     println!();
-        // }
     }
+}
 
-    fn remaining_empty(&self, row: i32, col: i32) -> bool {
-        self.border
-            .iter()
-            .filter(|p| p.0 == row && p.1 > col)
-            .count()
-            == 0
+fn border_symbol(previous: Dir, current: Dir) -> char {
+    match (previous, current) {
+        (Dir::North, Dir::East) | (Dir::West, Dir::South) => 'F',
+        (Dir::North, Dir::West) | (Dir::East, Dir::South) => '7',
+        (Dir::South, Dir::East) | (Dir::West, Dir::North) => 'L',
+        (Dir::South, Dir::West) | (Dir::East, Dir::North) => 'J',
+        (Dir::North, Dir::North) | (Dir::South, Dir::South) => '|',
+        (Dir::East, Dir::East) | (Dir::West, Dir::West) => '-',
+        _ => panic!("Can't convert {previous:?} to {current:?}"),
     }
 }
 
