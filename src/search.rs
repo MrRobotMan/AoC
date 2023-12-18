@@ -4,14 +4,16 @@ use std::{
 };
 
 pub trait Searcher: Eq + Hash + Clone {
-    fn moves(&self) -> Vec<&Self>
+    fn moves(&self) -> Vec<Self>
     where
         Self: Sized;
     fn is_done(&self) -> bool;
 }
 
-pub trait Weighted {
-    fn weight(&self, other: &Self) -> usize;
+pub trait Weighted<T: Searcher> {
+    fn weight(&self, _node: &T) -> usize {
+        1
+    }
 }
 
 pub fn dfs<T: Searcher>(start: &T) -> Option<Vec<T>> {
@@ -41,7 +43,7 @@ pub fn bfs<T: Searcher>(start: &T) -> Option<Vec<T>> {
             return Some(get_path(path, node));
         }
         for next_move in node.moves() {
-            if path.contains_key(next_move) {
+            if path.contains_key(&next_move) {
                 continue;
             }
             to_visit.push_back(next_move.clone());
@@ -51,7 +53,7 @@ pub fn bfs<T: Searcher>(start: &T) -> Option<Vec<T>> {
     None
 }
 
-pub fn dijkstra<T: Searcher + Weighted>(start: &T) -> Option<Vec<T>> {
+pub fn dijkstra<T: Searcher, U: Weighted<T>>(start: &T, map: &U) -> Option<Vec<T>> {
     let mut queue: HashSet<T> = HashSet::new();
     let mut dist: HashMap<T, usize> = HashMap::new();
     let mut path: HashMap<T, T> = HashMap::new();
@@ -82,7 +84,7 @@ pub fn dijkstra<T: Searcher + Weighted>(start: &T) -> Option<Vec<T>> {
         }
 
         for next_move in shortest.moves() {
-            let step = if queue.contains(next_move) {
+            let step = if queue.contains(&next_move) {
                 next_move
             } else if index.insert(next_move.clone()) {
                 dist.insert(next_move.clone(), usize::MAX);
@@ -91,7 +93,7 @@ pub fn dijkstra<T: Searcher + Weighted>(start: &T) -> Option<Vec<T>> {
             } else {
                 continue;
             };
-            let alt = dist[&shortest] + shortest.weight(next_move);
+            let alt = dist[&shortest] + map.weight(&step);
             if alt < dist[&step] {
                 dist.insert(step.clone(), alt);
                 path.insert(step.clone(), shortest.clone());
