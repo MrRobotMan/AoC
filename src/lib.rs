@@ -119,6 +119,20 @@ pub enum Dir {
     West,
 }
 
+impl FromStr for Dir {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "N" | "U" => Ok(Self::North),
+            "S" | "D" => Ok(Self::South),
+            "E" | "R" => Ok(Self::East),
+            "W" | "L" => Ok(Self::West),
+            d => Err(format!("Unknown direction {d}")),
+        }
+    }
+}
+
 impl Dir {
     pub fn delta(&self, point: &(i32, i32)) -> (i32, i32) {
         match self {
