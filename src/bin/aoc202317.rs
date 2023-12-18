@@ -47,7 +47,7 @@ impl AocDay {
             &Node {
                 pos: (0, 0),
                 dir: Dir::East,
-                steps: 1,
+                steps: 0,
                 target: (self.map.size.0 - 1, self.map.size.1 - 1),
             },
             &self.map,
@@ -64,7 +64,6 @@ fn dijkstra<U: Weighted<Node>>(
 ) -> Option<usize> {
     let mut queue: HashSet<(Node, usize)> = HashSet::new();
     let mut dist: HashMap<(Node, usize), usize> = HashMap::new();
-    // let mut path: HashMap<(Node, usize), (Node, usize)> = HashMap::new();
     let mut index: HashSet<(Node, usize)> = HashSet::new();
     let mut target = None;
 
@@ -115,20 +114,10 @@ fn dijkstra<U: Weighted<Node>>(
             let alt = dist[&shortest] + map.weight(&step);
             if alt < dist[&(step.clone(), step_count)] {
                 dist.insert((step.clone(), step_count), alt);
-                // path.insert((step.clone(), step_count), shortest.clone());
             }
         }
     }
     target.map(|t| dist[&t])
-    // target.map(|t| {
-    //     let mut found = Vec::new();
-    //     found.push(t);
-    //     while let Some(node) = path.get(found.last().unwrap()) {
-    //         found.push(node.clone());
-    //     }
-    //     found.reverse();
-    //     found
-    // })
 }
 
 #[derive(Debug, Default)]

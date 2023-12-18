@@ -104,7 +104,7 @@ pub fn dijkstra<T: Searcher, U: Weighted<T>>(start: &T, map: &U) -> Option<Vec<T
     target.map(|node| get_path(path, node))
 }
 
-pub fn get_path<T: Searcher>(moves: HashMap<T, T>, end: T) -> Vec<T> {
+fn get_path<T: Searcher>(moves: HashMap<T, T>, end: T) -> Vec<T> {
     let mut found = Vec::new();
     found.push(end);
     while let Some(node) = moves.get(found.last().unwrap()) {
