@@ -1,8 +1,11 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Display,
+};
 
 use aoc::{
     runner::{output, run_solution, Runner},
-    search::{dijkstra, Searcher, Weighted},
+    search::{Searcher, Weighted},
     Dir,
 };
 
@@ -34,30 +37,98 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.get_path((4, 10)))
     }
 }
 
 impl AocDay {
     fn get_path(&self, limits: (usize, usize)) -> usize {
-        let path = dijkstra(
+        dijkstra(
             &Node {
                 pos: (0, 0),
                 dir: Dir::East,
                 steps: 1,
-                limits,
                 target: (self.map.size.0 - 1, self.map.size.1 - 1),
             },
             &self.map,
+            limits,
         )
         .unwrap_or_default()
-        .iter()
-        .map(|n| n.pos)
-        .collect::<Vec<_>>();
-        path.iter()
-            .skip(1)
-            .fold(0, |acc, node| acc + self.map.grid[node])
     }
+}
+
+fn dijkstra<U: Weighted<Node>>(
+    start: &Node,
+    map: &U,
+    step_limits: (usize, usize),
+) -> Option<usize> {
+    let mut queue: HashSet<(Node, usize)> = HashSet::new();
+    let mut dist: HashMap<(Node, usize), usize> = HashMap::new();
+    // let mut path: HashMap<(Node, usize), (Node, usize)> = HashMap::new();
+    let mut index: HashSet<(Node, usize)> = HashSet::new();
+    let mut target = None;
+
+    index.insert((start.clone(), 1));
+    queue.insert((start.clone(), 1));
+    dist.insert((start.clone(), 1), 0);
+
+    while !queue.is_empty() {
+        let shortest = queue
+            .iter()
+            .map(|item| (item, dist.get(item).unwrap()))
+            .min_by(|a, b| a.1.cmp(b.1))
+            .unwrap()
+            .0
+            .clone();
+
+        if shortest.0.is_done() && shortest.1 >= step_limits.0 {
+            // Found target. Let's build the path.
+            target = Some(shortest);
+            break;
+        }
+
+        if !queue.remove(&shortest) {
+            panic!("Tried to remove shortest from queue but it was not found.")
+        }
+
+        for next_move in shortest.0.moves() {
+            let step_count = if next_move.dir == shortest.0.dir {
+                if shortest.1 >= step_limits.1 {
+                    continue;
+                }
+                shortest.1 + 1
+            } else {
+                if shortest.1 < step_limits.0 {
+                    continue;
+                }
+                1
+            };
+            let step = if queue.contains(&(next_move.clone(), step_count)) {
+                next_move
+            } else if index.insert((next_move.clone(), step_count)) {
+                dist.insert((next_move.clone(), step_count), usize::MAX);
+                queue.insert((next_move.clone(), step_count));
+                next_move
+            } else {
+                continue;
+            };
+            let alt = dist[&shortest] + map.weight(&step);
+            if alt < dist[&(step.clone(), step_count)] {
+                dist.insert((step.clone(), step_count), alt);
+                // path.insert((step.clone(), step_count), shortest.clone());
+            }
+        }
+    }
+    target.map(|t| dist[&t])
+    // target.map(|t| {
+    //     let mut found = Vec::new();
+    //     found.push(t);
+    //     while let Some(node) = path.get(found.last().unwrap()) {
+    //         found.push(node.clone());
+    //     }
+    //     found.reverse();
+    //     found
+    // })
 }
 
 #[derive(Debug, Default)]
@@ -71,7 +142,6 @@ struct Node {
     pos: (usize, usize),
     dir: Dir,
     steps: usize,
-    limits: (usize, usize),
     target: (usize, usize),
 }
 
@@ -99,10 +169,9 @@ impl Searcher for Node {
             .into_iter()
             .zip(steps.into_iter().zip(dirs))
             .filter_map(|(pos, (steps, dir))| {
-                if self.limits.0 <= steps
-                    && steps <= self.limits.1
-                    && pos != self.pos
+                if pos != self.pos // Don't step off the grid.
                     && dir != dont_go
+                // Don't go back the way you came.
                 {
                     let mut node = self.clone();
                     node.pos = pos;
@@ -205,6 +274,23 @@ mod tests {
         };
         day.parse();
         let expected = 94;
+        let actual = day.get_path((4, 10));
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2_example2() {
+        let mut day = AocDay {
+            input: "111111111111
+999999999991
+999999999991
+999999999991
+999999999991"
+                .into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 71;
         let actual = day.get_path((4, 10));
         assert_eq!(expected, actual);
     }
