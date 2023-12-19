@@ -23,7 +23,12 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        // Parse the input
+        let lines = aoc::lines(&self.input);
+        let (workflows, parts) = lines.split_once("\n\n").unwrap();
+        self.workflows = HashMap::from_iter(workflows.lines().map(parse_workflow));
+        self.parts = parts.lines().map(|p| p.into()).collect();
+        println!("workflows {:?}", self.workflows);
+        println!("parts {:?}", self.parts);
     }
 
     fn part1(&mut self) -> Vec<String> {
@@ -35,24 +40,84 @@ impl Runner for AocDay {
     }
 }
 
-struct Rule {
-    fields: char,
-    comps: char,
-    values: usize,
-    workflow: Status,
+fn parse_workflow(workflow: &str) -> (String, Vec<Rule>) {
+    let (name, rules) = workflow.trim_end_matches('}').split_once('{').unwrap();
+    (name.into(), rules.split(',').map(|s| s.into()).collect())
 }
 
+#[derive(Debug, Default, PartialEq, Eq)]
+struct Rule {
+    field: char,
+    comp: char,
+    value: usize,
+    workflow: Status,
+    is_final: bool,
+}
+
+impl From<&str> for Rule {
+    fn from(value: &str) -> Self {
+        match value.split_once(':') {
+            Some((rule, workflow)) => {
+                let workflow = match workflow {
+                    "A" => Status::Accepted,
+                    "R" => Status::Rejected,
+                    s => Status::Workflow(s.into()),
+                };
+                let mut chars = rule.chars();
+                let field = chars.next().unwrap();
+                let comp = chars.next().unwrap();
+                let value = rule[2..].parse().unwrap();
+                Rule {
+                    field,
+                    comp,
+                    value,
+                    workflow,
+                    is_final: false,
+                }
+            }
+            None => Rule {
+                workflow: match value {
+                    "A" => Status::Accepted,
+                    "R" => Status::Rejected,
+                    s => Status::Workflow(s.into()),
+                },
+                is_final: true,
+                ..Default::default()
+            },
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq)]
 enum Status {
     Accepted,
+    #[default]
     Rejected,
     Workflow(String),
 }
 
+#[derive(Debug, Default, PartialEq, Eq)]
 struct Part {
     x: usize,
     m: usize,
     a: usize,
     s: usize,
+}
+
+impl From<&str> for Part {
+    fn from(value: &str) -> Self {
+        let mut part = Part::default();
+        for field in value[1..value.len() - 1].split(',') {
+            match field.split_once('=').unwrap() {
+                ("x", v) => part.x = v.parse().unwrap(),
+                ("m", v) => part.m = v.parse().unwrap(),
+                ("a", v) => part.a = v.parse().unwrap(),
+                ("s", v) => part.s = v.parse().unwrap(),
+                _ => panic!("Can't process {}", field),
+            }
+        }
+        part
+    }
 }
 
 impl Part {
@@ -88,26 +153,63 @@ hdj{m>838:A,pv}
 {x=2127,m=1623,a=2188,s=1013}";
 
     #[test]
-    fn test_parsing() {
-    	let expected=;
-    	let actual=;
-    	assert_eq!(expected, actual);
+    fn test_parse_workflow() {
+        let expected = (
+            "px".into(),
+            vec![
+                Rule {
+                    field: 'a',
+                    comp: '<',
+                    value: 2006,
+                    workflow: Status::Workflow("qkq".into()),
+                    is_final: false,
+                },
+                Rule {
+                    field: 'm',
+                    comp: '>',
+                    value: 2090,
+                    workflow: Status::Accepted,
+                    is_final: false,
+                },
+                Rule {
+                    workflow: Status::Workflow("rfg".into()),
+                    is_final: true,
+                    ..Default::default()
+                },
+            ],
+        );
+        let actual = parse_workflow(INPUT.lines().next().unwrap());
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_parse_part() {
+        let expected = Part {
+            x: 787,
+            m: 2655,
+            a: 1222,
+            s: 2876,
+        };
+        let actual = "{x=787,m=2655,a=1222,s=2876}".into();
+        assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_part1() {
-    	let expected=;
-    	let actual=;
-    	assert_eq!(expected, actual);
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 0;
+        let actual = 0;
+        assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_part2() {
-    	let expected=;
-    	let actual=;
-    	assert_eq!(expected, actual);
+        let expected = 0;
+        let actual = 0;
+        assert_eq!(expected, actual);
     }
-    
-    
-    
 }
