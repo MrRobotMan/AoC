@@ -1,11 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fmt::Display,
-};
+use std::{collections::HashMap, fmt::Display};
 
 use aoc::{
     runner::{output, run_solution, Runner},
-    search::{Searcher, Weighted},
+    search::{a_star, Graph, Searcher, Weighted},
     Dir,
 };
 
@@ -43,82 +40,41 @@ impl Runner for AocDay {
 
 impl AocDay {
     fn get_path(&self, limits: (usize, usize)) -> usize {
-        dijkstra(
+        if let Some((path, score)) = a_star(
             &Node {
                 pos: (0, 0),
                 dir: Dir::East,
                 steps: 0,
-                target: (self.map.size.0 - 1, self.map.size.1 - 1),
+                limits,
             },
             &self.map,
-            limits,
-        )
-        .unwrap_or_default()
-    }
-}
-
-fn dijkstra<U: Weighted<Node>>(
-    start: &Node,
-    map: &U,
-    step_limits: (usize, usize),
-) -> Option<usize> {
-    let mut queue: HashSet<(Node, usize)> = HashSet::new();
-    let mut dist: HashMap<(Node, usize), usize> = HashMap::new();
-    let mut index: HashSet<(Node, usize)> = HashSet::new();
-    let mut target = None;
-
-    index.insert((start.clone(), 1));
-    queue.insert((start.clone(), 1));
-    dist.insert((start.clone(), 1), 0);
-
-    while !queue.is_empty() {
-        let shortest = queue
-            .iter()
-            .map(|item| (item, dist.get(item).unwrap()))
-            .min_by(|a, b| a.1.cmp(b.1))
-            .unwrap()
-            .0
-            .clone();
-
-        if shortest.0.is_done() && shortest.1 >= step_limits.0 {
-            // Found target. Let's build the path.
-            target = Some(shortest);
-            break;
-        }
-
-        if !queue.remove(&shortest) {
-            panic!("Tried to remove shortest from queue but it was not found.")
-        }
-
-        for next_move in shortest.0.moves() {
-            let step_count = if next_move.dir == shortest.0.dir {
-                if shortest.1 >= step_limits.1 {
-                    continue;
-                }
-                shortest.1 + 1
-            } else {
-                if shortest.1 < step_limits.0 {
-                    continue;
-                }
-                1
-            };
-            let step = if queue.contains(&(next_move.clone(), step_count)) {
-                next_move
-            } else if index.insert((next_move.clone(), step_count)) {
-                dist.insert((next_move.clone(), step_count), usize::MAX);
-                queue.insert((next_move.clone(), step_count));
-                next_move
-            } else {
-                continue;
-            };
-            let alt = dist[&shortest] + map.weight(&step);
-            if alt < dist[&(step.clone(), step_count)] {
-                dist.insert((step.clone(), step_count), alt);
+            |node| (self.map.height() - node.pos.0) + (self.map.width() - node.pos.1),
+        ) {
+            for node in path {
+                println!("{:?}", node.pos);
             }
+            score
+        } else {
+            0
         }
     }
-    target.map(|t| dist[&t])
 }
+
+/*
+2>>34^>>>1323
+32v>>>35v5623
+32552456v>>54
+3446585845v52
+4546657867v>6
+14385987984v4
+44578769877v6
+36378779796v>
+465496798688v
+456467998645v
+12246868655<v
+25465488877v5
+43226746555v>
+*/
 
 #[derive(Debug, Default)]
 struct Map {
@@ -126,47 +82,98 @@ struct Map {
     size: (usize, usize),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+impl Graph for Map {
+    fn value(&self, row: usize, col: usize) -> usize {
+        self.grid[&(row, col)]
+    }
+
+    fn height(&self) -> usize {
+        self.size.0
+    }
+    fn width(&self) -> usize {
+        self.size.1
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Node {
     pos: (usize, usize),
     dir: Dir,
     steps: usize,
-    target: (usize, usize),
+    limits: (usize, usize),
 }
 
-impl Searcher for Node {
-    fn moves(&self) -> Vec<Self>
+impl Searcher<Map> for Node {
+    fn moves(&self, map: &Map) -> Vec<Self>
     where
         Self: Sized,
     {
+        // If we would step off the grid, set to the same spot.
         let positions = vec![
-            (self.pos.0.saturating_sub(1), self.pos.1),        // Up
-            ((self.pos.0 + 1).min(self.target.0), self.pos.1), // Down
-            (self.pos.0, (self.pos.1 + 1).min(self.target.1)), // Right
-            (self.pos.0, self.pos.1.saturating_sub(1)),        // Left
+            (self.pos.0.saturating_sub(1), self.pos.1), // North
+            ((self.pos.0 + 1).min(map.height() - 1), self.pos.1), // South
+            (self.pos.0, (self.pos.1 + 1).min(map.width() - 1)), // East
+            (self.pos.0, self.pos.1.saturating_sub(1)), // West
         ];
         let mut steps = [1; 4];
         steps[self.dir as usize] = self.steps + 1;
         let dirs = [Dir::North, Dir::South, Dir::East, Dir::West];
         let dont_go = match self.dir {
+            // Don't go back the way you came.
             Dir::North => Dir::South,
             Dir::South => Dir::North,
             Dir::East => Dir::West,
             Dir::West => Dir::East,
         };
+        let mut neighbors = Vec::new();
+        for dir in [Dir::North, Dir::South, Dir::East, Dir::West] {
+            // Don't back track
+            if dir == dont_go {
+                continue;
+            }
+
+            // Dont' go off the map
+            if self.pos.0 == 0
+                || self.pos.1 == 0
+                || self.pos.0 == map.height() - 1
+                || self.pos.1 == map.width() - 1
+            {
+                continue;
+            }
+            let pos = dir.delta(&self.pos);
+            if dir == self.dir && self.steps < self.limits.1 {
+                neighbors.push(Self {
+                    pos,
+                    dir,
+                    steps: self.steps + 1,
+                    limits: self.limits,
+                });
+            } else if self.steps == 0 || (dir != self.dir && self.steps >= self.limits.0) {
+                neighbors.push(Self {
+                    pos,
+                    dir,
+                    steps: 1,
+                    limits: self.limits,
+                })
+            }
+        }
         positions
             .into_iter()
             .zip(steps.into_iter().zip(dirs))
             .filter_map(|(pos, (steps, dir))| {
-                if pos != self.pos // Don't step off the grid.
-                    && dir != dont_go
-                // Don't go back the way you came.
+                if pos == self.pos || dir == dont_go {
+                    // Don't step off the grid, don't go back the way you came.
+                    None
+                } else if (dir == self.dir && steps <= self.limits.1)
+                    || (dir != self.dir && steps >= self.limits.0)
+                    || self.steps == 1
                 {
-                    let mut node = self.clone();
-                    node.pos = pos;
-                    node.dir = dir;
-                    node.steps = steps;
-                    Some(node)
+                    Some(Self {
+                        pos,
+                        dir,
+                        steps,
+                        limits: self.limits,
+                    })
                 } else {
                     None
                 }
@@ -174,14 +181,15 @@ impl Searcher for Node {
             .collect()
     }
 
-    fn is_done(&self) -> bool {
-        self.pos == self.target
+    fn is_done(&self, map: &Map) -> bool {
+        let target = (map.height() - 1, map.width() - 1);
+        self.pos == target && self.steps >= self.limits.0
     }
 }
 
-impl Weighted<Node> for Map {
-    fn weight(&self, node: &Node) -> usize {
-        self.grid[&node.pos]
+impl Weighted<Map> for Node {
+    fn weight(&self, graph: &Map) -> usize {
+        graph.value(self.pos.0, self.pos.1)
     }
 }
 
