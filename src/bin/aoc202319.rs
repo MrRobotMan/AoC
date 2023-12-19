@@ -24,9 +24,15 @@ impl Runner for AocDay {
 
     fn parse(&mut self) {
         let lines = aoc::lines(&self.input);
-        let (workflows, parts) = lines.split_once("\n\n").unwrap();
-        self.workflows = HashMap::from_iter(workflows.lines().map(parse_workflow));
-        self.parts = parts.lines().map(|p| p.into()).collect();
+        let mut lines = lines.lines();
+        for line in lines.by_ref() {
+            if line.is_empty() {
+                break;
+            }
+            let (key, flows) = parse_workflow(line);
+            self.workflows.insert(key, flows);
+        }
+        self.parts = lines.map(|p| p.into()).collect();
     }
 
     fn part1(&mut self) -> Vec<String> {
