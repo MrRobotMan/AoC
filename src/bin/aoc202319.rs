@@ -27,12 +27,21 @@ impl Runner for AocDay {
         let (workflows, parts) = lines.split_once("\n\n").unwrap();
         self.workflows = HashMap::from_iter(workflows.lines().map(parse_workflow));
         self.parts = parts.lines().map(|p| p.into()).collect();
-        println!("workflows {:?}", self.workflows);
-        println!("parts {:?}", self.parts);
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(
+            self.parts
+                .iter()
+                .filter_map(|p| {
+                    if p.process_workflow("in", &self.workflows) == Status::Accepted {
+                        Some(p.score())
+                    } else {
+                        None
+                    }
+                })
+                .sum::<usize>(),
+        )
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -45,7 +54,7 @@ fn parse_workflow(workflow: &str) -> (String, Vec<Rule>) {
     (name.into(), rules.split(',').map(|s| s.into()).collect())
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
 struct Rule {
     field: char,
     comp: char,
@@ -88,7 +97,7 @@ impl From<&str> for Rule {
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
 enum Status {
     Accepted,
     #[default]
@@ -96,7 +105,7 @@ enum Status {
     Workflow(String),
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
 struct Part {
     x: usize,
     m: usize,
@@ -122,11 +131,37 @@ impl From<&str> for Part {
 
 impl Part {
     fn score(&self) -> usize {
-        self.x + self.m + self.a + self.x
+        self.x + self.m + self.a + self.s
     }
 
-    fn process_workflow(&self, workflow: &[Rule]) -> Status {
-        todo!()
+    fn process_workflow(&self, start: &str, workflows: &HashMap<String, Vec<Rule>>) -> Status {
+        let mut status = Status::Workflow(start.into());
+        while let Status::Workflow(ref k) = status {
+            let workflow = &workflows[k];
+            for rule in workflow.iter() {
+                if rule.is_final {
+                    status = rule.workflow.clone();
+                    break;
+                }
+                let val = match rule.field {
+                    'x' => self.x,
+                    'm' => self.m,
+                    'a' => self.a,
+                    's' => self.s,
+                    c => panic!("Unknown field {}", c),
+                };
+                let check = match rule.comp {
+                    '>' => val > rule.value,
+                    '<' => val < rule.value,
+                    o => panic!("Unknown operation {}", o),
+                };
+                if check {
+                    status = rule.workflow.clone();
+                    break;
+                }
+            }
+        }
+        status
     }
 }
 
@@ -192,6 +227,7 @@ hdj{m>838:A,pv}
         };
         let actual = "{x=787,m=2655,a=1222,s=2876}".into();
         assert_eq!(expected, actual);
+        assert_eq!(7540, actual.score());
     }
 
     #[test]
@@ -201,8 +237,8 @@ hdj{m>838:A,pv}
             ..Default::default()
         };
         day.parse();
-        let expected = 0;
-        let actual = 0;
+        let expected = 19114;
+        let actual = day.part1()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 
