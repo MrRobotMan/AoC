@@ -40,7 +40,7 @@ impl Runner for AocDay {
 
 impl AocDay {
     fn get_path(&self, limits: (usize, usize)) -> usize {
-        if let Some((path, score)) = a_star(
+        a_star(
             &Node {
                 pos: (0, 0),
                 dir: Dir::East,
@@ -49,32 +49,11 @@ impl AocDay {
             },
             &self.map,
             |node| (self.map.height() - node.pos.0) + (self.map.width() - node.pos.1),
-        ) {
-            for node in path {
-                println!("{:?}", node.pos);
-            }
-            score
-        } else {
-            0
-        }
+        )
+        .unwrap_or_default()
+        .1
     }
 }
-
-/*
-2>>34^>>>1323
-32v>>>35v5623
-32552456v>>54
-3446585845v52
-4546657867v>6
-14385987984v4
-44578769877v6
-36378779796v>
-465496798688v
-456467998645v
-12246868655<v
-25465488877v5
-43226746555v>
-*/
 
 #[derive(Debug, Default)]
 struct Map {
@@ -108,35 +87,25 @@ impl Searcher<Map> for Node {
     where
         Self: Sized,
     {
-        // If we would step off the grid, set to the same spot.
-        let positions = vec![
-            (self.pos.0.saturating_sub(1), self.pos.1), // North
-            ((self.pos.0 + 1).min(map.height() - 1), self.pos.1), // South
-            (self.pos.0, (self.pos.1 + 1).min(map.width() - 1)), // East
-            (self.pos.0, self.pos.1.saturating_sub(1)), // West
-        ];
-        let mut steps = [1; 4];
-        steps[self.dir as usize] = self.steps + 1;
-        let dirs = [Dir::North, Dir::South, Dir::East, Dir::West];
-        let dont_go = match self.dir {
-            // Don't go back the way you came.
-            Dir::North => Dir::South,
-            Dir::South => Dir::North,
-            Dir::East => Dir::West,
-            Dir::West => Dir::East,
-        };
         let mut neighbors = Vec::new();
         for dir in [Dir::North, Dir::South, Dir::East, Dir::West] {
             // Don't back track
-            if dir == dont_go {
+            if dir
+                == match self.dir {
+                    Dir::North => Dir::South,
+                    Dir::South => Dir::North,
+                    Dir::East => Dir::West,
+                    Dir::West => Dir::East,
+                }
+            {
                 continue;
             }
 
             // Dont' go off the map
-            if self.pos.0 == 0
-                || self.pos.1 == 0
-                || self.pos.0 == map.height() - 1
-                || self.pos.1 == map.width() - 1
+            if (self.pos.0 == 0 && dir == Dir::North)
+                || (self.pos.1 == 0 && dir == Dir::West)
+                || (self.pos.0 == map.height() - 1 && dir == Dir::South)
+                || (self.pos.1 == map.width() - 1 && dir == Dir::East)
             {
                 continue;
             }
@@ -157,28 +126,7 @@ impl Searcher<Map> for Node {
                 })
             }
         }
-        positions
-            .into_iter()
-            .zip(steps.into_iter().zip(dirs))
-            .filter_map(|(pos, (steps, dir))| {
-                if pos == self.pos || dir == dont_go {
-                    // Don't step off the grid, don't go back the way you came.
-                    None
-                } else if (dir == self.dir && steps <= self.limits.1)
-                    || (dir != self.dir && steps >= self.limits.0)
-                    || self.steps == 1
-                {
-                    Some(Self {
-                        pos,
-                        dir,
-                        steps,
-                        limits: self.limits,
-                    })
-                } else {
-                    None
-                }
-            })
-            .collect()
+        neighbors
     }
 
     fn is_done(&self, map: &Map) -> bool {
