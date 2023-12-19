@@ -134,12 +134,32 @@ impl FromStr for Dir {
 }
 
 impl Dir {
-    pub fn delta(&self, point: &(i32, i32)) -> (i32, i32) {
+    pub fn delta<T: num::Integer + Copy>(&self, point: &(T, T)) -> (T, T) {
+        let adder: T =
+            num::Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
-            Dir::North => (point.0 - 1, point.1),
-            Dir::South => (point.0 + 1, point.1),
-            Dir::East => (point.0, point.1 + 1),
-            Dir::West => (point.0, point.1 - 1),
+            Dir::North => (point.0 - adder, point.1),
+            Dir::South => (point.0 + adder, point.1),
+            Dir::East => (point.0, point.1 + adder),
+            Dir::West => (point.0, point.1 - adder),
         }
     }
+    pub fn scale<T: num::Integer + Copy>(&self, scale: T) -> (T, T) {
+        let zero: T = num::Num::from_str_radix("0", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        let one: T = num::Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        let neg_one: T =
+            num::Num::from_str_radix("-1", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        match self {
+            Dir::North => (neg_one * scale, zero),
+            Dir::South => (one * scale, zero),
+            Dir::East => (zero, one * scale),
+            Dir::West => (zero, neg_one * scale),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+pub struct Point<T: num::Num> {
+    x: T,
+    y: T,
 }
