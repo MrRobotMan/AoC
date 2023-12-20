@@ -32,7 +32,7 @@ impl Runner for AocDay {
                 self.modules
                     .entry(k.into())
                     .and_modify(|m| {
-                        if matches!(m, ModuleType::Broadcaster(_)) {
+                        if matches!(m, ModuleType::Dump(_)) {
                             *m = (*m)
                                 .clone()
                                 .dump_convert(ModuleType::FlipFlop(FlipFlop::default()))
@@ -48,7 +48,7 @@ impl Runner for AocDay {
                 self.modules
                     .entry(k.into())
                     .and_modify(|m| {
-                        if matches!(m, ModuleType::Broadcaster(_)) {
+                        if matches!(m, ModuleType::Dump(_)) {
                             *m = (*m)
                                 .clone()
                                 .dump_convert(ModuleType::Conjunction(Conjunction::default()))
@@ -63,7 +63,14 @@ impl Runner for AocDay {
             } else {
                 self.modules
                     .entry(module.into())
-                    .and_modify(|m| m.add_receivers(&receivers))
+                    .and_modify(|m| {
+                        if matches!(m, ModuleType::Dump(_)) {
+                            *m = (*m)
+                                .clone()
+                                .dump_convert(ModuleType::Broadcaster(Broadcaster::default()))
+                        };
+                        m.add_receivers(&receivers)
+                    })
                     .or_insert(ModuleType::Broadcaster(Broadcaster {
                         receivers: receivers.clone(),
                         ..Default::default()
