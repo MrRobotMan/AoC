@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, VecDeque},
+    ops::Range,
+};
 
 use aoc::runner::{output, run_solution, Runner};
 
@@ -51,7 +54,47 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.split_workflows())
+    }
+}
+
+impl AocDay {
+    fn split_workflows(&self) -> usize {
+        let mut accepted = 0;
+        let mut queue = VecDeque::new();
+        queue.push_front((
+            Status::Workflow("in".into()),
+            [1..4001, 1..4001, 1..4001, 1..4001],
+        ));
+        while let Some((status, ranges)) = queue.pop_front() {
+            match status {
+                Status::Accepted => {
+                    accepted += ranges.iter().fold(1, |acc, v| acc * v.clone().count())
+                }
+                Status::Rejected => (),
+                Status::Workflow(s) => {
+                    let res = self.step_through_workflow(&self.workflows[&s], ranges);
+                    for found in res {
+                        queue.push_back(found);
+                    }
+                }
+            }
+        }
+        accepted
+    }
+
+    fn step_through_workflow(
+        &self,
+        rules: &[Rule],
+        mut ranges: Ranges,
+    ) -> Vec<(Status, [Range<usize>; 4])> {
+        let mut collected = Vec::new();
+        for rule in rules {
+            let (good, bad) = rule.split_ranges(ranges.clone());
+            collected.push(good);
+            ranges = bad;
+        }
+        collected
     }
 }
 
@@ -60,6 +103,8 @@ fn parse_workflow(workflow: &str) -> (String, Vec<Rule>) {
     (name.into(), rules.split(',').map(|s| s.into()).collect())
 }
 
+type Ranges = [Range<usize>; 4];
+
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 struct Rule {
     field: char,
@@ -67,6 +112,56 @@ struct Rule {
     value: usize,
     workflow: Status,
     is_final: bool,
+}
+
+impl Rule {
+    fn split_ranges(&self, ranges: Ranges) -> ((Status, Ranges), Ranges) {
+        if self.is_final {
+            return ((self.workflow.clone(), ranges), Ranges::default());
+        }
+        let idx = match self.field {
+            'x' => 0,
+            'm' => 1,
+            'a' => 2,
+            's' => 3,
+            c => panic!("Unknown field {}", c),
+        };
+        match self.comp {
+            '>' => {
+                if ranges[idx].start > self.value {
+                    // Everything is greater
+                    ((self.workflow.clone(), ranges), Ranges::default())
+                } else if ranges[idx].end - 1 <= self.value {
+                    // Everything is lower
+                    ((self.workflow.clone(), Ranges::default()), ranges)
+                } else {
+                    // Somewhere inbetween
+                    let mut greater = ranges.clone();
+                    greater[idx] = (self.value + 1)..ranges[idx].end;
+                    let mut lower = ranges.clone();
+                    lower[idx] = ranges[idx].start..(self.value + 1);
+                    ((self.workflow.clone(), greater), lower)
+                }
+            }
+            '<' => {
+                if ranges[idx].start >= self.value {
+                    // Everything is greater
+                    ((self.workflow.clone(), Ranges::default()), ranges)
+                } else if ranges[idx].end <= self.value {
+                    // Everything is lower
+                    ((self.workflow.clone(), ranges), Ranges::default())
+                } else {
+                    // Somewhere inbetween
+                    let mut greater = ranges.clone();
+                    greater[idx] = self.value..ranges[idx].end;
+                    let mut lower = ranges.clone();
+                    lower[idx] = ranges[idx].start..self.value;
+                    ((self.workflow.clone(), lower), greater)
+                }
+            }
+            o => panic!("Unknown operation {}", o),
+        }
+    }
 }
 
 impl From<&str> for Rule {
@@ -249,9 +344,51 @@ hdj{m>838:A,pv}
     }
 
     #[test]
+    fn test_split_range_less() {
+        let rule = Rule {
+            field: 's',
+            comp: '<',
+            value: 1351,
+            workflow: Status::Workflow("px".into()),
+            is_final: false,
+        };
+        let expected = (
+            (
+                Status::Workflow("px".into()),
+                [1..4001, 1..4001, 1..4001, 1..1351],
+            ),
+            [1..4001, 1..4001, 1..4001, 1351..4001],
+        );
+        let actual = rule.split_ranges([1..4001, 1..4001, 1..4001, 1..4001]);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_split_range_more() {
+        let rule = Rule {
+            field: 'm',
+            comp: '>',
+            value: 1548,
+            workflow: Status::Accepted,
+            is_final: false,
+        };
+        let expected = (
+            (Status::Accepted, [1..4001, 1549..4001, 1..4001, 1..4001]),
+            [1..4001, 1..1549, 1..4001, 1..4001],
+        );
+        let actual = rule.split_ranges([1..4001, 1..4001, 1..4001, 1..4001]);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_part2() {
-        let expected = 0;
-        let actual = 0;
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 167409079868000_usize;
+        let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }
