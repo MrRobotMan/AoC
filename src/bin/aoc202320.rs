@@ -90,7 +90,17 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output(self.check_pulses())
+        // The configuration of the modules is a binary couter with 4 branches.
+        // The final trigger occurs when all 4 branches send high pulses to the
+        // penultimate conjugation module. Calculate when each sends this pulse
+        // and multiply to get the LCM.
+        let sender = self.modules["rx"].senders.keys().next().unwrap();
+        output(
+            self.modules[sender]
+                .senders
+                .keys()
+                .fold(1, |acc, t| acc * self.check_pulses(t)),
+        )
     }
 }
 
@@ -101,30 +111,30 @@ impl AocDay {
         let mut low = 0;
         let mut high = 0;
         for _ in 0..pulses {
-            let pulse = self.send_pulse(&mut state);
+            let pulse = self.send_pulse(&mut state, "");
             low += pulse.0;
             high += pulse.1;
         }
         low * high
     }
 
-    fn check_pulses(&self) -> u64 {
-        let mut count = 0;
+    fn check_pulses(&self, target: &str) -> u64 {
+        let mut count = 1;
         let mut state = self.modules.clone();
-        while !self.send_pulse(&mut state).2 {
+        while !self.send_pulse(&mut state, target).2 {
             count += 1;
         }
         count
     }
 
-    fn send_pulse(&self, state: &mut HashMap<String, Module>) -> (u64, u64, bool) {
+    fn send_pulse(&self, state: &mut HashMap<String, Module>, target: &str) -> (u64, u64, bool) {
         let mut highs = 0;
         let mut lows = 1; // Initial pulse to broadcaster
         let mut queue = VecDeque::new();
         let mut check = false;
         queue.push_back(("button".to_string(), "broadcaster".to_string(), Pulse::Low));
         while let Some((sender, receiver, pulse)) = queue.pop_front() {
-            if receiver == "rx" && pulse == Pulse::Low {
+            if sender == target && pulse == Pulse::High {
                 check = true;
             }
             for response in state
