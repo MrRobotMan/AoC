@@ -90,40 +90,17 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct State {
-    modules: HashMap<String, Module>,
-}
-
-impl State {
-    fn _dump(&self) {
-        for (n, m) in self.modules.iter() {
-            println!("{n}: is_on: {}, senders: {:?}", m.is_on, m.senders);
-        }
+        output(self.check_pulses())
     }
 }
 
 impl AocDay {
     fn send_pulses(&self, pulses: u64) -> u64 {
-        let initial_state = State {
-            modules: self.modules.clone(),
-        };
+        let initial_state = self.modules.clone();
         let mut state = initial_state.clone();
-        let (mut low, mut high) = self.send_pulse(&mut state);
-        let mut count = 1;
-        while state != initial_state && count < pulses {
-            count += 1;
-            let pulse = self.send_pulse(&mut state);
-            low += pulse.0;
-            high += pulse.1;
-        }
-        low *= pulses / count;
-        high *= pulses / count;
-        for _ in 0..(pulses % count) {
+        let mut low = 0;
+        let mut high = 0;
+        for _ in 0..pulses {
             let pulse = self.send_pulse(&mut state);
             low += pulse.0;
             high += pulse.1;
@@ -131,14 +108,26 @@ impl AocDay {
         low * high
     }
 
-    fn send_pulse(&self, state: &mut State) -> (u64, u64) {
+    fn check_pulses(&self) -> u64 {
+        let mut count = 0;
+        let mut state = self.modules.clone();
+        while !self.send_pulse(&mut state).2 {
+            count += 1;
+        }
+        count
+    }
+
+    fn send_pulse(&self, state: &mut HashMap<String, Module>) -> (u64, u64, bool) {
         let mut highs = 0;
         let mut lows = 1; // Initial pulse to broadcaster
         let mut queue = VecDeque::new();
+        let mut check = false;
         queue.push_back(("button".to_string(), "broadcaster".to_string(), Pulse::Low));
         while let Some((sender, receiver, pulse)) = queue.pop_front() {
+            if receiver == "rx" && pulse == Pulse::Low {
+                check = true;
+            }
             for response in state
-                .modules
                 .get_mut(&receiver)
                 .unwrap()
                 .process_pulse(&sender, pulse)
@@ -150,7 +139,7 @@ impl AocDay {
                 queue.push_back((receiver.clone(), response.0, response.1));
             }
         }
-        (lows, highs)
+        (lows, highs, check)
     }
 }
 
