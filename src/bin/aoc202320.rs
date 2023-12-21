@@ -13,7 +13,7 @@ fn main() {
 #[derive(Default)]
 struct AocDay {
     input: String,
-    modules: HashMap<String, ModuleType>,
+    modules: HashMap<String, Module>,
 }
 
 impl Runner for AocDay {
@@ -32,60 +32,55 @@ impl Runner for AocDay {
                 self.modules
                     .entry(k.into())
                     .and_modify(|m| {
-                        if matches!(m, ModuleType::Dump(_)) {
-                            *m = (*m)
-                                .clone()
-                                .dump_convert(ModuleType::FlipFlop(FlipFlop::default()))
-                        };
-                        m.add_receivers(&receivers)
+                        m.configuration = Configuration::FlipFlop;
+                        m.receivers.extend(receivers.clone());
                     })
-                    .or_insert(ModuleType::FlipFlop(FlipFlop {
+                    .or_insert(Module {
                         receivers: receivers.clone(),
+                        configuration: Configuration::FlipFlop,
                         ..Default::default()
-                    }));
+                    });
                 k
             } else if let Some(k) = module.strip_prefix('&') {
                 self.modules
                     .entry(k.into())
                     .and_modify(|m| {
-                        if matches!(m, ModuleType::Dump(_)) {
-                            *m = (*m)
-                                .clone()
-                                .dump_convert(ModuleType::Conjunction(Conjunction::default()))
-                        };
-                        m.add_receivers(&receivers)
+                        m.configuration = Configuration::Conjunction;
+                        m.receivers.extend(receivers.clone());
                     })
-                    .or_insert(ModuleType::Conjunction(Conjunction {
+                    .or_insert(Module {
                         receivers: receivers.clone(),
+                        configuration: Configuration::Conjunction,
                         ..Default::default()
-                    }));
+                    });
                 k
             } else {
                 self.modules
                     .entry(module.into())
                     .and_modify(|m| {
-                        if matches!(m, ModuleType::Dump(_)) {
-                            *m = (*m)
-                                .clone()
-                                .dump_convert(ModuleType::Broadcaster(Broadcaster::default()))
-                        };
-                        m.add_receivers(&receivers)
+                        m.configuration = Configuration::Broadcaster;
+                        m.receivers.extend(receivers.clone());
                     })
-                    .or_insert(ModuleType::Broadcaster(Broadcaster {
+                    .or_insert(Module {
                         receivers: receivers.clone(),
+                        configuration: Configuration::Broadcaster,
                         ..Default::default()
-                    }));
+                    });
                 module
             };
 
             for receiver in receivers {
                 self.modules
                     .entry(receiver.clone())
-                    .and_modify(|m| m.add_sender(sender))
-                    .or_insert(ModuleType::Dump(Dump {
-                        senders: vec![sender.into()],
-                        ..Default::default()
-                    }));
+                    .and_modify(|m| {
+                        m.senders.insert(sender.into(), Pulse::Low);
+                    })
+                    .or_insert(Module {
+                        senders: HashMap::from([(sender.into(), Pulse::Low)]),
+                        receivers: Vec::new(),
+                        is_on: false,
+                        configuration: Configuration::Dump,
+                    });
             }
         }
     }
@@ -101,7 +96,15 @@ impl Runner for AocDay {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct State {
-    modules: HashMap<String, ModuleType>,
+    modules: HashMap<String, Module>,
+}
+
+impl State {
+    fn _dump(&self) {
+        for (n, m) in self.modules.iter() {
+            println!("{n}: is_on: {}, senders: {:?}", m.is_on, m.senders);
+        }
+    }
 }
 
 impl AocDay {
@@ -110,33 +113,29 @@ impl AocDay {
             modules: self.modules.clone(),
         };
         let mut state = initial_state.clone();
-        let mut count = self.send_pulse(&mut state);
-        let mut loop_count = 1;
-        while state != initial_state && loop_count <= pulses {
-            loop_count += 1;
-            let pulse_count = self.send_pulse(&mut state);
-            count.0 += pulse_count.0;
-            count.1 += pulse_count.1;
+        let (mut low, mut high) = self.send_pulse(&mut state);
+        let mut count = 1;
+        while state != initial_state && count < pulses {
+            count += 1;
+            let pulse = self.send_pulse(&mut state);
+            low += pulse.0;
+            high += pulse.1;
         }
-        count = (
-            count.0 * (pulses / loop_count),
-            count.1 * (pulses / loop_count),
-        );
-        for _ in 0..(pulses % loop_count) {
-            let pulse_count = self.send_pulse(&mut state);
-            count.0 += pulse_count.0;
-            count.1 += pulse_count.1;
+        low *= pulses / count;
+        high *= pulses / count;
+        for _ in 0..(pulses % count) {
+            let pulse = self.send_pulse(&mut state);
+            low += pulse.0;
+            high += pulse.1;
         }
-        count.0 * count.1
+        low * high
     }
+
     fn send_pulse(&self, state: &mut State) -> (u64, u64) {
         let mut highs = 0;
-        let mut lows = 1; // Initial pulse
+        let mut lows = 1; // Initial pulse to broadcaster
         let mut queue = VecDeque::new();
-        for recv in state.modules["broadcaster"].receivers() {
-            lows += 1; // Pulse send from broadcaster
-            queue.push_back(("broadcaster".to_string(), recv.clone(), Pulse::Low));
-        }
+        queue.push_back(("button".to_string(), "broadcaster".to_string(), Pulse::Low));
         while let Some((sender, receiver, pulse)) = queue.pop_front() {
             for response in state
                 .modules
@@ -155,39 +154,53 @@ impl AocDay {
     }
 }
 
-trait PulseProcessor {
-    fn process_pulse(&mut self, sender: &str, pulse: Pulse) -> Vec<(String, Pulse)>;
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+struct Module {
+    senders: HashMap<String, Pulse>,
+    receivers: Vec<String>,
+    is_on: bool,
+    configuration: Configuration,
 }
 
-impl PulseProcessor for FlipFlop {
-    fn process_pulse(&mut self, _sender: &str, pulse: Pulse) -> Vec<(String, Pulse)> {
-        if pulse == Pulse::High {
-            return Vec::new();
-        }
-        let pulse = if self.is_on { Pulse::Low } else { Pulse::High };
-        self.is_on = !self.is_on;
-        self.receivers.iter().map(|r| (r.clone(), pulse)).collect()
-    }
-}
-
-impl PulseProcessor for Conjunction {
+impl Module {
     fn process_pulse(&mut self, sender: &str, pulse: Pulse) -> Vec<(String, Pulse)> {
-        self.senders.entry(sender.to_string()).and_modify(|p| {
-            *p = pulse;
-        });
-        let pulse = if self.senders.values().all(|v| v == &Pulse::High) {
-            Pulse::Low
-        } else {
-            Pulse::High
+        let sending = match self.configuration {
+            Configuration::Broadcaster => pulse,
+            Configuration::Conjunction => {
+                self.senders.entry(sender.to_string()).and_modify(|p| {
+                    *p = pulse;
+                });
+                if self.senders.values().all(|v| v == &Pulse::High) {
+                    Pulse::Low
+                } else {
+                    Pulse::High
+                }
+            }
+            Configuration::FlipFlop => {
+                if pulse == Pulse::High {
+                    return Vec::new();
+                } else {
+                    let pulse = if self.is_on { Pulse::Low } else { Pulse::High };
+                    self.is_on = !self.is_on;
+                    pulse
+                }
+            }
+            Configuration::Dump => return Vec::new(),
         };
-        self.receivers.iter().map(|r| (r.clone(), pulse)).collect()
+        self.receivers
+            .iter()
+            .map(|r| (r.clone(), sending))
+            .collect()
     }
 }
 
-impl PulseProcessor for Broadcaster {
-    fn process_pulse(&mut self, _sender: &str, pulse: Pulse) -> Vec<(String, Pulse)> {
-        self.receivers.iter().map(|r| (r.clone(), pulse)).collect()
-    }
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+enum Configuration {
+    Broadcaster,
+    Conjunction,
+    FlipFlop,
+    #[default]
+    Dump,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -195,105 +208,6 @@ enum Pulse {
     High,
     #[default]
     Low,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-struct FlipFlop {
-    senders: Vec<String>,
-    receivers: Vec<String>,
-    is_on: bool,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Eq)]
-struct Conjunction {
-    senders: HashMap<String, Pulse>,
-    receivers: Vec<String>,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-struct Broadcaster {
-    senders: Vec<String>,
-    receivers: Vec<String>,
-}
-
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
-struct Dump {
-    senders: Vec<String>,
-    receivers: Vec<String>,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum ModuleType {
-    Dump(Dump),
-    Broadcaster(Broadcaster),
-    FlipFlop(FlipFlop),
-    Conjunction(Conjunction),
-}
-
-impl ModuleType {
-    fn process_pulse(&mut self, sender: &str, pulse: Pulse) -> Vec<(String, Pulse)> {
-        match self {
-            ModuleType::Dump(_) => Vec::new(),
-            ModuleType::Broadcaster(m) => m.process_pulse(sender, pulse),
-            ModuleType::FlipFlop(m) => m.process_pulse(sender, pulse),
-            ModuleType::Conjunction(m) => m.process_pulse(sender, pulse),
-        }
-    }
-    fn add_sender(&mut self, sender: &str) {
-        match self {
-            ModuleType::Dump(d) => d.senders.push(sender.into()),
-            ModuleType::Broadcaster(b) => b.senders.push(sender.into()),
-            ModuleType::FlipFlop(f) => f.senders.push(sender.into()),
-            ModuleType::Conjunction(c) => {
-                c.senders.insert(sender.into(), Pulse::Low);
-            }
-        };
-    }
-
-    fn add_receivers(&mut self, receivers: &[String]) {
-        match self {
-            ModuleType::Dump(m) => m.receivers.extend(receivers.iter().map(|r| r.to_string())),
-            ModuleType::Broadcaster(b) => {
-                b.receivers.extend(receivers.iter().map(|r| r.to_string()))
-            }
-            ModuleType::FlipFlop(f) => f.receivers.extend(receivers.iter().map(|r| r.to_string())),
-            ModuleType::Conjunction(c) => {
-                c.receivers.extend(receivers.iter().map(|r| r.to_string()))
-            }
-        };
-    }
-
-    fn receivers(&self) -> &[String] {
-        match self {
-            ModuleType::Dump(d) => &d.receivers,
-            ModuleType::Broadcaster(b) => &b.receivers,
-            ModuleType::FlipFlop(f) => &f.receivers,
-            ModuleType::Conjunction(c) => &c.receivers,
-        }
-    }
-
-    fn dump_convert(self, other: ModuleType) -> Self {
-        if let Self::Dump(b) = self {
-            match other {
-                ModuleType::Dump(_) => ModuleType::Dump(b),
-                ModuleType::Broadcaster(_) => Self::Broadcaster(Broadcaster {
-                    senders: b.senders,
-                    receivers: b.receivers,
-                }),
-                ModuleType::FlipFlop(_) => Self::FlipFlop(FlipFlop {
-                    senders: b.senders,
-                    receivers: b.receivers,
-                    is_on: false,
-                }),
-                ModuleType::Conjunction(_) => Self::Conjunction(Conjunction {
-                    senders: HashMap::from_iter(b.senders.iter().map(|r| (r.clone(), Pulse::Low))),
-                    receivers: b.receivers,
-                }),
-            }
-        } else {
-            self
-        }
-    }
 }
 
 #[cfg(test)]

@@ -83,9 +83,9 @@ impl Card {
     }
 }
 
-impl From<&str> for Card {
-    fn from(value: &str) -> Self {
-        let (_, tail) = value.split_once(": ").unwrap();
+impl<T: AsRef<str>> From<T> for Card {
+    fn from(value: T) -> Self {
+        let (_, tail) = value.as_ref().split_once(": ").unwrap();
         let (winners, plays) = tail.split_once(" | ").unwrap();
         Self {
             winners: winners
@@ -97,16 +97,6 @@ impl From<&str> for Card {
                 .map(|v| v.parse::<_>().unwrap())
                 .collect::<Vec<_>>(),
         }
-    }
-}
-impl From<String> for Card {
-    fn from(value: String) -> Self {
-        value.as_str().into()
-    }
-}
-impl From<&String> for Card {
-    fn from(value: &String) -> Self {
-        value.as_str().into()
     }
 }
 
