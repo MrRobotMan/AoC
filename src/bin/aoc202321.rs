@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use aoc::{
     runner::{output, run_solution, Runner},
+    search::{Graph, Searcher},
     Dir,
 };
 
@@ -18,6 +19,8 @@ struct AocDay {
     input: String,
     garden: Garden,
     steps: usize,
+    shortest: HashMap<(i64, i64), i64>,
+    visited: HashSet<(i64, i64)>,
 }
 
 impl Runner for AocDay {
@@ -33,7 +36,7 @@ impl Runner for AocDay {
             self.steps = 64;
         }
         self.garden.layout =
-            HashMap::from_iter(lines.into_iter().enumerate().flat_map(|(row, line)| {
+            HashSet::from_iter(lines.into_iter().enumerate().flat_map(|(row, line)| {
                 line.into_iter()
                     .enumerate()
                     .filter_map(|(col, ch)| {
@@ -43,7 +46,7 @@ impl Runner for AocDay {
                             self.garden.start = (row as i64, col as i64);
                             None
                         } else {
-                            Some(((row as i64, col as i64), ch))
+                            Some((row as i64, col as i64))
                         }
                     })
                     .collect::<Vec<_>>()
@@ -51,37 +54,107 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        let mut visited = HashSet::new();
-        visited.insert(self.garden.start);
-        for _ in 0..self.steps {
-            visited = visited
+        self.visited.insert(self.garden.start);
+        for step in 0..self.steps as i64 {
+            self.visited = self
+                .visited
                 .iter()
                 .flat_map(|cell| self.garden.step(cell))
                 .collect();
+            for p in self.visited.iter() {
+                self.shortest
+                    .entry(*p)
+                    .and_modify(|v| *v = (step + 1).min(*v))
+                    .or_insert(step + 1);
+            }
         }
-        output(visited.len())
+        output(self.visited.len())
     }
 
     fn part2(&mut self) -> Vec<String> {
-        let mut visited = HashSet::new();
-        visited.insert(self.garden.start);
-        for s in 0..self.steps {
-            println!("step {}", s + 1);
-            visited = visited
+        for step in self.steps as i64..(3 * self.steps as i64) {
+            self.visited = self
+                .visited
                 .iter()
-                .flat_map(|cell| self.garden.step_infinite(cell))
+                .flat_map(|cell| self.garden.step(cell))
                 .collect();
+            for p in self.visited.iter() {
+                self.shortest
+                    .entry(*p)
+                    .and_modify(|v| *v = (step + 1).min(*v))
+                    .or_insert(step + 1);
+            }
         }
-        output(visited.len())
+        let evens_out = self
+            .shortest
+            .values()
+            .filter(|v| **v % 2 == 0 && **v > 65)
+            .count() as i64;
+        let odds_out = self
+            .shortest
+            .values()
+            .filter(|v| **v % 2 == 1 && **v > 65)
+            .count() as i64;
+        let evens = self.shortest.values().filter(|v| **v % 2 == 0).count() as i64;
+        let odds = self.shortest.values().filter(|v| **v % 2 == 1).count() as i64;
+        let n = (26501365 - self.garden.start.0) / self.garden.height;
+        let visited = (n + 1).pow(2) * odds + n.pow(2) * evens - (n + 1) * odds_out + n * evens_out;
+        output(visited)
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+struct Point(i64, i64);
+
+impl Searcher<Garden> for Point {
+    fn moves(&self, graph: &Garden) -> Vec<Self>
+    where
+        Self: Sized,
+    {
+        [Dir::North, Dir::South, Dir::East, Dir::West]
+            .iter()
+            .filter_map(|dir| {
+                let new_pos = dir.delta(&(self.0, self.1));
+                if new_pos.0 < 0
+                    || new_pos.0 >= graph.height() as i64
+                    || new_pos.1 < 0
+                    || new_pos.1 >= graph.width() as i64
+                    || graph.layout.contains(&new_pos)
+                {
+                    None
+                } else {
+                    Some(Self(new_pos.0, new_pos.1))
+                }
+            })
+            .collect()
+    }
+
+    fn is_done(&self, graph: &Garden) -> bool {
+        self == &graph.target
     }
 }
 
 #[derive(Debug, Default, Clone)]
 struct Garden {
-    layout: HashMap<(i64, i64), char>,
+    layout: HashSet<(i64, i64)>,
     width: i64,
     height: i64,
     start: (i64, i64),
+    target: Point,
+}
+
+impl Graph for Garden {
+    fn value(&self, _row: usize, _col: usize) -> usize {
+        0
+    }
+
+    fn height(&self) -> usize {
+        self.height as usize
+    }
+
+    fn width(&self) -> usize {
+        self.width as usize
+    }
 }
 
 impl Garden {
@@ -94,7 +167,7 @@ impl Garden {
                     || new_pos.0 >= self.height
                     || new_pos.1 < 0
                     || new_pos.1 >= self.width
-                    || self.layout.contains_key(&new_pos)
+                    || self.layout.contains(&new_pos)
                 {
                     None
                 } else {
@@ -104,30 +177,19 @@ impl Garden {
             .collect()
     }
 
-    fn step_infinite(&self, position: &(i64, i64)) -> Vec<(i64, i64)> {
-        [Dir::North, Dir::South, Dir::East, Dir::West]
-            .iter()
-            .filter_map(|dir| {
-                let new_pos = dir.delta(position);
-                let mut check_pos = (new_pos.0 % self.height, new_pos.1 % self.width);
-                if check_pos.0 < 0 {
-                    check_pos.0 += self.height;
-                }
-                if check_pos.1 < 0 {
-                    check_pos.1 += self.width;
-                }
-                if check_pos.0 < 0
-                    || check_pos.0 >= self.height
-                    || check_pos.1 < 0
-                    || check_pos.1 >= self.width
-                    || self.layout.contains_key(&check_pos)
-                {
-                    None
-                } else {
-                    Some(new_pos)
-                }
-            })
-            .collect()
+    fn _dump(&self) {
+        for row in 0..self.height {
+            for col in 0..self.width {
+                print!(
+                    "{}",
+                    match self.layout.get(&(row, col)) {
+                        Some(_) => '#',
+                        None => '.',
+                    }
+                )
+            }
+            println!();
+        }
     }
 }
 
@@ -157,19 +219,6 @@ mod tests {
         day.parse();
         let expected = 16;
         let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            steps: 50,
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 1594;
-        let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }

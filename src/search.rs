@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     hash::Hash,
@@ -28,7 +29,7 @@ pub fn dfs<S: Searcher<G>, G: Graph>(start: &S, graph: &G) -> Option<Vec<S>> {
             continue;
         }
         if node.is_done(graph) {
-            return Some(get_path(path, node));
+            return Some(get_path(path, node, start));
         }
         for next_move in node.moves(graph) {
             to_visit.push(next_move.clone());
@@ -44,7 +45,7 @@ pub fn bfs<S: Searcher<G>, G: Graph>(start: &S, graph: &G) -> Option<Vec<S>> {
     to_visit.push_front(start.clone());
     while let Some(node) = to_visit.pop_front() {
         if node.is_done(graph) {
-            return Some(get_path(path, node));
+            return Some(get_path(path, node, start));
         }
         for next_move in node.moves(graph) {
             if path.contains_key(&next_move) {
@@ -126,7 +127,7 @@ pub fn a_star<S: Searcher<G> + Weighted<G>, G: Graph, H: Fn(&S) -> usize>(
             .clone();
 
         if cur.is_done(graph) {
-            return Some((get_path(path, cur.clone()), g_score[&cur]));
+            return Some((get_path(path, cur.clone(), start), g_score[&cur]));
         }
 
         if !queue.remove(&cur) {
@@ -146,11 +147,14 @@ pub fn a_star<S: Searcher<G> + Weighted<G>, G: Graph, H: Fn(&S) -> usize>(
     None
 }
 
-fn get_path<S: Searcher<G>, G: Graph>(moves: HashMap<S, S>, end: S) -> Vec<S> {
+pub fn get_path<S: Searcher<G>, G: Graph>(moves: HashMap<S, S>, end: S, start: &S) -> Vec<S> {
     let mut found = Vec::new();
     found.push(end);
     while let Some(node) = moves.get(found.last().unwrap()) {
         found.push(node.clone());
+        if node == start {
+            break;
+        }
     }
     found.reverse();
     found
