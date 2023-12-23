@@ -1,6 +1,6 @@
 use std::{
     num::ParseIntError,
-    ops::{Add, Sub},
+    ops::{Add, Range, Sub},
     str::FromStr,
 };
 
@@ -18,6 +18,7 @@ fn main() {
 struct AocDay {
     input: String,
     bricks: Vec<Brick>,
+    plane: (i64, i64, i64, i64),
 }
 
 impl Runner for AocDay {
@@ -26,21 +27,70 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.bricks = aoc::read_lines(&self.input)
-            .iter()
-            .map(|l| l.parse().unwrap())
-            .collect();
-
+        let mut min_x = i64::MAX;
+        let mut max_x = i64::MIN;
+        let mut min_y = i64::MAX;
+        let mut max_y = i64::MIN;
+        for line in aoc::read_lines(&self.input) {
+            let brick: Brick = line.parse().unwrap();
+            min_x = min_x.min(brick.start.0).min(brick.end.0);
+            max_x = max_x.max(brick.start.0).max(brick.end.0);
+            min_y = min_y.min(brick.start.1).min(brick.end.1);
+            max_y = max_y.max(brick.start.1).max(brick.end.1);
+            self.bricks.push(brick);
+        }
+        self.plane = (min_x, max_x, min_y, max_y);
         // Make sure all bricks are orthogonal. Plan doesn't work if they're tilted.
         assert_eq!(0, self.bricks.iter().filter(|b| !b.is_orthogonal()).count());
+        self.bricks.sort_by_key(|brick| brick.lowest());
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        for i in 0..self.bricks.len() {
+            self.place_brick(i);
+        }
+        let disintigratable = self
+            .bricks
+            .iter()
+            .filter(|b| {
+                b.supporting.is_empty()
+                    || b.supporting
+                        .iter()
+                        .all(|a| self.bricks[*a as usize].supported_by.len() > 1)
+            })
+            .count();
+        output(disintigratable)
     }
 
     fn part2(&mut self) -> Vec<String> {
         output("Unsolved")
+    }
+}
+
+impl AocDay {
+    fn place_brick(&mut self, idx: usize) {
+        let deltas = self.bricks[idx].coordinates();
+        let dx = &deltas[0];
+        let dy = &deltas[1];
+        let mut z = 0;
+        let mut canditates = Vec::new();
+        for (i, b) in self.bricks[..idx].iter().enumerate() {
+            if b.overlaps(dx, 0) && b.overlaps(dy, 1) {
+                canditates.push((i, b.highest()));
+                z = z.max(b.highest());
+            }
+        }
+        let mut supporting = Vec::new();
+        for (i, brick) in self.bricks[..=idx].iter_mut().enumerate() {
+            if canditates.contains(&(i, z)) {
+                brick.supporting.push(idx as i64);
+                supporting.push(i as i64);
+            }
+            if i == idx {
+                brick.supported_by.extend(supporting.clone());
+                brick.shift_down_to(z + 1);
+            }
+        }
     }
 }
 
@@ -49,26 +99,47 @@ struct Brick {
     start: Point,
     end: Point,
     supporting: Vec<i64>,
-    supported: Vec<i64>,
+    supported_by: Vec<i64>,
 }
 
 impl Brick {
-    fn delta(&self) -> (i64, i64, i64) {
-        self.end - self.start
+    fn lowest(&self) -> i64 {
+        self.start.2.min(self.end.2)
     }
 
-    fn length(&self) -> i64 {
-        let (dx, dy, dz) = self.delta();
-        (dx + dy + dz).abs() + 1
+    fn highest(&self) -> i64 {
+        self.start.2.max(self.end.2)
+    }
+
+    fn shift_down_to(&mut self, elevation: i64) {
+        let dz = self.lowest() - elevation;
+        self.start.2 -= dz;
+        self.end.2 -= dz;
+    }
+
+    fn delta(&self) -> [i64; 3] {
+        (self.end - self.start).into()
+    }
+
+    fn overlaps(&self, other: &Range<i64>, idx: usize) -> bool {
+        let d = &self.coordinates()[idx];
+        d.start <= other.end && d.end >= other.start
+    }
+
+    fn coordinates(&self) -> [Range<i64>; 3] {
+        [
+            self.start.0.min(self.end.0)..self.start.0.max(self.end.0),
+            self.start.1.min(self.end.1)..self.start.1.max(self.end.1),
+            self.start.2.min(self.end.2)..self.start.2.max(self.end.2),
+        ]
+    }
+
+    fn _length(&self) -> i64 {
+        self.delta().iter().sum::<i64>().abs() + 1
     }
 
     fn is_orthogonal(&self) -> bool {
-        let (dx, dy, dz) = self.delta();
-        [dx != 0, dy != 0, dz != 0]
-            .iter()
-            .map(|b| if *b { 0 } else { 1 })
-            .sum::<usize>()
-            > 1
+        self.delta().iter().filter(|d| **d != 0).count() <= 1
     }
 }
 
