@@ -43,12 +43,12 @@ impl Runner for AocDay {
         // Make sure all bricks are orthogonal. Plan doesn't work if they're tilted.
         assert_eq!(0, self.bricks.iter().filter(|b| !b.is_orthogonal()).count());
         self.bricks.sort_by_key(|brick| brick.lowest());
+        for i in 0..self.bricks.len() {
+            place_brick(i, &mut self.bricks);
+        }
     }
 
     fn part1(&mut self) -> Vec<String> {
-        for i in 0..self.bricks.len() {
-            self.place_brick(i);
-        }
         let disintigratable = self
             .bricks
             .iter()
@@ -63,38 +63,67 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let canditates = self
+            .bricks
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, b)| {
+                if !b.supporting.is_empty()
+                    && b.supporting
+                        .iter()
+                        .any(|a| self.bricks[*a as usize].supported_by.len() <= 1)
+                {
+                    Some(idx)
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+        let count = canditates.iter().fold(0, |acc, idx| {
+            let mut bricks = self.bricks.clone();
+            bricks.remove(*idx);
+            acc + (0..bricks.len()).fold(0, |t, i| {
+                if place_brick(i, &mut bricks) {
+                    t + 1
+                } else {
+                    t
+                }
+            })
+        });
+        output(count)
     }
 }
 
-impl AocDay {
-    fn place_brick(&mut self, idx: usize) {
-        let deltas = self.bricks[idx].coordinates();
-        let dx = &deltas[0];
-        let dy = &deltas[1];
-        let mut z = 0;
-        let mut canditates = Vec::new();
-        for (i, b) in self.bricks[..idx].iter().enumerate() {
-            if b.overlaps(dx, 0) && b.overlaps(dy, 1) {
-                canditates.push((i, b.highest()));
-                z = z.max(b.highest());
-            }
-        }
-        let mut supporting = Vec::new();
-        for (i, brick) in self.bricks[..=idx].iter_mut().enumerate() {
-            if canditates.contains(&(i, z)) {
-                brick.supporting.push(idx as i64);
-                supporting.push(i as i64);
-            }
-            if i == idx {
-                brick.supported_by.extend(supporting.clone());
-                brick.shift_down_to(z + 1);
-            }
+fn place_brick(idx: usize, bricks: &mut [Brick]) -> bool {
+    let deltas = bricks[idx].coordinates();
+    let dx = &deltas[0];
+    let dy = &deltas[1];
+    let mut z = 0;
+    let mut canditates = Vec::new();
+    for (i, b) in bricks[..idx].iter().enumerate() {
+        if b.overlaps(dx, 0) && b.overlaps(dy, 1) {
+            canditates.push((i, b.highest()));
+            z = z.max(b.highest());
         }
     }
+    let mut supporting = Vec::new();
+    for (i, brick) in bricks[..=idx].iter_mut().enumerate() {
+        if canditates.contains(&(i, z)) {
+            brick.supporting.push(idx as i64);
+            supporting.push(i as i64);
+        }
+        if i == idx {
+            brick.supported_by.extend(supporting.clone());
+            if (z + 1) == brick.lowest() {
+                return false;
+            };
+            brick.shift_down_to(z + 1);
+        }
+    }
+    true
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Brick {
     start: Point,
     end: Point,
@@ -208,6 +237,18 @@ mod tests {
         day.parse();
         let expected = 5;
         let actual = day.part1()[0].parse().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 7;
+        let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }
