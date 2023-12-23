@@ -1,10 +1,12 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use aoc::{
     runner::{output, run_solution, Runner},
-    search::get_path,
     Dir, Point,
 };
+
+use itertools::Itertools;
+use pathfinding::directed::bfs::bfs;
 
 fn main() {
     let mut day = AocDay {
@@ -20,6 +22,7 @@ struct AocDay {
     trails: Vec<Vec<Tile>>,
     start: Point<usize>,
     end: Point<usize>,
+    poi: HashSet<Point<usize>>,
     height: usize,
     width: usize,
 }
@@ -51,12 +54,40 @@ impl Runner for AocDay {
                 .unwrap(),
         );
 
+        self.poi.extend([self.start, self.end]);
+        self.poi.extend(self.intersections());
+
         #[cfg(test)]
         self._dump();
     }
 
     fn part1(&mut self) -> Vec<String> {
-        let visited = vec![Point(self.start.0, self.start.1)];
+        let mut paths: HashMap<Point<usize>, Vec<(Point<usize>, usize)>> = HashMap::new();
+        for pair in self.poi.iter().permutations(2) {
+            if let Some(path) = bfs(
+                pair[0],
+                |node| self.moves(node, true),
+                |node| node == pair[1],
+            ) {
+                if HashSet::from_iter(path[1..path.len() - 1].iter().copied())
+                    .intersection(&self.poi)
+                    .count()
+                    == 0
+                {
+                    // Path doesn't contain other points of interest.
+                    let end = *path.last().unwrap();
+                    paths
+                        .entry(path[0])
+                        .and_modify(|v| v.push((end, path.len() - 1)))
+                        .or_insert(vec![(end, path.len() - 1)]);
+                }
+            };
+        }
+
+        for p in paths.iter() {
+            println!("{:?}=>{:?}", p.0, p.1);
+        }
+
         output("Unsolved")
     }
 
@@ -66,29 +97,34 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn bad_bfs(&self) -> Option<Vec<Point<usize>>> {
-        let mut path = HashMap::new();
-        let mut to_visit = VecDeque::new();
-        to_visit.push_front(self.start);
-        while let Some(node) = to_visit.pop_front() {
-            if node == self.end {
-                return Some(get_path(path, node, &self.start));
-            }
-            for next_move in self.moves(&node) {
-                if path.contains_key(&next_move) {
-                    continue;
-                }
-                to_visit.push_back(next_move);
-                path.insert(next_move, node);
-            }
-        }
-        None
+    fn intersections(&self) -> Vec<Point<usize>> {
+        self.trails
+            .iter()
+            .enumerate()
+            .flat_map(|(r, line)| {
+                line.iter()
+                    .enumerate()
+                    .filter_map(|(c, tile)| {
+                        if *tile == Tile::Path {
+                            if self.moves(&Point(r, c), false).len() > 2 {
+                                Some(Point(r, c))
+                            } else {
+                                None
+                            }
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>()
     }
 
-    fn moves(&self, point: &Point<usize>) -> Vec<Point<usize>> {
+    fn moves(&self, point: &Point<usize>, check_slopes: bool) -> Vec<Point<usize>> {
         [Dir::North, Dir::South, Dir::East, Dir::West]
             .iter()
             .filter_map(|d| {
+                // Don't step off the grid.
                 if (point.0 == 0 && *d == Dir::North)
                     || (point.1 == 0 && *d == Dir::West)
                     || (point.0 == self.height - 1 && *d == Dir::South)
@@ -97,14 +133,18 @@ impl AocDay {
                     return None;
                 }
                 let pos = d.delta(point);
-                if matches!(
-                    (self.trails[pos.0][pos.1], d),
-                    (Tile::Path, _)
-                        | (Tile::SlopeUp, Dir::North)
-                        | (Tile::SlopeRight, Dir::East)
-                        | (Tile::SlopeDown, Dir::South)
-                        | (Tile::SlopeLeft, Dir::West)
-                ) {
+                let tile = &self.trails[pos.0][pos.1];
+                if (check_slopes
+                    && matches!(
+                        (tile, d),
+                        (Tile::Path, _)
+                            | (Tile::SlopeUp, Dir::North)
+                            | (Tile::SlopeRight, Dir::East)
+                            | (Tile::SlopeDown, Dir::South)
+                            | (Tile::SlopeLeft, Dir::West)
+                    ))
+                    || (!check_slopes && *tile != Tile::Forest)
+                {
                     Some(pos)
                 } else {
                     None
