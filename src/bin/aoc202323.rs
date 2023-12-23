@@ -1,4 +1,10 @@
-use aoc::runner::{output, run_solution, Runner};
+use std::collections::{HashMap, VecDeque};
+
+use aoc::{
+    runner::{output, run_solution, Runner},
+    search::get_path,
+    Dir, Point,
+};
 
 fn main() {
     let mut day = AocDay {
@@ -12,6 +18,10 @@ fn main() {
 struct AocDay {
     input: String,
     trails: Vec<Vec<Tile>>,
+    start: Point<usize>,
+    end: Point<usize>,
+    height: usize,
+    width: usize,
 }
 
 impl Runner for AocDay {
@@ -24,9 +34,29 @@ impl Runner for AocDay {
             self.trails
                 .push(line.iter().map(|c| c.into()).collect::<Vec<_>>());
         }
+        self.height = self.trails.len();
+        self.width = self.trails[0].len();
+        self.start = Point(
+            0,
+            self.trails[0]
+                .iter()
+                .position(|t| *t == Tile::Path)
+                .unwrap(),
+        );
+        self.end = Point(
+            self.width - 1,
+            self.trails[self.width - 1]
+                .iter()
+                .position(|t| *t == Tile::Path)
+                .unwrap(),
+        );
+
+        #[cfg(test)]
+        self._dump();
     }
 
     fn part1(&mut self) -> Vec<String> {
+        let visited = vec![Point(self.start.0, self.start.1)];
         output("Unsolved")
     }
 
@@ -36,6 +66,53 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
+    fn bad_bfs(&self) -> Option<Vec<Point<usize>>> {
+        let mut path = HashMap::new();
+        let mut to_visit = VecDeque::new();
+        to_visit.push_front(self.start);
+        while let Some(node) = to_visit.pop_front() {
+            if node == self.end {
+                return Some(get_path(path, node, &self.start));
+            }
+            for next_move in self.moves(&node) {
+                if path.contains_key(&next_move) {
+                    continue;
+                }
+                to_visit.push_back(next_move);
+                path.insert(next_move, node);
+            }
+        }
+        None
+    }
+
+    fn moves(&self, point: &Point<usize>) -> Vec<Point<usize>> {
+        [Dir::North, Dir::South, Dir::East, Dir::West]
+            .iter()
+            .filter_map(|d| {
+                if (point.0 == 0 && *d == Dir::North)
+                    || (point.1 == 0 && *d == Dir::West)
+                    || (point.0 == self.height - 1 && *d == Dir::South)
+                    || (point.1 == self.width - 1 && *d == Dir::East)
+                {
+                    return None;
+                }
+                let pos = d.delta(point);
+                if matches!(
+                    (self.trails[pos.0][pos.1], d),
+                    (Tile::Path, _)
+                        | (Tile::SlopeUp, Dir::North)
+                        | (Tile::SlopeRight, Dir::East)
+                        | (Tile::SlopeDown, Dir::South)
+                        | (Tile::SlopeLeft, Dir::West)
+                ) {
+                    Some(pos)
+                } else {
+                    None
+                }
+            })
+            .collect()
+    }
+
     fn _dump(&self) {
         for line in self.trails.iter() {
             for ch in line.iter() {

@@ -134,14 +134,14 @@ impl FromStr for Dir {
 }
 
 impl Dir {
-    pub fn delta<T: num::Integer + Copy>(&self, point: &(T, T)) -> (T, T) {
+    pub fn delta<T: num::Integer + Copy>(&self, point: &Point<T>) -> Point<T> {
         let adder: T =
             num::Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
-            Dir::North => (point.0 - adder, point.1),
-            Dir::South => (point.0 + adder, point.1),
-            Dir::East => (point.0, point.1 + adder),
-            Dir::West => (point.0, point.1 - adder),
+            Dir::North => Point(point.0 - adder, point.1),
+            Dir::South => Point(point.0 + adder, point.1),
+            Dir::East => Point(point.0, point.1 + adder),
+            Dir::West => Point(point.0, point.1 - adder),
         }
     }
     pub fn scale<T: num::Integer + Copy>(&self, scale: T) -> (T, T) {
@@ -158,8 +158,5 @@ impl Dir {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
-pub struct Point<T: num::Num> {
-    x: T,
-    y: T,
-}
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct Point<T: num::Num>(pub T, pub T);

@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use aoc::{
     runner::{output, run_solution, Runner},
     search::{a_star, Graph, Searcher, Weighted},
-    Dir,
+    Dir, Point,
 };
 
 fn main() {
@@ -30,19 +30,19 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output(self.get_path((1, 3)))
+        output(self.get_path(Point(1, 3)))
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output(self.get_path((4, 10)))
+        output(self.get_path(Point(4, 10)))
     }
 }
 
 impl AocDay {
-    fn get_path(&self, limits: (usize, usize)) -> usize {
+    fn get_path(&self, limits: Point<usize>) -> usize {
         a_star(
             &Node {
-                pos: (0, 0),
+                pos: Point(0, 0),
                 dir: Dir::East,
                 steps: 0,
                 limits,
@@ -57,13 +57,13 @@ impl AocDay {
 
 #[derive(Debug, Default)]
 struct Map {
-    grid: HashMap<(usize, usize), usize>,
-    size: (usize, usize),
+    grid: HashMap<Point<usize>, usize>,
+    size: Point<usize>,
 }
 
 impl Graph for Map {
     fn value(&self, row: usize, col: usize) -> usize {
-        self.grid[&(row, col)]
+        self.grid[&Point(row, col)]
     }
 
     fn height(&self) -> usize {
@@ -76,10 +76,10 @@ impl Graph for Map {
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 struct Node {
-    pos: (usize, usize),
+    pos: Point<usize>,
     dir: Dir,
     steps: usize,
-    limits: (usize, usize),
+    limits: Point<usize>,
 }
 
 impl Searcher<Map> for Node {
@@ -130,7 +130,7 @@ impl Searcher<Map> for Node {
     }
 
     fn is_done(&self, map: &Map) -> bool {
-        let target = (map.height() - 1, map.width() - 1);
+        let target = Point(map.height() - 1, map.width() - 1);
         self.pos == target && self.steps >= self.limits.0
     }
 }
@@ -143,11 +143,11 @@ impl Weighted<Map> for Node {
 
 impl From<Vec<Vec<char>>> for Map {
     fn from(value: Vec<Vec<char>>) -> Self {
-        let size = (value.len(), value[0].len());
+        let size = Point(value.len(), value[0].len());
         let grid = HashMap::from_iter(value.into_iter().enumerate().flat_map(|(row, line)| {
             line.into_iter()
                 .enumerate()
-                .map(|(col, chr)| ((row, col), (chr as u8 - b'0') as usize))
+                .map(|(col, chr)| (Point(row, col), (chr as u8 - b'0') as usize))
                 .collect::<Vec<_>>()
         }));
         Self { grid, size }
@@ -158,7 +158,7 @@ impl Display for Map {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in 0..self.size.0 {
             for col in 0..self.size.1 {
-                write!(f, "{}", self.grid[&(row, col)])?;
+                write!(f, "{}", self.grid[&Point(row, col)])?;
             }
             if row != self.size.0 - 1 {
                 writeln!(f)?;
@@ -207,7 +207,7 @@ mod tests {
         };
         day.parse();
         let expected = 102;
-        let actual = day.get_path((1, 3));
+        let actual = day.get_path(Point(1, 3));
         assert_eq!(expected, actual);
     }
 
@@ -219,7 +219,7 @@ mod tests {
         };
         day.parse();
         let expected = 94;
-        let actual = day.get_path((4, 10));
+        let actual = day.get_path(Point(4, 10));
         assert_eq!(expected, actual);
     }
 
@@ -236,7 +236,7 @@ mod tests {
         };
         day.parse();
         let expected = 71;
-        let actual = day.get_path((4, 10));
+        let actual = day.get_path(Point(4, 10));
         assert_eq!(expected, actual);
     }
 }

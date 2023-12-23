@@ -1,5 +1,6 @@
 use core::panic;
 use std::{
+    cmp::Eq,
     collections::{HashMap, HashSet, VecDeque},
     hash::Hash,
 };
@@ -147,7 +148,11 @@ pub fn a_star<S: Searcher<G> + Weighted<G>, G: Graph, H: Fn(&S) -> usize>(
     None
 }
 
-pub fn get_path<S: Searcher<G>, G: Graph>(moves: HashMap<S, S>, end: S, start: &S) -> Vec<S> {
+pub fn get_path<S: PartialEq + Eq + Hash + Clone>(
+    moves: HashMap<S, S>,
+    end: S,
+    start: &S,
+) -> Vec<S> {
     let mut found = Vec::new();
     found.push(end);
     while let Some(node) = moves.get(found.last().unwrap()) {
