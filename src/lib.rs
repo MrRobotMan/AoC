@@ -158,5 +158,5 @@ impl Dir {
     }
 }
 
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Point<T: num::Num>(pub T, pub T);

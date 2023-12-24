@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use aoc::{
     runner::{output, run_solution, Runner},
@@ -62,7 +62,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        let mut paths: HashMap<Point<usize>, Vec<(Point<usize>, usize)>> = HashMap::new();
+        let mut path_lengths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
         for pair in self.poi.iter().permutations(2) {
             if let Some(path) = bfs(
                 pair[0],
@@ -76,19 +76,16 @@ impl Runner for AocDay {
                 {
                     // Path doesn't contain other points of interest.
                     let end = *path.last().unwrap();
-                    paths
+                    path_lengths
                         .entry(path[0])
-                        .and_modify(|v| v.push((end, path.len() - 1)))
-                        .or_insert(vec![(end, path.len() - 1)]);
+                        .and_modify(|v| {
+                            v.insert(end, path.len() - 1);
+                        })
+                        .or_insert(HashMap::from([(end, path.len() - 1)]));
                 }
             };
         }
-
-        for p in paths.iter() {
-            println!("{:?}=>{:?}", p.0, p.1);
-        }
-
-        output("Unsolved")
+        output(self.bad_bfs(&path_lengths))
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -97,6 +94,28 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
+    fn bad_bfs(&self, graph: &HashMap<Point<usize>, HashMap<Point<usize>, usize>>) -> usize {
+        let mut path_length = 0;
+        let mut to_visit = VecDeque::new();
+        to_visit.push_front(vec![self.start]);
+        while let Some(node) = to_visit.pop_front() {
+            if node.last() == Some(self.end).as_ref() {
+                let length = node.windows(2).fold(0, |acc, v| acc + graph[&v[0]][&v[1]]);
+                path_length = path_length.max(length);
+                continue;
+            }
+            for next_move in graph[&node.last().unwrap()].keys() {
+                if node.contains(next_move) {
+                    continue;
+                }
+                let mut new = node.clone();
+                new.push(*next_move);
+                to_visit.push_back(new);
+            }
+        }
+        path_length
+    }
+
     fn intersections(&self) -> Vec<Point<usize>> {
         self.trails
             .iter()
