@@ -62,7 +62,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        let mut path_lengths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
+        let mut paths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
         for pair in self.poi.iter().permutations(2) {
             if let Some(path) = bfs(
                 pair[0],
@@ -75,21 +75,31 @@ impl Runner for AocDay {
                     == 0
                 {
                     // Path doesn't contain other points of interest.
-                    let end = *path.last().unwrap();
-                    path_lengths
+                    paths
                         .entry(path[0])
                         .and_modify(|v| {
-                            v.insert(end, path.len() - 1);
+                            v.insert(*pair[1], path.len() - 1);
                         })
-                        .or_insert(HashMap::from([(end, path.len() - 1)]));
+                        .or_insert(HashMap::from([(*pair[1], path.len() - 1)]));
                 }
             };
         }
-        output(self.bad_bfs(&path_lengths))
+        output(self.bad_bfs(&paths))
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut paths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
+        for pair in self.poi.iter().permutations(2) {
+            if let Some(path) = self.get_longest(pair[0], pair[1]) {
+                paths
+                    .entry(*pair[0])
+                    .and_modify(|v| {
+                        v.insert(*pair[1], path.len() - 1);
+                    })
+                    .or_insert(HashMap::from([(*pair[1], path.len() - 1)]));
+            };
+        }
+        output(self.bad_bfs(&paths))
     }
 }
 
@@ -114,6 +124,32 @@ impl AocDay {
             }
         }
         path_length
+    }
+
+    fn get_longest(&self, start: &Point<usize>, end: &Point<usize>) -> Option<Vec<Point<usize>>> {
+        let mut path = None;
+        let mut path_length = 0;
+        let mut to_visit = VecDeque::new();
+        to_visit.push_front(vec![*start]);
+        while let Some(node) = to_visit.pop_front() {
+            if node.last() == Some(end) {
+                if node.len() > path_length {
+                    path = Some(node.clone());
+                    path_length = node.len();
+                }
+                continue;
+            }
+            for next_move in self.moves(node.last().unwrap(), false) {
+                if node.contains(&next_move) || (next_move != *end && self.poi.contains(&next_move))
+                {
+                    continue;
+                }
+                let mut new = node.clone();
+                new.push(next_move);
+                to_visit.push_back(new);
+            }
+        }
+        path
     }
 
     fn intersections(&self) -> Vec<Point<usize>> {
@@ -254,6 +290,18 @@ mod tests {
         day.parse();
         let expected = 94;
         let actual = day.part1()[0].parse().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let mut day = AocDay {
+            input: INPUT.into(),
+            ..Default::default()
+        };
+        day.parse();
+        let expected = 154;
+        let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
 }
