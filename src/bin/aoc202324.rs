@@ -3,9 +3,13 @@ use aoc::{
     Point3D,
 };
 
+use itertools::Itertools;
+
 fn main() {
     let mut day = AocDay {
         input: "inputs/2023/day24.txt".into(),
+        lower_limit: 200_000_000_000_000.,
+        upper_limit: 400_000_000_000_000.,
         ..Default::default()
     };
     run_solution(&mut day);
@@ -15,6 +19,8 @@ fn main() {
 struct AocDay {
     input: String,
     hailstones: Vec<Hailstone>,
+    lower_limit: f64,
+    upper_limit: f64,
 }
 
 impl Runner for AocDay {
@@ -30,7 +36,13 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(
+            self.hailstones
+                .iter()
+                .combinations(2)
+                .filter(|v| v[0].intersect_xy(v[1], self.lower_limit, self.upper_limit))
+                .count(),
+        )
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -42,6 +54,39 @@ impl Runner for AocDay {
 struct Hailstone {
     initial_pos: Point3D<f64>,
     velocity: Point3D<f64>,
+}
+
+impl Hailstone {
+    fn intersect_xy(&self, other: &Self, lower: f64, upper: f64) -> bool {
+        let next_self = self.initial_pos + self.velocity;
+        let next_other = other.initial_pos + other.velocity;
+        let slope_self = (next_self.1 - self.initial_pos.1) / (next_self.0 - self.initial_pos.0);
+        let slope_other =
+            (next_other.1 - other.initial_pos.1) / (next_other.0 - other.initial_pos.0);
+        if approx_equal(slope_self, slope_other) {
+            return false;
+        }
+        let b_self = slope_self * -self.initial_pos.0 + self.initial_pos.1;
+        let b_other = slope_other * -other.initial_pos.0 + other.initial_pos.1;
+        let x_intersect = (b_other - b_self) / (slope_self - slope_other);
+        let y_interect = slope_self * (x_intersect) + b_self;
+
+        if x_intersect < lower || x_intersect > upper || y_interect < lower || y_interect > upper {
+            return false;
+        }
+
+        let t_self = (x_intersect - self.initial_pos.0) / self.velocity.0;
+        let t_other = (x_intersect - other.initial_pos.0) / other.velocity.0;
+        if t_self < 0. || t_other < 0. {
+            return false;
+        }
+
+        true
+    }
+}
+
+fn approx_equal(lhs: f64, rhs: f64) -> bool {
+    (lhs - rhs).abs() < f64::EPSILON
 }
 
 impl<S: AsRef<str>> From<S> for Hailstone {
@@ -76,6 +121,8 @@ mod tests {
     fn test_part1() {
         let mut day = AocDay {
             input: INPUT.into(),
+            lower_limit: 7.,
+            upper_limit: 27.,
             ..Default::default()
         };
         day.parse();
