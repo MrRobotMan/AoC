@@ -5,6 +5,8 @@ use std::{
     str::FromStr,
 };
 
+use num::{Integer, Num};
+
 pub mod runner;
 pub mod search;
 
@@ -134,9 +136,8 @@ impl FromStr for Dir {
 }
 
 impl Dir {
-    pub fn delta<T: num::Integer + Copy>(&self, point: &Point<T>) -> Point<T> {
-        let adder: T =
-            num::Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
+    pub fn delta<T: Integer + Copy>(&self, point: &Point<T>) -> Point<T> {
+        let adder: T = Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
             Dir::North => Point(point.0 - adder, point.1),
             Dir::South => Point(point.0 + adder, point.1),
@@ -144,11 +145,10 @@ impl Dir {
             Dir::West => Point(point.0, point.1 - adder),
         }
     }
-    pub fn scale<T: num::Integer + Copy>(&self, scale: T) -> (T, T) {
-        let zero: T = num::Num::from_str_radix("0", 10).unwrap_or_else(|_| panic!("Can't convert"));
-        let one: T = num::Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
-        let neg_one: T =
-            num::Num::from_str_radix("-1", 10).unwrap_or_else(|_| panic!("Can't convert"));
+    pub fn scale<T: Integer + Copy>(&self, scale: T) -> (T, T) {
+        let zero: T = Num::from_str_radix("0", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        let one: T = Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        let neg_one: T = Num::from_str_radix("-1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
             Dir::North => (neg_one * scale, zero),
             Dir::South => (one * scale, zero),
@@ -159,4 +159,89 @@ impl Dir {
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
-pub struct Point<T: num::Num>(pub T, pub T);
+pub struct Point<T: Num>(pub T, pub T);
+
+impl<T: Num + Copy> std::ops::Add for Point<T> {
+    type Output = Point<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
+impl<T: Num + Copy> std::ops::Sub for Point<T> {
+    type Output = Point<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1)
+    }
+}
+
+impl<T: Num + Copy + std::ops::AddAssign> std::ops::AddAssign for Point<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
+
+impl<T: Num + Copy + std::ops::SubAssign> std::ops::SubAssign for Point<T> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
+    }
+}
+
+#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+pub struct Point3D<T: Num>(pub T, pub T, pub T);
+
+impl<T: Num + Copy> Point3D<T> {
+    /// Return the point in the plane normal to the provided axis.
+    /// Normal X => (Y, Z),
+    /// Normal Y => (X, Z),
+    /// Normal Z => (X, Y)
+    pub fn planer(&self, normal: Coordinate) -> Point<T> {
+        match normal {
+            Coordinate::X => Point::<T>(self.1, self.2),
+            Coordinate::Y => Point::<T>(self.0, self.2),
+            Coordinate::Z => Point::<T>(self.0, self.1),
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+pub enum Coordinate {
+    X,
+    Y,
+    #[default]
+    Z,
+}
+
+impl<T: Num + Copy> std::ops::Add for Point3D<T> {
+    type Output = Point3D<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1, self.2 + rhs.2)
+    }
+}
+impl<T: Num + Copy> std::ops::Sub for Point3D<T> {
+    type Output = Point3D<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0 - rhs.0, self.1 - rhs.1, self.2 - rhs.2)
+    }
+}
+
+impl<T: Num + Copy + std::ops::AddAssign> std::ops::AddAssign for Point3D<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+        self.2 += rhs.2;
+    }
+}
+
+impl<T: Num + Copy + std::ops::SubAssign> std::ops::SubAssign for Point3D<T> {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
+        self.2 -= rhs.2;
+    }
+}
