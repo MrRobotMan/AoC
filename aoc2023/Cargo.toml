@@ -10,3 +10,4 @@ itertools = "0.12.0"
 num = "0.4.1"
 pathfinding = "4.8.0"
 aoc = {path = "../aoc"}
+rand = "0.8.5"
