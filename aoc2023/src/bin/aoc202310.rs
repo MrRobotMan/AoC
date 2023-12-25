@@ -6,12 +6,16 @@ use std::{
 use aoc::runner::{output, run_solution, Runner};
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day10.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     grid: HashMap<(i32, i32), Pipe>,
     mainloop: HashSet<(i32, i32)>,
     start: (i32, i32),
@@ -24,7 +28,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = aoc::read_lines("inputs/day10.txt");
+        let lines = aoc::read_lines(&self.input);
         self.size = (lines.len() as i32, lines[0].len() as i32);
         for (row, line) in lines.into_iter().enumerate() {
             for (col, chr) in line.chars().enumerate() {

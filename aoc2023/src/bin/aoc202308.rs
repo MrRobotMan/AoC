@@ -7,12 +7,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day08.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     nodes: HashMap<String, (String, String)>,
     instructions: Vec<char>,
 }
@@ -23,7 +27,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = read_lines("inputs/2023/day08.txt");
+        let lines = read_lines(&self.input);
         self.instructions = lines[0].chars().collect();
         self.nodes = lines[1..]
             .iter()

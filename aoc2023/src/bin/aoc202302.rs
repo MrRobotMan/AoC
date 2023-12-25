@@ -7,12 +7,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day02.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     games: HashMap<u32, Game>,
     max: Game,
 }
@@ -28,7 +32,7 @@ impl Runner for AocDay {
             green: 13,
             blue: 14,
         };
-        for line in read_lines("inputs/day02.txt") {
+        for line in read_lines(&self.input) {
             if let Some((game, pulls)) = line.split_once(':') {
                 let mut red = 0;
                 let mut blue = 0;

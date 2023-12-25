@@ -6,12 +6,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day07.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     hands: Vec<Hand>,
 }
 
@@ -21,7 +25,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        for line in read_lines("inputs/day07.txt") {
+        for line in read_lines(&self.input) {
             self.hands.push(line.as_str().into())
         }
     }

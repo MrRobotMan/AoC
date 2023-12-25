@@ -4,12 +4,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day06.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     races: Vec<(i64, i64)>,
 }
 
@@ -19,7 +23,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = read_lines("inputs/day06.txt")
+        let lines = read_lines(&self.input)
             .iter()
             .map(|l| {
                 let (_, nums) = l.split_once(':').unwrap();

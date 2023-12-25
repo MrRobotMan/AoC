@@ -6,12 +6,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day04.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     cards: Vec<Card>,
 }
 
@@ -21,7 +25,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.cards = read_lines("inputs/day04.txt")
+        self.cards = read_lines(&self.input)
             .iter()
             .map(|c| c.into())
             .collect::<Vec<Card>>();
@@ -142,7 +146,10 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"
             .split('\n')
             .map(|l| l.into())
             .collect::<Vec<Card>>();
-        let day = AocDay { cards };
+        let day = AocDay {
+            cards,
+            ..Default::default()
+        };
         let expected = 30;
         let actual = day.total_cards();
         assert_eq!(expected, actual);

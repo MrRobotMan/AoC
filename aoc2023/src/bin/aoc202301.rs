@@ -6,12 +6,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day01.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     calibrations: Vec<String>,
 }
 
@@ -21,7 +25,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.calibrations = read_lines("inputs/day01.txt");
+        self.calibrations = read_lines(&self.input);
     }
 
     fn part1(&mut self) -> Vec<String> {

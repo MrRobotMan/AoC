@@ -6,12 +6,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day03.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Debug, Default, PartialEq)]
 struct AocDay {
+    input: String,
     part_numbers: HashMap<(usize, usize), String>,
     symbols: HashMap<(usize, usize), char>,
 }
@@ -22,7 +26,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let (parts, symbols) = parse_string(read_lines("inputs/day03.txt"));
+        let (parts, symbols) = parse_string(read_lines(&self.input));
         self.part_numbers = parts;
         self.symbols = symbols;
     }

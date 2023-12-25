@@ -3,12 +3,16 @@ use std::collections::VecDeque;
 use aoc::runner::{output, run_solution, Runner};
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day09.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
+    input: String,
     histories: Vec<History>,
 }
 
@@ -18,7 +22,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.histories = aoc::read_lines("inputs/2023/day09.txt")
+        self.histories = aoc::read_lines(&self.input)
             .iter()
             .map(|l| l.into())
             .collect();

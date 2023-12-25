@@ -7,12 +7,16 @@ use aoc::{
 };
 
 fn main() {
-    let mut day = AocDay::default();
+    let mut day = AocDay {
+        input: "inputs/day05.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default, Clone)]
 struct AocDay {
+    input: String,
     seeds: Vec<i64>,
     seed_soil: HashSet<(i64, i64, i64)>,
     soil_fertilizer: HashSet<(i64, i64, i64)>,
@@ -29,7 +33,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = read_lines("inputs/day05.txt");
+        let lines = read_lines(&self.input);
         self.process_lines(lines);
     }
 
