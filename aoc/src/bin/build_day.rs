@@ -243,14 +243,16 @@ mod tests {{
 
 fn update_bacon(year: i32, day: u32) {
     let bin = format!("aoc{year}{day:02}");
-    let mut bacon = fs::read_to_string("aoc{year}/bacon.toml").unwrap();
-    let bins = bacon
+    let bacon = format!("aoc{year}/bacon.toml");
+    let mut text = fs::read_to_string(&bacon).unwrap();
+    let bins = text
         .match_indices("aoc")
         .map(|(l, _)| l)
         .collect::<Vec<usize>>();
     for loc in bins {
-        bacon.replace_range(loc..loc + bin.len(), &bin);
+        text.replace_range(loc..loc + bin.len(), &bin);
     }
+    let _ = fs::write(bacon, text);
 }
 
 #[cfg(test)]
