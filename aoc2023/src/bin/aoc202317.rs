@@ -2,9 +2,10 @@ use std::{collections::HashMap, fmt::Display};
 
 use aoc::{
     runner::{output, run_solution, Runner},
-    search::{a_star, Graph, Searcher, Weighted},
     Dir, Point,
 };
+
+use pathfinding::directed::dijkstra::dijkstra;
 
 fn main() {
     let mut day = AocDay {
@@ -40,17 +41,17 @@ impl Runner for AocDay {
 
 impl AocDay {
     fn get_path(&self, limits: Point<usize>) -> usize {
-        a_star(
+        dijkstra(
             &Node {
                 pos: Point(0, 0),
                 dir: Dir::East,
                 steps: 0,
                 limits,
             },
-            &self.map,
-            |node| (self.map.height() - node.pos.0) + (self.map.width() - node.pos.1),
+            |node| self.map.moves(node),
+            |node| self.map.is_done(node),
         )
-        .unwrap_or_default()
+        .unwrap()
         .1
     }
 }
@@ -61,37 +62,15 @@ struct Map {
     size: Point<usize>,
 }
 
-impl Graph for Map {
-    fn value(&self, row: usize, col: usize) -> usize {
-        self.grid[&Point(row, col)]
-    }
-
-    fn height(&self) -> usize {
-        self.size.0
-    }
-    fn width(&self) -> usize {
-        self.size.1
-    }
-}
-
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-struct Node {
-    pos: Point<usize>,
-    dir: Dir,
-    steps: usize,
-    limits: Point<usize>,
-}
-
-impl Searcher<Map> for Node {
-    fn moves(&self, map: &Map) -> Vec<Self>
-    where
-        Self: Sized,
-    {
+impl Map {
+    fn moves(&self, node: &Node) -> Vec<(Node, usize)> {
         let mut neighbors = Vec::new();
+        let height = self.size.0 - 1;
+        let width = self.size.1 - 1;
         for dir in [Dir::North, Dir::South, Dir::East, Dir::West] {
             // Don't back track
             if dir
-                == match self.dir {
+                == match node.dir {
                     Dir::North => Dir::South,
                     Dir::South => Dir::North,
                     Dir::East => Dir::West,
@@ -102,43 +81,51 @@ impl Searcher<Map> for Node {
             }
 
             // Dont' go off the map
-            if (self.pos.0 == 0 && dir == Dir::North)
-                || (self.pos.1 == 0 && dir == Dir::West)
-                || (self.pos.0 == map.height() - 1 && dir == Dir::South)
-                || (self.pos.1 == map.width() - 1 && dir == Dir::East)
+            if (node.pos.0 == 0 && dir == Dir::North)
+                || (node.pos.1 == 0 && dir == Dir::West)
+                || (node.pos.0 == height && dir == Dir::South)
+                || (node.pos.1 == width && dir == Dir::East)
             {
                 continue;
             }
-            let pos = dir.delta(&self.pos);
-            if dir == self.dir && self.steps < self.limits.1 {
-                neighbors.push(Self {
-                    pos,
-                    dir,
-                    steps: self.steps + 1,
-                    limits: self.limits,
-                });
-            } else if self.steps == 0 || (dir != self.dir && self.steps >= self.limits.0) {
-                neighbors.push(Self {
-                    pos,
-                    dir,
-                    steps: 1,
-                    limits: self.limits,
-                })
+            let pos = dir.delta(&node.pos);
+            if dir == node.dir && node.steps < node.limits.1 {
+                neighbors.push((
+                    Node {
+                        pos,
+                        dir,
+                        steps: node.steps + 1,
+                        limits: node.limits,
+                    },
+                    self.grid[&pos],
+                ));
+            } else if node.steps == 0 || (dir != node.dir && node.steps >= node.limits.0) {
+                neighbors.push((
+                    Node {
+                        pos,
+                        dir,
+                        steps: 1,
+                        limits: node.limits,
+                    },
+                    self.grid[&pos],
+                ))
             }
         }
         neighbors
     }
 
-    fn is_done(&self, map: &Map) -> bool {
-        let target = Point(map.height() - 1, map.width() - 1);
-        self.pos == target && self.steps >= self.limits.0
+    fn is_done(&self, node: &Node) -> bool {
+        let target = Point(self.size.0 - 1, self.size.1 - 1);
+        node.pos == target && node.steps >= node.limits.0
     }
 }
 
-impl Weighted<Map> for Node {
-    fn weight(&self, graph: &Map) -> usize {
-        graph.value(self.pos.0, self.pos.1)
-    }
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+struct Node {
+    pos: Point<usize>,
+    dir: Dir,
+    steps: usize,
+    limits: Point<usize>,
 }
 
 impl From<Vec<Vec<char>>> for Map {
