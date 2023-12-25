@@ -24,7 +24,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = aoc::read_lines("inputs/2023/day10.txt");
+        let lines = aoc::read_lines("inputs/day10.txt");
         self.size = (lines.len() as i32, lines[0].len() as i32);
         for (row, line) in lines.into_iter().enumerate() {
             for (col, chr) in line.chars().enumerate() {

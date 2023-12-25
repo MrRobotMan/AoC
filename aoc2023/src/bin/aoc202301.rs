@@ -21,7 +21,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.calibrations = read_lines("inputs/2023/day01.txt");
+        self.calibrations = read_lines("inputs/day01.txt");
     }
 
     fn part1(&mut self) -> Vec<String> {

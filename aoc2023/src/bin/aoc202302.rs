@@ -28,7 +28,7 @@ impl Runner for AocDay {
             green: 13,
             blue: 14,
         };
-        for line in read_lines("inputs/2023/day02.txt") {
+        for line in read_lines("inputs/day02.txt") {
             if let Some((game, pulls)) = line.split_once(':') {
                 let mut red = 0;
                 let mut blue = 0;

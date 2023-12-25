@@ -2,7 +2,7 @@ use aoc::runner::{output, run_solution, Runner};
 
 fn main() {
     let mut day = AocDay {
-        input: "inputs/2023/day15.txt".into(),
+        input: "inputs/day15.txt".into(),
         ..Default::default()
     };
     run_solution(&mut day);

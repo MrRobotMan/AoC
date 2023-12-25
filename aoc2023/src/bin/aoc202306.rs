@@ -19,7 +19,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = read_lines("inputs/2023/day06.txt")
+        let lines = read_lines("inputs/day06.txt")
             .iter()
             .map(|l| {
                 let (_, nums) = l.split_once(':').unwrap();

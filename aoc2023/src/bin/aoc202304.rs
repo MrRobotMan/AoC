@@ -21,7 +21,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.cards = read_lines("inputs/2023/day04.txt")
+        self.cards = read_lines("inputs/day04.txt")
             .iter()
             .map(|c| c.into())
             .collect::<Vec<Card>>();

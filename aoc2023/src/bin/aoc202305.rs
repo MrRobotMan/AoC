@@ -29,7 +29,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = read_lines("inputs/2023/day05.txt");
+        let lines = read_lines("inputs/day05.txt");
         self.process_lines(lines);
     }
 
@@ -45,7 +45,7 @@ impl Runner for AocDay {
 impl AocDay {
     fn get_index(&self, item: i64, state: &State) -> i64 {
         let table = match state {
-            State::Seeds => {return item},
+            State::Seeds => return item,
             State::Soils => &self.seed_soil,
             State::Fertilizers => &self.soil_fertilizer,
             State::Waters => &self.fertilizer_water,
@@ -64,7 +64,7 @@ impl AocDay {
 
     fn get_index_reverse(&self, item: i64, state: &State) -> i64 {
         let table = match state {
-            State::Seeds => {return item},
+            State::Seeds => return item,
             State::Soils => &self.seed_soil,
             State::Fertilizers => &self.soil_fertilizer,
             State::Waters => &self.fertilizer_water,
@@ -109,7 +109,7 @@ impl AocDay {
                 index = self.get_index_reverse(index, &state);
                 state = state.prev();
             }
-            
+
             for range in &ranges {
                 if range.contains(&index) {
                     return loc;
@@ -118,7 +118,7 @@ impl AocDay {
             loc += 1;
         }
     }
-    
+
     fn process_lines(&mut self, lines: Vec<String>) {
         let mut lines = lines.iter();
         self.seeds = lines
@@ -167,7 +167,7 @@ enum State {
     Temperatures,
     Humidities,
     Locations,
-    Seeds
+    Seeds,
 }
 
 impl State {

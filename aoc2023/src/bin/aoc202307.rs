@@ -21,7 +21,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        for line in read_lines("inputs/2023/day07.txt") {
+        for line in read_lines("inputs/day07.txt") {
             self.hands.push(line.as_str().into())
         }
     }

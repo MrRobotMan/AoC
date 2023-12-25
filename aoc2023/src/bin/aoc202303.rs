@@ -22,7 +22,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let (parts, symbols) = parse_string(read_lines("inputs/2023/day03.txt"));
+        let (parts, symbols) = parse_string(read_lines("inputs/day03.txt"));
         self.part_numbers = parts;
         self.symbols = symbols;
     }

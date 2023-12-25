@@ -28,7 +28,7 @@ fn main() {
         }
         Some((year, day)) => (year, day),
     };
-    let file = PathBuf::from(&format!("inputs/{year}/day{day:02}.txt"));
+    let file = PathBuf::from(&format!("aoc{year}/inputs/day{day:02}.txt"));
     let data = match get_input(Arc::new(CookieStoreMutex::new(cookie_store)), year, day) {
         Ok(text) => text,
         Err(InputResult::NotLoggedIn) => {
@@ -59,7 +59,7 @@ fn main() {
     show_preview(&data);
     write_file(file, data);
     create_day(year, day);
-    update_bacon(format!("aoc{year}{day:02}"));
+    update_bacon(year, day);
 }
 
 #[derive(Debug, PartialEq)]
@@ -176,7 +176,7 @@ fn get_args() -> Option<(i32, u32)> {
 }
 
 fn create_day(year: i32, day: u32) {
-    let filename = format!("src/bin/aoc{year}{day:02}.rs");
+    let filename = format!("aoc{year}/src/bin/aoc{year}{day:02}.rs");
     let file = Path::new(&filename);
     if file.exists() {
         return;
@@ -185,7 +185,7 @@ fn create_day(year: i32, day: u32) {
         r#"use aoc::runner::{{output, run_solution, Runner}};
 
 fn main() {{
-    let mut day = AocDay{{input: "inputs/{year}/day{day:02}.txt".into(), ..Default::default()}};
+    let mut day = AocDay{{input: "inputs/day{day:02}.txt".into(), ..Default::default()}};
     run_solution(&mut day);
 }}
 
@@ -211,21 +211,46 @@ impl Runner for AocDay {{
         output("Unsolved")
     }}
 }}
+
+#[cfg(test)]
+mod tests {{
+    use super::*;
+
+    static INPUT: &str = "";      
+
+    #[test]
+    fn test_part1() {{
+            let mut day = AocDay{{input: INPUT.into(), ..Default::default()}};
+            day.parse();
+            let expected = 0;
+            let actual = day.part1()[0].parse().unwrap_or_default();
+            assert_eq!(expected, actual);
+        }}
+
+    #[test]
+    fn test_part2() {{
+            let mut day = AocDay{{input: INPUT.into(), ..Default::default()}};
+            day.parse();
+            let expected = 0;
+            let actual = day.part2()[0].parse().unwrap_or_default();
+            assert_eq!(expected, actual);
+        }}
+    }}
         "#
     );
     let _ = fs::write(file, template);
 }
 
-fn update_bacon(day: String) {
-    let mut bacon = fs::read_to_string("bacon.toml").unwrap();
-    let locs = bacon
+fn update_bacon(year: i32, day: u32) {
+    let bin = format!("aoc{year}{day:02}");
+    let mut bacon = fs::read_to_string("aoc{year}/bacon.toml").unwrap();
+    let bins = bacon
         .match_indices("aoc")
         .map(|(l, _)| l)
         .collect::<Vec<usize>>();
-    for loc in locs {
-        bacon.replace_range(loc..loc + day.len(), &day);
+    for loc in bins {
+        bacon.replace_range(loc..loc + bin.len(), &bin);
     }
-    let _ = fs::write("bacon.toml", bacon);
 }
 
 #[cfg(test)]

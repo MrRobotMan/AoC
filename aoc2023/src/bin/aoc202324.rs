@@ -7,7 +7,7 @@ use itertools::Itertools;
 
 fn main() {
     let mut day = AocDay {
-        input: "inputs/2023/day24.txt".into(),
+        input: "inputs/day24.txt".into(),
         lower_limit: 200_000_000_000_000.,
         upper_limit: 400_000_000_000_000.,
         ..Default::default()
@@ -76,7 +76,7 @@ impl Runner for AocDay {
         // C0x + Cvx*v = Px + Qx*v
         // C0y + Cvy*v = Py + Qy*v
         // C0z + Cvz*v = Pz + Qz*v
-        let (a0x, a0y, a0z) = (
+        let (apx, apy, apz) = (
             stones[0].initial_pos.0 as f64,
             stones[0].initial_pos.1 as f64,
             stones[0].initial_pos.2 as f64,
@@ -86,7 +86,7 @@ impl Runner for AocDay {
             stones[0].velocity.1 as f64,
             stones[0].velocity.2 as f64,
         );
-        let (b0x, b0y, b0z) = (
+        let (bpx, bpy, bpz) = (
             stones[1].initial_pos.0 as f64,
             stones[1].initial_pos.1 as f64,
             stones[1].initial_pos.2 as f64,
@@ -96,7 +96,7 @@ impl Runner for AocDay {
             stones[1].velocity.1 as f64,
             stones[1].velocity.2 as f64,
         );
-        let (c0x, c0y, c0z) = (
+        let (cpx, cpy, cpz) = (
             stones[2].initial_pos.0 as f64,
             stones[2].initial_pos.1 as f64,
             stones[2].initial_pos.2 as f64,
@@ -122,21 +122,21 @@ impl Runner for AocDay {
         let acvy = avy - cvy;
         let acvz = avz - cvz;
 
-        let ab0x = a0x - b0x;
-        let ab0y = a0y - b0y;
-        let ab0z = a0z - b0z;
+        let abpx = apx - bpx;
+        let abpy = apy - bpy;
+        let abpz = apz - bpz;
 
-        let ac0x = a0x - c0x;
-        let ac0y = a0y - c0y;
-        let ac0z = a0z - c0z;
+        let acpx = apx - cpx;
+        let acpy = apy - cpy;
+        let acpz = apz - cpz;
 
-        let rhs0 = (b0y * bvx - b0x * bvy) - (a0y * avx - a0x * avy);
-        let rhs1 = (c0y * cvx - c0x * cvy) - (a0y * avx - a0x * avy);
-        let rhs2 = (b0x * bvz - b0z * bvx) - (a0x * avz - a0z * avx);
-        let rhs3 = (c0x * cvz - c0z * cvx) - (a0x * avz - a0z * avx);
-        let rhs4 = (b0z * bvy - b0y * bvz) - (a0z * avy - a0y * avz);
-        let rhs5 = (c0z * cvy - c0y * cvz) - (a0z * avy - a0y * avz);
-        // Solve each for the first P.
+        let rhs0 = (bpy * bvx - bpx * bvy) - (apy * avx - apx * avy);
+        let rhs1 = (cpy * cvx - cpx * cvy) - (apy * avx - apx * avy);
+        let rhs2 = (bpx * bvz - bpz * bvx) - (apx * avz - apz * avx);
+        let rhs3 = (cpx * cvz - cpz * cvx) - (apx * avz - apz * avx);
+        let rhs4 = (bpz * bvy - bpy * bvz) - (apz * avy - apy * avz);
+        let rhs5 = (cpz * cvy - cpy * cvz) - (apz * avy - apy * avz);
+        // Solve each for the first P, combine and solve for the second P.
         // Px = ([abvx*ac0x - acvx*ab0x]*Qz + [acvx*ab0z - abvx*ac0z]*Qx + [abvx*rhs3 - acvx*rhs2])/(acvx*abvz - abvx*acvz)
         // Py = ([abvy*ac0y - acvy*ab0y]*Qx + [acvy*ab0x - abvy*ac0x]*Qy + [abvy*rhs1 - acvy*rhs0])/(acvy*abvx - abvy*acvx)
         // Pz = ([abvz*ac0z - acvz*ab0z]*Qy + [acvz*ab0y - abvz*ac0y)*Qz + [abvz*rhs5 - acvz*rhs4])/(acvz*abvy - abvz*acvy)
@@ -144,13 +144,13 @@ impl Runner for AocDay {
         // Px = (Pxz*Qz + Pxx*Qx + Pxc)/Pxd
         // Py = (Pyx*Qx + Pyy*Qy + Pyc)/Pyd
         // Pz = (Pzy*Qy + Pzz*Qz + Pzc)/Pzd
-        let pxx = acvx * ab0z - abvx * ac0z;
-        let pyy = acvy * ab0x - abvy * ac0x;
-        let pzz = acvz * ab0y - abvz * ac0y;
+        let pxx = acvx * abpz - abvx * acpz;
+        let pyy = acvy * abpx - abvy * acpx;
+        let pzz = acvz * abpy - abvz * acpy;
 
-        let pxz = abvx * ac0x - acvx * ab0x;
-        let pzy = abvz * ac0z - acvz * ab0z;
-        let pyx = abvy * ac0y - acvy * ab0y;
+        let pxz = abvx * acpx - acvx * abpx;
+        let pzy = abvz * acpz - acvz * abpz;
+        let pyx = abvy * acpy - acvy * abpy;
 
         let pxc = abvx * rhs3 - acvx * rhs2;
         let pyc = abvy * rhs1 - acvy * rhs0;
@@ -161,7 +161,7 @@ impl Runner for AocDay {
         let pzd = acvz * abvy - abvz * acvy;
 
         // Group and rearrange in terms of Q (stone velocity)
-        // Reduct knowns to new variables.
+        // Reduce knowns to new variables.
         // abvy*[(Pxz*Qz + Pxx*Qx + Pxc)/Pxd] - abvx*[(Pyx*Qx + Pyy*Qy + Pyc)/Pyd] - ab0y*Qx + ab0x*Qy = rhs0
         // abvx*[(Pzy*Qy + Pzz*Qz + Pzc)/Pzd] - abvz*[(Pxz*Qz + Pxx*Qx + Pxc)/Pxd] - ab0x*Qz + ab0z*Qx = rhs2
         // abvz*[(Pyx*Qx + Pyy*Qy + Pyc)/Pyd] - abvy*[(Pzy*Qy + Pzz*Qz + Pzc)/Pzd] - ab0z*Qy + ab0y*Qz = rhs4
@@ -169,22 +169,22 @@ impl Runner for AocDay {
         // ([abvy/Pxd]*Pxz)*Qz + ([abvy/Pxd]*Pxx - [abvx/Pyd]*Pyx - ab0y)*Qx + (ab0x - [abvx/Pyd]*Pyy)*Qy
         //   = rhs0 - [abvy/Pxd]*Pxc + [abvx/Pyd]*Pyc
         let qz0 = (abvy / pxd) * pxz;
-        let qx0 = (abvy / pxd) * pxx - (abvx / pyd) * pyx - ab0y;
-        let qy0 = ab0x - (abvx / pyd) * pyy;
+        let qx0 = (abvy / pxd) * pxx - (abvx / pyd) * pyx - abpy;
+        let qy0 = abpx - (abvx / pyd) * pyy;
         let r0 = rhs0 - (abvy / pxd) * pxc + (abvx / pyd) * pyc;
 
         // ([abvx/Pzd]*Pzy)*Qy + ([abvx/Pzd]*Pzz - [abvz/Pxd]*Pxz - ab0x)*Qz + (ab0z - [abvz/Pxd]*Pxx)*Qx
         //   = rhs2 - [abvx/Pzd]*Pzc + [abvz/Pxd]*Pxc
         let qy1 = (abvx / pzd) * pzy;
-        let qz1 = (abvx / pzd) * pzz - (abvz / pxd) * pxz - ab0x;
-        let qx1 = ab0z - (abvz / pxd) * pxx;
+        let qz1 = (abvx / pzd) * pzz - (abvz / pxd) * pxz - abpx;
+        let qx1 = abpz - (abvz / pxd) * pxx;
         let r1 = rhs2 - (abvx / pzd) * pzc + (abvz / pxd) * pxc;
 
         // ([abvz/Pyd]*Pyx)*Qx + ([abvz/Pyd]*Pyy - [abvy/Pzd]*Pzy - ab0z)*Qy + (ab0y - [abvy/Pzd]*Pzz)*Qz
         //   = rhs4 - [abvz/Pyd]*Pyc + [abvy/Pzd]*Pzc
         let qx2 = (abvz / pyd) * pyx;
-        let qy2 = (abvz / pyd) * pyy - (abvy / pzd) * pzy - ab0z;
-        let qz2 = ab0y - (abvy / pzd) * pzz;
+        let qy2 = (abvz / pyd) * pyy - (abvy / pzd) * pzy - abpz;
+        let qz2 = abpy - (abvy / pzd) * pzz;
         let r2 = rhs4 - (abvz / pyd) * pyc + (abvy / pzd) * pzc;
 
         // Finally solve for q

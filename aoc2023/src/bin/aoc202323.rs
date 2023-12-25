@@ -10,7 +10,7 @@ use pathfinding::directed::bfs::bfs;
 
 fn main() {
     let mut day = AocDay {
-        input: "inputs/2023/day23.txt".into(),
+        input: "inputs/day23.txt".into(),
         ..Default::default()
     };
     run_solution(&mut day);
