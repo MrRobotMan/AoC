@@ -84,6 +84,7 @@ mod tests {
     fn test_get_hold_times() {
         let day = AocDay {
             races: vec![(7, 9), (15, 40), (30, 200)],
+            ..Default::default()
         };
         let expected = vec![4, 8, 9];
         let actual = day.races.iter().map(get_best_times).collect::<Vec<i64>>();

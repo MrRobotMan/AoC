@@ -173,6 +173,7 @@ mod tests {
                 ((8, 3), '$'),
                 ((8, 5), '*'),
             ]),
+            ..Default::default()
         };
         assert_eq!(expected, actual);
     }
@@ -195,6 +196,7 @@ mod tests {
                 ((2, 0), "67".into()),
             ]),
             symbols: HashMap::from([((0, 6), '$'), ((1, 9), '*')]),
+            ..Default::default()
         };
         assert_eq!(expected, actual);
     }

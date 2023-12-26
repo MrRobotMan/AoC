@@ -104,6 +104,7 @@ mod tests {
             })
             .collect::<HashMap<String, (String, String)>>(),
             instructions: "RL".chars().collect(),
+            ..Default::default()
         };
         let actual = day.part1()[0].parse().unwrap();
         assert_eq!(expected, actual)
@@ -123,6 +124,7 @@ mod tests {
                 })
                 .collect::<HashMap<String, (String, String)>>(),
             instructions: "LLR".chars().collect(),
+            ..Default::default()
         };
         let actual = day.part1()[0].parse().unwrap();
         assert_eq!(expected, actual)
@@ -151,6 +153,7 @@ mod tests {
             })
             .collect::<HashMap<String, (String, String)>>(),
             instructions: "LR".chars().collect(),
+            ..Default::default()
         };
         let actual = day.part2()[0].parse().unwrap();
         assert_eq!(expected, actual)

@@ -293,6 +293,7 @@ mod tests {
             start,
             size: (5, 5),
             mainloop: HashSet::new(),
+            ..Default::default()
         };
         day.make_loop();
 
@@ -323,6 +324,7 @@ mod tests {
             start,
             size: (5, 5),
             mainloop: HashSet::new(),
+            ..Default::default()
         };
         day.make_loop();
 
@@ -363,6 +365,7 @@ mod tests {
             start,
             size: (9, 11),
             mainloop: HashSet::new(),
+            ..Default::default()
         };
         day.make_loop();
 
@@ -404,6 +407,7 @@ mod tests {
             start,
             size: (10, 20),
             mainloop: HashSet::new(),
+            ..Default::default()
         };
         day.make_loop();
 

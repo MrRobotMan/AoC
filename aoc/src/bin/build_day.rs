@@ -184,7 +184,7 @@ fn create_day(year: i32, day: u32) {
     let template = format!(
         r#"use aoc::runner::{{output, run_solution, Runner}};
 
-fn main() {{
+pub fn main() {{
     let mut day = AocDay{{input: "inputs/day{day:02}.txt".into(), ..Default::default()}};
     run_solution(&mut day);
 }}

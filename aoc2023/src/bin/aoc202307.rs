@@ -253,7 +253,10 @@ QQQJA 483";
     #[test]
     fn test_part1() {
         let hands = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
-        let mut day = AocDay { hands };
+        let mut day = AocDay {
+            hands,
+            ..Default::default()
+        };
         let expected = 6440;
         let actual = day.part1()[0].parse().unwrap();
         assert_eq!(expected, actual);
@@ -261,7 +264,10 @@ QQQJA 483";
     #[test]
     fn test_part2() {
         let hands = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
-        let mut day = AocDay { hands };
+        let mut day = AocDay {
+            hands,
+            ..Default::default()
+        };
         let expected = 5905;
         let actual = day.part2()[0].parse().unwrap();
         assert_eq!(expected, actual);

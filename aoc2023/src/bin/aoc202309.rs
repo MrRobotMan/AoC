@@ -114,6 +114,7 @@ mod tests {
                     values: l.to_vec().into(),
                 })
                 .collect(),
+            ..Default::default()
         };
         let actual = day.part1()[0].parse().unwrap_or(0);
         assert_eq!(expected, actual);
@@ -129,6 +130,7 @@ mod tests {
                     values: l.to_vec().into(),
                 })
                 .collect(),
+            ..Default::default()
         };
         let actual = day.part2()[0].parse().unwrap_or(0);
         assert_eq!(expected, actual);
