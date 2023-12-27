@@ -1,5 +1,8 @@
 use chrono::{Datelike, FixedOffset, TimeZone, Utc};
-use reqwest::{blocking::ClientBuilder, Url};
+use reqwest::{
+    blocking::{Client, ClientBuilder},
+    Url,
+};
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
 use std::{
     env,
@@ -19,7 +22,12 @@ fn main() {
         println!("Failed to load .env");
         return;
     }
-    let cookie_store = load_cookies();
+
+    let cookie_store = Arc::new(CookieStoreMutex::new(load_cookies()));
+    let client = ClientBuilder::new()
+        .cookie_provider(cookie_store)
+        .build()
+        .unwrap();
 
     let (year, day) = match get_args() {
         None => {
@@ -28,8 +36,20 @@ fn main() {
         }
         Some((year, day)) => (year, day),
     };
+    if day == 0 {
+        for day in 1..=25 {
+            build_day(year, day, &client);
+        }
+        update_bacon(year, 1);
+    } else {
+        build_day(year, day, &client);
+        update_bacon(year, day);
+    }
+}
+
+fn build_day(year: i32, day: u32, client: &Client) {
     let file = PathBuf::from(&format!("aoc{year}/inputs/day{day:02}.txt"));
-    let data = match get_input(Arc::new(CookieStoreMutex::new(cookie_store)), year, day) {
+    let data = match get_input(client, year, day) {
         Ok(text) => text,
         Err(InputResult::NotLoggedIn) => {
             println!("Session cookie missing.");
@@ -59,7 +79,6 @@ fn main() {
     show_preview(&data);
     write_file(file, data);
     create_day(year, day);
-    update_bacon(year, day);
 }
 
 #[derive(Debug, PartialEq)]
@@ -74,7 +93,7 @@ enum InputResult {
 }
 
 fn get_input<T: Display, U: Display>(
-    cookie_store: Arc<CookieStoreMutex>,
+    client: &Client,
     year: T,
     day: U,
 ) -> Result<String, InputResult> {
@@ -82,10 +101,6 @@ fn get_input<T: Display, U: Display>(
         Err(_) => return Err(InputResult::BadUrl),
         Ok(url) => url,
     };
-    let client = ClientBuilder::new()
-        .cookie_provider(cookie_store)
-        .build()
-        .unwrap();
 
     let response = match client.get(url).send() {
         Err(_) => return Err(InputResult::RequestError),
@@ -161,6 +176,12 @@ fn get_args() -> Option<(i32, u32)> {
             } else {
                 Some((today.year(), today.day()))
             }
+        }
+        2 => {
+            args.next();
+            let year = args.next();
+            let day = 0;
+            Some((year.unwrap().parse().unwrap(), day))
         }
         3 => {
             args.next();
@@ -273,7 +294,11 @@ mod tests {
     fn test_no_cookie() {
         let expected = Err(InputResult::NotLoggedIn);
         let cookie_store = Arc::new(CookieStoreMutex::new(CookieStore::new(None)));
-        let actual = get_input(Arc::clone(&cookie_store), 2015, 1);
+        let client = ClientBuilder::new()
+            .cookie_provider(cookie_store)
+            .build()
+            .unwrap();
+        let actual = get_input(&client, 2015, 1);
         assert_eq!(expected, actual);
     }
 
@@ -285,8 +310,12 @@ mod tests {
             .trim()
             .into());
         let _ = dotenv::dotenv();
-        let cookie_store = CookieStoreMutex::new(load_cookies());
-        let actual = get_input(Arc::new(cookie_store), 2015, 1);
+        let cookie_store = Arc::new(CookieStoreMutex::new(load_cookies()));
+        let client = ClientBuilder::new()
+            .cookie_provider(cookie_store)
+            .build()
+            .unwrap();
+        let actual = get_input(&client, 2015, 1);
         assert_eq!(expected, actual);
     }
 }
