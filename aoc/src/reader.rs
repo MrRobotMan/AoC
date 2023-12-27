@@ -37,7 +37,7 @@ where
         .filter(|s| !s.is_empty())
         .map(|s| {
             s.lines()
-                .filter(|s| s.is_empty())
+                .filter(|s| !s.is_empty())
                 .map(|num| num.parse::<U>().expect("Unable to parse number"))
                 .collect::<Vec<U>>()
         })
