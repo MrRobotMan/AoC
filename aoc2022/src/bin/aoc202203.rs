@@ -1,13 +1,19 @@
+use std::collections::HashSet;
+
 use aoc::runner::{output, run_solution, Runner};
 
 pub fn main() {
-    let mut day = AocDay{input: "inputs/day03.txt".into(), ..Default::default()};
+    let mut day = AocDay {
+        input: "inputs/day03.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
     input: String,
+    items: Vec<String>,
 }
 
 impl Runner for AocDay {
@@ -16,40 +22,41 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        // Parse the input
+        self.items = aoc::read_lines(&self.input);
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.items.iter().fold(0, |acc, item| {
+            let (first, second) = item.split_at(item.len() / 2);
+            let first = first.chars().collect::<HashSet<_>>();
+            let second = second.chars().collect::<HashSet<_>>();
+            acc + first
+                .intersection(&second)
+                .fold(0, |acc, i| acc + get_item_priority(*i))
+        }))
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.items.chunks(3).fold(0, |acc, sacks| {
+            let s1 = sacks[0].chars().collect::<HashSet<_>>();
+            let s2 = sacks[1].chars().collect::<HashSet<_>>();
+            let s3 = sacks[2].chars().collect::<HashSet<_>>();
+            acc + s1
+                .intersection(&s2)
+                .copied()
+                .collect::<HashSet<_>>()
+                // Intersection of the intersection of s1 & s2 with s1 & s3
+                .intersection(&(s1.intersection(&s3).copied().collect::<HashSet<_>>()))
+                .fold(0, |acc, i| acc + get_item_priority(*i))
+        }))
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "";      
-
-    #[test]
-    fn test_part1() {
-            let mut day = AocDay{input: INPUT.into(), ..Default::default()};
-            day.parse();
-            let expected = 0;
-            let actual = day.part1()[0].parse().unwrap_or_default();
-            assert_eq!(expected, actual);
-        }
-
-    #[test]
-    fn test_part2() {
-            let mut day = AocDay{input: INPUT.into(), ..Default::default()};
-            day.parse();
-            let expected = 0;
-            let actual = day.part2()[0].parse().unwrap_or_default();
-            assert_eq!(expected, actual);
-        }
+fn get_item_priority(item: char) -> u32 {
+    let val = item as u32;
+    if val > 96 {
+        val - 96
+    } else {
+        val - 38
     }
-        
+}
