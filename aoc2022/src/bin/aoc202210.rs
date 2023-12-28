@@ -1,13 +1,18 @@
 use aoc::runner::{output, run_solution, Runner};
 
 pub fn main() {
-    let mut day = AocDay{input: "inputs/day10.txt".into(), ..Default::default()};
+    let mut day = AocDay {
+        input: "inputs/day10.txt".into(),
+        ..Default::default()
+    };
     run_solution(&mut day);
 }
 
 #[derive(Default)]
 struct AocDay {
     input: String,
+    instructions: Vec<Instruction>,
+    machine: Machine,
 }
 
 impl Runner for AocDay {
@@ -16,40 +21,91 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        // Parse the input
+        self.instructions = aoc::read_lines(&self.input)
+            .into_iter()
+            .map(|line| match line.split_once(' ') {
+                None => Instruction::Noop,
+                Some((_, v)) => Instruction::Addx(v.parse().unwrap()),
+            })
+            .collect();
+        self.machine = Machine::new(40);
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut strength = 0;
+        let mut check = 20;
+        let step = 40;
+        for line in &self.instructions {
+            match line {
+                Instruction::Noop => {
+                    self.machine.noop();
+                    if self.machine.cycle >= check {
+                        strength += check * self.machine.register;
+                        check += step;
+                    }
+                }
+                &Instruction::Addx(v) => {
+                    let prev = self.machine.register;
+                    self.machine.addx(v);
+                    if self.machine.cycle >= check {
+                        strength += check * prev;
+                        check += step;
+                    }
+                }
+            }
+        }
+        output(strength)
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(&self.machine.display)
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[derive(Debug)]
+enum Instruction {
+    Addx(i32),
+    Noop,
+}
 
-    static INPUT: &str = "";      
+#[derive(Debug, Default)]
+struct Machine {
+    cycle: i32,
+    register: i32,
+    display: String,
+    display_size: i32,
+}
 
-    #[test]
-    fn test_part1() {
-            let mut day = AocDay{input: INPUT.into(), ..Default::default()};
-            day.parse();
-            let expected = 0;
-            let actual = day.part1()[0].parse().unwrap_or_default();
-            assert_eq!(expected, actual);
-        }
-
-    #[test]
-    fn test_part2() {
-            let mut day = AocDay{input: INPUT.into(), ..Default::default()};
-            day.parse();
-            let expected = 0;
-            let actual = day.part2()[0].parse().unwrap_or_default();
-            assert_eq!(expected, actual);
+impl Machine {
+    fn new(display_size: i32) -> Self {
+        Self {
+            cycle: 0,
+            register: 1,
+            display: "".into(),
+            display_size,
         }
     }
-        
+
+    fn cycle(&mut self) {
+        if self.cycle % self.display_size == 0 {
+            self.display.push('\n')
+        }
+        let sprite = self.register + (self.cycle / self.display_size) * self.display_size;
+        if (self.cycle - sprite).abs() <= 1 {
+            self.display.push('#')
+        } else {
+            self.display.push('.')
+        }
+        self.cycle += 1;
+    }
+
+    fn noop(&mut self) {
+        self.cycle();
+    }
+
+    fn addx(&mut self, value: i32) {
+        self.cycle();
+        self.cycle();
+        self.register += value;
+    }
+}
