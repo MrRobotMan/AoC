@@ -44,6 +44,15 @@ where
         .collect()
 }
 
+/// Return records split by \n\n.
+pub fn read_string_records<T: AsRef<Path> + Display>(path: T) -> Vec<String> {
+    lines(path)
+        .split("\n\n")
+        .filter(|s| !s.is_empty())
+        .map(|s| s.to_string())
+        .collect()
+}
+
 /// Reads the text of a file to a vector of numbers.
 pub fn read_numbers<T: AsRef<Path> + Display, U: FromStr>(path: T) -> Vec<U>
 where
