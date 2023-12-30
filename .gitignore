@@ -7,3 +7,4 @@ inputs/
 *.pdb
 bacon.toml
 Cargo.lock
+*2024*
