@@ -102,6 +102,16 @@ impl<T: Num + Copy> Point3D<T> {
     }
 }
 
+impl<T: Num + Copy> FromIterator<T> for Point3D<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let v = iter.into_iter().collect::<Vec<_>>();
+        if v.len() != 3 {
+            panic!("Can only collect length 3 iterators into points.");
+        }
+        Self(v[0], v[1], v[2])
+    }
+}
+
 #[derive(Debug, Default)]
 pub enum Coordinate {
     X,
