@@ -2,6 +2,7 @@ use aoc::{
     runner::{output, run_solution, Runner},
     Point3D,
 };
+use std::collections::{HashSet, VecDeque};
 
 pub fn main() {
     let mut day = AocDay {
@@ -14,7 +15,7 @@ pub fn main() {
 #[derive(Default)]
 struct AocDay {
     input: String,
-    cubes: Vec<Point3D<i64>>,
+    cubes: HashSet<Point3D<i64>>,
 }
 
 impl Runner for AocDay {
@@ -40,7 +41,54 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let (mut min_x, mut min_y, mut min_z) = (i64::MAX, i64::MAX, i64::MAX);
+        let (mut max_x, mut max_y, mut max_z) = (i64::MIN, i64::MIN, i64::MIN);
+        for cube in &self.cubes {
+            min_x = min_x.min(cube.0);
+            max_x = max_x.max(cube.0);
+            min_y = min_y.min(cube.1);
+            max_y = max_y.max(cube.1);
+            min_z = min_z.min(cube.2);
+            max_z = max_z.max(cube.2);
+        }
+
+        // Set bounding box 1 cube away from furthest or else we miss the
+        // faces at the edges of the bounding box.
+        min_x -= 1;
+        max_x += 1;
+        min_y -= 1;
+        max_y += 1;
+        min_z -= 1;
+        max_z += 1;
+
+        let mut queue = VecDeque::from([Point3D(min_x, min_y, min_z)]);
+        let mut seen = HashSet::new();
+        let mut count = 0;
+        while let Some(cube) = queue.pop_front() {
+            if !seen.insert(cube) {
+                continue;
+            }
+
+            for &dir in &DIR {
+                let loc = cube + dir;
+                // Check for outside bounding box
+                if loc.0 < min_x
+                    || loc.0 > max_x
+                    || loc.1 < min_y
+                    || loc.1 > max_y
+                    || loc.2 < min_z
+                    || loc.2 > max_z
+                {
+                    continue;
+                }
+                if self.cubes.contains(&loc) {
+                    count += 1;
+                } else {
+                    queue.push_back(loc);
+                }
+            }
+        }
+        output(count)
     }
 }
 
@@ -90,7 +138,7 @@ mod tests {
             ..Default::default()
         };
         day.parse();
-        let expected = 0;
+        let expected = 58;
         let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
