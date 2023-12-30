@@ -14,7 +14,7 @@ pub fn main() {
 #[derive(Default)]
 struct AocDay {
     input: String,
-    cubes: Vec<Point3D<usize>>,
+    cubes: Vec<Point3D<i64>>,
 }
 
 impl Runner for AocDay {
@@ -27,17 +27,31 @@ impl Runner for AocDay {
             .iter()
             .map(|l| l.split(',').map(|p| p.parse().unwrap()).collect())
             .collect();
-        println!("{:?}", self.cubes);
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let total = self.cubes.iter().fold(0, |acc, cube| {
+            acc + DIR
+                .iter()
+                .filter(|d| !self.cubes.contains(&(*cube + **d)))
+                .count()
+        });
+        output(total)
     }
 
     fn part2(&mut self) -> Vec<String> {
         output("Unsolved")
     }
 }
+
+const DIR: [Point3D<i64>; 6] = [
+    Point3D(0, 0, 1),
+    Point3D(0, 0, -1),
+    Point3D(0, 1, 0),
+    Point3D(0, -1, 0),
+    Point3D(1, 0, 0),
+    Point3D(-1, 0, 0),
+];
 
 #[cfg(test)]
 mod tests {
