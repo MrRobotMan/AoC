@@ -11,7 +11,7 @@ pub fn main() {
 #[derive(Default)]
 struct AocDay {
     input: String,
-    encrypted_coordinates: Vec<i64>,
+    encrypted_coordinates: Vec<(usize, i64)>,
 }
 
 impl Runner for AocDay {
@@ -20,11 +20,36 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.encrypted_coordinates = aoc::read_numbers(&self.input);
+        self.encrypted_coordinates = aoc::read_numbers(&self.input)
+            .into_iter()
+            .enumerate()
+            .collect();
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut nums = self.encrypted_coordinates.clone();
+        let total = nums.len() as i64 - 1;
+        for v in &self.encrypted_coordinates {
+            if v.1 == 0 {
+                continue;
+            }
+            let pos = nums.iter().position(|loc| loc == v).unwrap();
+            nums.remove(pos);
+            let new_pos = (pos as i64 + v.1).rem_euclid(total);
+            if new_pos == 0 {
+                nums.push(*v);
+            } else {
+                nums.insert(new_pos as usize, *v);
+            };
+        }
+
+        let idx = nums.iter().position(|loc| loc.1 == 0).unwrap();
+
+        output(
+            nums[(1000 + idx) % nums.len()].1
+                + nums[(2000 + idx) % nums.len()].1
+                + nums[(3000 + idx) % nums.len()].1,
+        )
     }
 
     fn part2(&mut self) -> Vec<String> {
