@@ -32,7 +32,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        output(self.monkeys["root"].process(&self.monkeys))
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -43,6 +43,17 @@ impl Runner for AocDay {
 enum Monkey {
     Constant(i64),
     Operation(String, Box<dyn Fn(i64, i64) -> i64>, String),
+}
+
+impl Monkey {
+    fn process(&self, monkeys: &HashMap<String, Monkey>) -> i64 {
+        match self {
+            Self::Constant(c) => *c,
+            Self::Operation(lhs, ope, rhs) => {
+                ope(monkeys[lhs].process(monkeys), monkeys[rhs].process(monkeys))
+            }
+        }
+    }
 }
 
 impl<T: AsRef<str>> From<T> for Monkey {
