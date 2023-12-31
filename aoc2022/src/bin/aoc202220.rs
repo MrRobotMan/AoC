@@ -53,7 +53,35 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let key = 811589153;
+        let mut nums = self
+            .encrypted_coordinates
+            .iter()
+            .map(|v| (v.0, key * v.1))
+            .collect::<Vec<_>>();
+        let total = nums.len() as i64 - 1;
+        for _ in 0..10 {
+            for idx in 0..self.encrypted_coordinates.len() {
+                let pos = nums.iter().position(|loc| loc.0 == idx).unwrap();
+                if nums[pos].1 == 0 {
+                    continue;
+                }
+                let v = nums.remove(pos);
+                let new_pos = (pos as i64 + v.1).rem_euclid(total);
+                if new_pos == 0 {
+                    nums.push(v);
+                } else {
+                    nums.insert(new_pos as usize, v);
+                };
+            }
+        }
+        let idx = nums.iter().position(|loc| loc.1 == 0).unwrap();
+
+        output(
+            nums[(1000 + idx) % nums.len()].1
+                + nums[(2000 + idx) % nums.len()].1
+                + nums[(3000 + idx) % nums.len()].1,
+        )
     }
 }
 
@@ -88,7 +116,7 @@ mod tests {
             ..Default::default()
         };
         day.parse();
-        let expected = 0;
+        let expected = 1623178306;
         let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
