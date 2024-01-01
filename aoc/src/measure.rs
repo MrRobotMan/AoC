@@ -46,6 +46,15 @@ impl Dir {
             Dir::West => (zero, neg_one * scale),
         }
     }
+
+    pub fn value(&self) -> Point<isize> {
+        match self {
+            Dir::North => Point(-1, 0),
+            Dir::South => Point(1, 0),
+            Dir::East => Point(0, 1),
+            Dir::West => Point(0, -1),
+        }
+    }
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
