@@ -35,24 +35,28 @@ impl Dir {
             Dir::West => Point(point.0, point.1 - adder),
         }
     }
-    pub fn scale<T: Integer + Copy>(&self, scale: T) -> (T, T) {
+    pub fn scale<T: Integer + Copy>(&self, scale: T) -> Point<T> {
         let zero: T = Num::from_str_radix("0", 10).unwrap_or_else(|_| panic!("Can't convert"));
         let one: T = Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         let neg_one: T = Num::from_str_radix("-1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
-            Dir::North => (neg_one * scale, zero),
-            Dir::South => (one * scale, zero),
-            Dir::East => (zero, one * scale),
-            Dir::West => (zero, neg_one * scale),
+            Dir::North => Point(neg_one * scale, zero),
+            Dir::South => Point(one * scale, zero),
+            Dir::East => Point(zero, one * scale),
+            Dir::West => Point(zero, neg_one * scale),
         }
     }
 
-    pub fn value(&self) -> Point<isize> {
+    /// Provide with directrion of movement in Point<ROW, COL>
+    pub fn value<T: Integer + Copy>(&self) -> Point<T> {
+        let zero: T = Num::from_str_radix("0", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        let one: T = Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
+        let neg_one: T = Num::from_str_radix("-1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
-            Dir::North => Point(-1, 0),
-            Dir::South => Point(1, 0),
-            Dir::East => Point(0, 1),
-            Dir::West => Point(0, -1),
+            Dir::North => Point(neg_one, zero),
+            Dir::South => Point(one, zero),
+            Dir::East => Point(zero, one),
+            Dir::West => Point(zero, neg_one),
         }
     }
 }
