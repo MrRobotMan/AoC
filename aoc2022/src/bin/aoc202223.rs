@@ -20,7 +20,6 @@ pub fn main() {
 struct AocDay {
     input: String,
     elf_locations: HashSet<Point<i64>>,
-    initial_layout: HashSet<Point<i64>>,
 }
 
 impl Runner for AocDay {
@@ -45,31 +44,11 @@ impl Runner for AocDay {
                     .collect::<Vec<_>>()
             })
             .collect();
-
-        self.initial_layout = self.elf_locations.clone();
-        if cfg!(test) {
-            self.show();
-        };
     }
 
     fn part1(&mut self) -> Vec<String> {
         for cur in 0..10 {
-            let mut proposed: HashMap<Point<i64>, Vec<Point<i64>>> = HashMap::new();
-            for elf in &self.elf_locations {
-                let loc = self.propose(*elf, cur);
-                proposed
-                    .entry(loc)
-                    .and_modify(|v| v.push(*elf))
-                    .or_insert(vec![*elf]);
-            }
-            for (moved, elves) in proposed {
-                if elves.len() == 1 {
-                    for elf in elves {
-                        self.elf_locations.remove(&elf);
-                    }
-                    self.elf_locations.insert(moved);
-                }
-            }
+            self.round(cur);
         }
         let (rows, cols) = self.bounds();
         output(
@@ -79,7 +58,14 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let mut rounds = 10; // Aleady done in part 1.
+        loop {
+            if !self.round(rounds) {
+                break;
+            }
+            rounds += 1;
+        }
+        output(rounds + 1)
     }
 }
 
@@ -91,21 +77,30 @@ const DIRS: [[usize; 3]; 4] = [[0, 1, 2], [4, 5, 6], [6, 7, 0], [2, 3, 4]];
 const DIR: [Point<i64>; 4] = [Point(-1, 0), Point(1, 0), Point(0, -1), Point(0, 1)];
 
 impl AocDay {
-    fn show(&self) {
-        let bounds = self.bounds();
-        for row in bounds.0 {
-            for col in bounds.1.clone() {
-                print!(
-                    "{}",
-                    match self.elf_locations.get(&Point(row, col)) {
-                        Some(_) => '#',
-                        None => '.',
-                    }
-                )
+    fn round(&mut self, cur: usize) -> bool {
+        let mut proposed: HashMap<Point<i64>, Vec<Point<i64>>> = HashMap::new();
+        for elf in &self.elf_locations {
+            if let Some(loc) = self.propose(*elf, cur) {
+                proposed
+                    .entry(loc)
+                    .and_modify(|v| v.push(*elf))
+                    .or_insert(vec![*elf]);
             }
-            println!();
         }
+        if proposed.is_empty() {
+            return false;
+        }
+        for (moved, elves) in proposed {
+            if elves.len() == 1 {
+                for elf in elves {
+                    self.elf_locations.remove(&elf);
+                }
+                self.elf_locations.insert(moved);
+            }
+        }
+        true
     }
+
     fn bounds(&self) -> (RangeInclusive<i64>, RangeInclusive<i64>) {
         let mut row_range = (i64::MAX, i64::MIN);
         let mut col_range = (i64::MAX, i64::MIN);
@@ -118,19 +113,19 @@ impl AocDay {
         (row_range.0..=row_range.1, col_range.0..=col_range.1)
     }
 
-    fn propose(&self, elf: Point<i64>, dir: usize) -> Point<i64> {
+    fn propose(&self, elf: Point<i64>, dir: usize) -> Option<Point<i64>> {
         let surrounding = self.surrounding(elf);
         if surrounding.iter().all(|c| *c) {
-            return elf;
+            return None;
         }
         for idx in 0..4 {
             let indices = DIRS[(idx + dir) % 4];
             if surrounding[indices[0]] && surrounding[indices[1]] && surrounding[indices[2]] {
-                return elf + DIR[(idx + dir) % 4];
+                return Some(elf + DIR[(idx + dir) % 4]);
             }
         }
 
-        elf
+        None
     }
 
     /// Check the 8 surrounding cells. Returning true if empty and false if occupied.
@@ -182,7 +177,7 @@ mod tests {
             ..Default::default()
         };
         day.parse();
-        let expected = 0;
+        let expected = 29;
         let actual = day.part2()[0].parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }
