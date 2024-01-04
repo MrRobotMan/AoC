@@ -11,7 +11,7 @@ pub fn main() {
 #[derive(Default)]
 struct AocDay {
     input: String,
-    burners: Vec<Snafu>,
+    burners: Vec<String>,
 }
 
 impl Runner for AocDay {
@@ -20,14 +20,12 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.burners = aoc::read_lines(&self.input)
-            .iter()
-            .map(|s| s.into())
-            .collect();
+        self.burners = aoc::read_lines(&self.input);
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let total = self.burners.iter().map(decrypt).sum::<i64>();
+        output(encrypt(total))
     }
 
     fn part2(&mut self) -> Vec<String> {
@@ -35,30 +33,35 @@ impl Runner for AocDay {
     }
 }
 
-#[derive(Debug)]
-struct Snafu {
-    value: i64,
+fn encrypt(mut value: i64) -> String {
+    let chars = ['0', '1', '2', '=', '-'];
+    let mut res = String::new();
+    while value > 0 {
+        res.push(chars[value as usize % 5]);
+        value = (value + 2) / 5;
+    }
+    if res.is_empty() {
+        res.push('0');
+    }
+    res.chars().rev().collect()
 }
 
-impl<T: AsRef<str>> From<T> for Snafu {
-    fn from(value: T) -> Self {
-        let value = value
-            .as_ref()
-            .chars()
-            .rev()
-            .enumerate()
-            .fold(0, |acc, (pow, val)| {
-                acc + (match val {
-                    '=' => -2,
-                    '-' => -1,
-                    '0' => 0,
-                    '1' => 1,
-                    '2' => 2,
-                    _ => unreachable!("Unknown val"),
-                }) * 5_i64.pow(pow as u32)
-            });
-        Self { value }
-    }
+fn decrypt<T: AsRef<str>>(value: T) -> i64 {
+    value
+        .as_ref()
+        .chars()
+        .rev()
+        .enumerate()
+        .fold(0, |acc, (pow, val)| {
+            acc + (match val {
+                '=' => -2,
+                '-' => -1,
+                '0' => 0,
+                '1' => 1,
+                '2' => 2,
+                _ => unreachable!("Unknown val"),
+            }) * 5_i64.pow(pow as u32)
+        })
 }
 
 #[cfg(test)]
@@ -86,8 +89,9 @@ mod tests {
             ..Default::default()
         };
         day.parse();
-        let _total = 4890;
-        let expected = "2=-10";
+        let total = 4890;
+        assert_eq!(total, day.burners.iter().map(decrypt).sum::<i64>());
+        let expected = "2=-1=0";
         let actual = &day.part1()[0];
         assert_eq!(expected, actual);
     }
