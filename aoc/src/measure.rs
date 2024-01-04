@@ -3,7 +3,7 @@ use std::str::FromStr;
 use num::{Integer, Num};
 
 /// Directions you can move in a grid
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Hash, Ord, PartialOrd)]
 pub enum Dir {
     North,
     South,
@@ -26,6 +26,11 @@ impl FromStr for Dir {
 }
 
 impl Dir {
+    pub fn iter() -> impl Iterator<Item = Dir> {
+        [Dir::North, Dir::South, Dir::East, Dir::West]
+            .iter()
+            .copied()
+    }
     pub fn delta<T: Integer + Copy>(&self, point: &Point<T>) -> Point<T> {
         let adder: T = Num::from_str_radix("1", 10).unwrap_or_else(|_| panic!("Can't convert"));
         match self {
