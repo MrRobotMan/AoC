@@ -265,15 +265,18 @@ mod tests {{
 fn update_bacon(year: i32, day: u32) {
     let bin = format!("aoc{year}{day:02}");
     let bacon = format!("aoc{year}/bacon.toml");
-    let mut text = fs::read_to_string(&bacon).unwrap();
-    let bins = text
-        .match_indices("aoc")
-        .map(|(l, _)| l)
-        .collect::<Vec<usize>>();
-    for loc in bins {
-        text.replace_range(loc..loc + bin.len(), &bin);
+    if let Ok(mut text) = fs::read_to_string(&bacon) {
+        let bins = text
+            .match_indices("aoc")
+            .map(|(l, _)| l)
+            .collect::<Vec<usize>>();
+        for loc in bins {
+            text.replace_range(loc..loc + bin.len(), &bin);
+        }
+        let _ = fs::write(bacon, text);
+    } else {
+        println!("/aoc{year}/bacon.toml does not exist. Create and try again.");
     }
-    let _ = fs::write(bacon, text);
 }
 
 #[cfg(test)]
