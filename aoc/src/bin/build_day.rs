@@ -7,7 +7,8 @@ use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
 use std::{
     env,
     fmt::Display,
-    fs,
+    fs::{self, OpenOptions},
+    io::{Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -40,10 +41,8 @@ fn main() {
         for day in 1..=25 {
             build_day(year, day, &client);
         }
-        update_bacon(year, 1);
     } else {
         build_day(year, day, &client);
-        update_bacon(year, day);
     }
 }
 
@@ -79,6 +78,8 @@ fn build_day(year: i32, day: u32, client: &Client) {
     show_preview(&data);
     write_file(file, data);
     create_day(year, day);
+    update_tests(year, day);
+    update_main(year, day);
 }
 
 #[derive(Debug, PartialEq)]
@@ -197,22 +198,26 @@ fn get_args() -> Option<(i32, u32)> {
 }
 
 fn create_day(year: i32, day: u32) {
-    let filename = format!("aoc{year}/src/bin/aoc{year}{day:02}.rs");
+    let filename = format!("aoc{year}/src/aoc{year}{day:02}.rs");
     let file = Path::new(&filename);
     if file.exists() {
         return;
     }
     let template = format!(
-        r#"use aoc::runner::{{output, run_solution, Runner}};
-
-pub fn main() {{
-    let mut day = AocDay{{input: "inputs/day{day:02}.txt".into(), ..Default::default()}};
-    run_solution(&mut day);
-}}
+        r#"use aoc::runner::{{output, Runner}};
 
 #[derive(Default)]
-struct AocDay {{
+pub struct AocDay {{
     input: String,
+}}
+
+impl for AocDay {{
+    pub fn new<S: Into<String>>(input: S) -> Self {{
+        Self {{
+            input: input.into(),
+            ..Default::default()
+        }}
+    }}
 }}
 
 impl Runner for AocDay {{
@@ -232,51 +237,130 @@ impl Runner for AocDay {{
         output("Unsolved")
     }}
 }}
-
-#[cfg(test)]
-mod tests {{
-    use super::*;
-
-    static INPUT: &str = "";      
-
-    #[test]
-    fn test_part1() {{
-            let mut day = AocDay{{input: INPUT.into(), ..Default::default()}};
-            day.parse();
-            let expected = 0;
-            let actual = day.part1()[0].parse().unwrap_or_default();
-            assert_eq!(expected, actual);
-        }}
-
-    #[test]
-    fn test_part2() {{
-            let mut day = AocDay{{input: INPUT.into(), ..Default::default()}};
-            day.parse();
-            let expected = 0;
-            let actual = day.part2()[0].parse().unwrap_or_default();
-            assert_eq!(expected, actual);
-        }}
-    }}
         "#
     );
     let _ = fs::write(file, template);
 }
 
-fn update_bacon(year: i32, day: u32) {
-    let bin = format!("aoc{year}{day:02}");
-    let bacon = format!("aoc{year}/bacon.toml");
-    if let Ok(mut text) = fs::read_to_string(&bacon) {
-        let bins = text
-            .match_indices("aoc")
-            .map(|(l, _)| l)
-            .collect::<Vec<usize>>();
-        for loc in bins {
-            text.replace_range(loc..loc + bin.len(), &bin);
+fn update_tests(year: i32, day: u32) {
+    let mut template = format!(
+        r#"
+mod aoc_{year}{day}_tests {{
+    use super::*;
+    use crate::aoc{year}{day:02}::*;
+
+    static INPUT: &str = "";
+
+    #[test]
+    fn test_part1() {{
+        let mut day = AocDay::new(INPUT);
+        day.parse();
+        let expected = 0;
+        let actual = day.part1()[0].parse().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }}
+
+    #[test]
+    fn test_part2() {{
+        let mut day = AocDay::new(INPUT);
+        day.parse();
+        let expected = 0;
+        let actual = day.part2()[0].parse().unwrap_or_default();
+        assert_eq!(expected, actual);
+    }}
+}}
+"#
+    );
+    match OpenOptions::new()
+        .read(true)
+        .append(true)
+        .create(true)
+        .open(format!("aoc{year}/src/tests.rs"))
+    {
+        Ok(mut file) => {
+            if file.seek(SeekFrom::End(0)).unwrap() == 0 {
+                template.insert_str(0, "use aoc::runner::Runner;\n\n");
+            }
+            let _ = file.write(template.as_bytes());
         }
-        let _ = fs::write(bacon, text);
+        Err(_) => println!("Could not update tests."),
+    };
+}
+
+fn update_main(year: i32, day: u32) {
+    let module = format!("aoc{year}{day:02}");
+    let file = format!("aoc{year}/main.rs");
+    if let Ok(mut contents) = fs::read_to_string(&file) {
+        if let Some(mod_line) = contents.find(&format!("mod aoc{year}{:02}", day - 1)) {
+            let new_mod = format!("mod {module};\n");
+            contents.insert_str(mod_line + new_mod.len(), &new_mod);
+        };
+
+        if let Some(struct_line) = contents.find(&format!("    let day{:02}", day - 1)) {
+            let new_struct =
+                format!(r#"    let day{day:02} = {module}::AocDay::new("inputs/day{day:02}.txt")"#);
+            contents.insert_str(struct_line + new_struct.len(), &new_struct);
+        };
+        if let Some(collection) = contents.find("let mut days") {
+            if let Some(measure) = contents.find("    let len = ") {
+                let mut new_arr = "let mut days = [".to_string();
+                for d in 1..day {
+                    new_arr.push_str(&format!("day{d:02},"));
+                }
+                new_arr.push_str("];\n");
+                contents.replace_range(collection..measure, &new_arr);
+            }
+        };
+        let _ = fs::write(file, contents);
     } else {
-        println!("/aoc{year}/bacon.toml does not exist. Create and try again.");
-    }
+        let _ = fs::write(
+            file,
+            r#"use std::env;
+
+use aoc::runner::run_solution;
+
+mod aoc{year}01;
+
+#[cfg(test)]
+mod tests;
+
+fn main() {{
+    let day01 = aoc{year}01::AocDay::new("inputs/day01.txt");
+    let mut days = [day01];
+    let len = days.len() - 1;
+    match get_args() {{
+        Some(0) => {{
+            // Run all days
+            for selected in days.iter_mut() {{
+                run_solution(selected);
+            }}
+        }}
+        Some(d) => {{
+            // Run selected day
+            let selected = &mut days[(d - 1).min(len)];
+            run_solution(selected)
+        }}
+        None => {{
+            // Run last day
+            let selected = &mut days[len];
+            run_solution(selected);
+        }}
+    }};
+}}
+
+fn get_args() -> Option<usize> {{
+    let mut args = env::args();
+    match args.len() {{
+        2 => {{
+            args.next();
+            Some(args.next().unwrap().parse().unwrap())
+        }}
+        _ => None,
+    }}
+}}
+        "#,
+        );
+    };
 }
 
 #[cfg(test)]
