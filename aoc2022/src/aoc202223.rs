@@ -4,22 +4,23 @@ use std::{
 };
 
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Point,
 };
 
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day23.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
-
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     elf_locations: HashSet<Point<i64>>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

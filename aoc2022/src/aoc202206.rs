@@ -1,19 +1,20 @@
 use std::collections::HashSet;
 
-use aoc::runner::{output, run_solution, Runner};
-
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day06.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     signal: Vec<char>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

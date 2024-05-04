@@ -4,20 +4,21 @@ use std::{
     slice::Iter,
 };
 
-use aoc::runner::{output, run_solution, Runner};
-
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day17.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     pattern: Vec<char>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

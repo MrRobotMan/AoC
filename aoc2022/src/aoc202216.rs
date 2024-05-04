@@ -4,22 +4,23 @@ use std::{
     hash::Hash,
 };
 
-use aoc::runner::{output, run_solution, Runner};
-
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day16.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default, Debug)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     tunnels: HashMap<String, Valve>,
     distances: HashMap<String, HashMap<String, u64>>,
     search: Search,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

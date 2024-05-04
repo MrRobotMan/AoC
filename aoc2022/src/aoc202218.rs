@@ -1,21 +1,22 @@
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Point3D,
 };
 use std::collections::{HashSet, VecDeque};
 
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day18.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
-
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     cubes: HashSet<Point3D<i64>>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

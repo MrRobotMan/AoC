@@ -1,20 +1,21 @@
-use aoc::runner::{output, run_solution, Runner};
+use aoc::runner::{output, Runner};
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::str::FromStr;
 
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day11.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
-
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     monkeys: Vec<Monkey>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

@@ -1,26 +1,27 @@
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Dir, Point,
 };
 use pathfinding::prelude::dijkstra;
 use std::{collections::HashMap, hash::Hash};
 
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day24.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
-
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     groves: Vec<HashMap<Point<i64>, Vec<Valley>>>,
     height: i64,
     width: i64,
     start: Point<i64>,
     end: Point<i64>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {

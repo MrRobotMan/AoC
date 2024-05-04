@@ -1,21 +1,22 @@
-use aoc::runner::{output, run_solution, Runner};
+use aoc::runner::{output, Runner};
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 
-pub fn main() {
-    let mut day = AocDay {
-        input: "inputs/day15.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
-
 #[derive(Default)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     beacons: HashMap<(i32, i32), i32>,
     target_row: i32,
     target_range: (i32, i32),
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
