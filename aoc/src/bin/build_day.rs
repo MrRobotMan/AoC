@@ -8,7 +8,7 @@ use std::{
     env,
     fmt::Display,
     fs::{self, OpenOptions},
-    io::{Seek, SeekFrom, Write},
+    io::{Read, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -80,6 +80,7 @@ fn build_day(year: i32, day: u32, client: &Client) {
     create_day(year, day);
     update_tests(year, day);
     update_main(year, day);
+    update_bacon(year);
 }
 
 #[derive(Debug, PartialEq)]
@@ -245,7 +246,7 @@ impl Runner for AocDay {{
 fn update_tests(year: i32, day: u32) {
     let mut template = format!(
         r#"
-mod aoc_{year}{day}_tests {{
+mod aoc_{year}{day:02}_tests {{
     use super::*;
     use crate::aoc{year}{day:02}::*;
 
@@ -287,37 +288,59 @@ mod aoc_{year}{day}_tests {{
     };
 }
 
-fn update_main(year: i32, day: u32) {
-    let module = format!("aoc{year}{day:02}");
-    let file = format!("aoc{year}/main.rs");
-    if let Ok(mut contents) = fs::read_to_string(&file) {
-        if let Some(mod_line) = contents.find(&format!("mod aoc{year}{:02}", day - 1)) {
-            let new_mod = format!("mod {module};\n");
-            contents.insert_str(mod_line + new_mod.len(), &new_mod);
-        };
-
-        if let Some(struct_line) = contents.find(&format!("    let day{:02}", day - 1)) {
-            let new_struct =
-                format!(r#"    let day{day:02} = {module}::AocDay::new("inputs/day{day:02}.txt")"#);
-            contents.insert_str(struct_line + new_struct.len(), &new_struct);
-        };
-        if let Some(collection) = contents.find("let mut days") {
-            if let Some(measure) = contents.find("    let len = ") {
-                let mut new_arr = "let mut days = [".to_string();
-                for d in 1..day {
-                    new_arr.push_str(&format!("day{d:02},"));
-                }
-                new_arr.push_str("];\n");
-                contents.replace_range(collection..measure, &new_arr);
+fn update_bacon(year: i32) {
+    let bin = format!("aoc{year}");
+    match OpenOptions::new().read(true).write(true).open("bacon.toml") {
+        Err(_) => println!("bacon.toml is missing."),
+        Ok(mut file) => {
+            let mut contents = String::new();
+            file.read_to_string(&mut contents)
+                .expect("Could not read bacon.toml");
+            let locs = contents
+                .match_indices("aoc")
+                .map(|(loc, _)| loc)
+                .collect::<Vec<_>>();
+            for loc in locs {
+                contents.replace_range(loc..loc + bin.len(), &bin);
             }
-        };
-        let _ = fs::write(file, contents);
+            file.write_all(contents.as_bytes())
+                .expect("Could not write bacon.toml");
+        }
+    }
+}
+
+fn update_main(year: i32, day: u32) {
+    let file = format!("aoc{year}/src/main.rs");
+    let module = format!("mod aoc{year}{day:02};");
+    let new_struct = format!(
+        r#"    let mut day{day:02} = {module}::AocDay::new("aoc{year}/inputs/day{day:02}.txt");"#
+        
+    );
+    let days = builds_days_vec(day);
+    if let Ok(contents) = fs::read_to_string(&file) {
+        let mut lines = contents.lines().collect::<Vec<_>>();
+        // days vec = last_day + 6 + days total
+        // len def = days + d < 5 {1} else {d / 7 + 4}
+        lines.insert(day as usize + 3, &module); // module = day + 4 (01 => line5)
+        lines.insert(2 * day as usize + 8, &new_struct); // struct = module + 5 + day
+        let days_loc = lines
+            .iter()
+            .position(|line| line.contains("let mut days"))
+            .expect("days def missing.");
+        let len_loc = lines
+            .iter()
+            .position(|line| line.contains("let len ="))
+            .expect("len def missing.");
+        lines.splice(days_loc..len_loc, [days.as_str()]);
+
+        let _ = fs::write(file, lines.join("\n"));
     } else {
         let _ = fs::write(
             file,
-            r#"use std::env;
+            format!(
+                r#"use std::env;
 
-use aoc::runner::run_solution;
+use aoc::runner::{{run_solution, Runner}};
 
 mod aoc{year}01;
 
@@ -325,20 +348,27 @@ mod aoc{year}01;
 mod tests;
 
 fn main() {{
-    let day01 = aoc{year}01::AocDay::new("inputs/day01.txt");
-    let mut days = [day01];
+    let mut day01 = aoc{year}01::AocDay::new("inputs/day01.txt");
+    let mut days: Vec<&mut dyn Runner> = vev![&mut day01];
     let len = days.len() - 1;
     match get_args() {{
         Some(0) => {{
             // Run all days
+            let start = Instant::now();
             for selected in days.iter_mut() {{
-                run_solution(selected);
+                run_solution(*selected);
             }}
+            let duration = start.elapsed().as_millis();
+            let millis = duration % 1000;
+            let seconds = duration / 1000;
+            let minutes = seconds / 60;
+            let seconds = seconds % 60;
+            println!("\nTotal: {{minutes:3}}:{{seconds:02}}.{{millis:03}}");
         }}
         Some(d) => {{
             // Run selected day
             let selected = &mut days[(d - 1).min(len)];
-            run_solution(selected)
+            run_solution(selected);
         }}
         None => {{
             // Run last day
@@ -358,9 +388,49 @@ fn get_args() -> Option<usize> {{
         _ => None,
     }}
 }}
-        "#,
+        "#
+            ),
         );
     };
+}
+
+fn builds_days_vec(day: u32) -> String {
+    // days vec will be a single line with the vec opening on that line only when there are 5 days.
+    // When 4 days or fewer the entire vec is one line.
+    // When 6 days or more, form rows of up to 7 days.
+    // e.g. day = 4: days = vec![&mut day01, &mut day02, &mut day03, &mut day04];
+    // days =
+    //     vec![&mut day01, &mut day02, &mut day03, &mut day04, &mut day05];
+    // days = vec![
+    //      &mut day01, &mut day02, &mut day03, &mut day04, &mut day05, &mut day06, &mut day07,
+    // ];
+    let mut days = String::from("    let mut days: Vec<&mut dyn Runner> = ");
+    if day == 5 {
+        // Put 'vec' on the same line as the contents
+        days.push_str("\n        ");
+    };
+    days.push_str("vec![");
+    if day > 5 {
+        // Start adding contents on a new line.
+        days.push_str("\n        ");
+    };
+    for d in 1..=day {
+        days.push_str(&format!("&mut day{d:02}"));
+        if d > 5 || d != day {
+            days.push_str(", ");
+        }
+        if d % 7 == 0 || (day > 5 && d == day) {
+            days.push_str("\n        ");
+        }
+    }
+    // When greater than 5 line will have 8 spaces at the start. Reduce to 4.
+    days = if let Some(s) = days.strip_suffix("    ") {
+        s.to_string()
+    } else {
+        days
+    };
+    days.push_str("];");
+    days
 }
 
 #[cfg(test)]
