@@ -6,7 +6,7 @@ use aoc::{
 #[derive(Default)]
 pub struct AocDay {
     input: String,
-    measurements: Vec<(usize, Delta)>,
+    measurements: Vec<usize>,
 }
 
 impl AocDay {
@@ -25,40 +25,30 @@ impl Runner for AocDay {
 
     fn parse(&mut self) {
         // Parse the input
-        let measurements = read_numbers(&self.input);
-        self.measurements
-            .push((measurements[0], Delta::NotApplicable));
-        for (idx, depth) in measurements.iter().skip(1).enumerate() {
-            self.measurements.push((
-                *depth,
-                match depth.cmp(&self.measurements[idx].0) {
-                    std::cmp::Ordering::Less => Delta::Decrease,
-                    std::cmp::Ordering::Equal => Delta::NoChange,
-                    std::cmp::Ordering::Greater => Delta::Increase,
-                },
-            ))
-        }
+        self.measurements = read_numbers(&self.input);
     }
 
     fn part1(&mut self) -> Vec<String> {
-        output(self.measurements.iter().fold(0, |acc, (_, delta)| {
-            acc + if matches!(delta, Delta::Increase) {
-                1
-            } else {
-                0
-            }
-        }))
+        output(count_increasing(&self.measurements))
     }
 
     fn part2(&mut self) -> Vec<String> {
-        output("Unsolved")
+        let sums = self
+            .measurements
+            .as_slice()
+            .windows(3)
+            .map(|v| v.iter().sum::<usize>())
+            .collect::<Vec<usize>>();
+        output(count_increasing(&sums))
     }
 }
 
-#[derive(Debug)]
-enum Delta {
-    NoChange,
-    Increase,
-    Decrease,
-    NotApplicable,
+fn count_increasing(arr: &[usize]) -> usize {
+    arr.windows(2).fold(0, |acc, depth| {
+        acc + if depth[1].saturating_sub(depth[0]) > 0 {
+            1
+        } else {
+            0
+        }
+    })
 }
