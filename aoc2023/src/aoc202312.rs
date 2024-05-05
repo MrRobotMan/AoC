@@ -1,20 +1,21 @@
 use core::panic;
 use std::collections::HashMap;
 
-use aoc::runner::{output, run_solution, Runner};
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day12.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+use aoc::runner::{output, Runner};
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub records: Vec<Record>,
+    pub history: HashMap<Record, usize>,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    records: Vec<Record>,
-    history: HashMap<Record, usize>,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -49,9 +50,9 @@ impl Runner for AocDay {
 }
 
 #[derive(Default, Debug, PartialEq, Clone, Eq, Hash)]
-struct Record {
-    springs: Vec<char>,
-    groups: Vec<usize>,
+pub struct Record {
+    pub springs: Vec<char>,
+    pub groups: Vec<usize>,
 }
 
 impl Record {
@@ -65,7 +66,7 @@ impl Record {
         }
         Self { springs, groups }
     }
-    fn options(&self, history: &mut HashMap<Record, usize>) -> usize {
+    pub fn options(&self, history: &mut HashMap<Record, usize>) -> usize {
         if let Some(res) = history.get(self) {
             return *res;
         }
@@ -158,60 +159,5 @@ impl From<&str> for Record {
 impl From<&String> for Record {
     fn from(value: &String) -> Self {
         value.as_str().into()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "???.### 1,1,3
-.??..??...?##. 1,1,3
-?#?#?#?#?#?#?#? 1,3,1,6
-????.#...#... 4,1,1
-????.######..#####. 1,6,5
-?###???????? 3,2,1";
-
-    #[test]
-    fn test_parse_line() {
-        let expected = Record {
-            springs: "???.###".chars().collect(),
-            groups: vec![1, 1, 3],
-        };
-        let actual = INPUT.lines().next().unwrap().into();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_get_options() {
-        let record: Record = INPUT.lines().last().unwrap().into();
-        let expected = 10;
-        let mut history = HashMap::new();
-        let actual = record.options(&mut history);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 21;
-        let actual = day.part1()[0].parse::<i32>().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 525152;
-        let actual = day.part2()[0].parse::<i32>().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

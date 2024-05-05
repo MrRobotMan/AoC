@@ -4,23 +4,24 @@ use std::{
 };
 
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Dir, Point,
 };
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day16.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub grid: HashMap<Point<i32>, Cave>,
+    pub size: Point<i32>,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    grid: HashMap<Point<i32>, Cave>,
-    size: Point<i32>,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -100,7 +101,7 @@ impl Display for AocDay {
 }
 
 #[derive(Debug, Default, PartialEq)]
-enum Cave {
+pub enum Cave {
     #[default]
     Empty,
     SwNeMirror, // /
@@ -155,57 +156,5 @@ impl Display for Cave {
                 Cave::Horizontal => '-',
             }
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = r".|...\....
-|.-.\.....
-.....|-...
-........|.
-..........
-.........\
-..../.\\..
-.-.-/..|..
-.|....-|.\
-..//.|....";
-
-    #[test]
-    fn test_parsing() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = Point(10, 10);
-        let actual = day.size;
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 46;
-        let actual = day.part1()[0].parse::<i32>().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 51;
-        let actual = day.part2()[0].parse::<i32>().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

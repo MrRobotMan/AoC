@@ -1,20 +1,21 @@
 use aoc::{
     read_lines,
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
 };
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day06.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub races: Vec<(i64, i64)>,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    races: Vec<(i64, i64)>,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -58,7 +59,7 @@ impl Runner for AocDay {
     }
 }
 
-fn get_best_times(race: &(i64, i64)) -> i64 {
+pub fn get_best_times(race: &(i64, i64)) -> i64 {
     // Instead of brute forcing to get each time and comparing.
     // Solve the quadratic.
     // race_time: race.0
@@ -74,20 +75,4 @@ fn get_best_times(race: &(i64, i64)) -> i64 {
         root1 += 1.;
     }
     root2.ceil() as i64 - root1.ceil() as i64
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_hold_times() {
-        let day = AocDay {
-            races: vec![(7, 9), (15, 40), (30, 200)],
-            ..Default::default()
-        };
-        let expected = vec![4, 8, 9];
-        let actual = day.races.iter().map(get_best_times).collect::<Vec<i64>>();
-        assert_eq!(expected, actual);
-    }
 }

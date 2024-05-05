@@ -1,19 +1,20 @@
 use std::collections::{HashMap, VecDeque};
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day20.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    modules: HashMap<String, Module>,
+pub struct AocDay {
+    pub input: String,
+    pub modules: HashMap<String, Module>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -154,7 +155,7 @@ impl AocDay {
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-struct Module {
+pub struct Module {
     senders: HashMap<String, Pulse>,
     receivers: Vec<String>,
     is_on: bool,
@@ -207,43 +208,4 @@ enum Pulse {
     High,
     #[default]
     Low,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_part1_version1() {
-        let mut day = AocDay {
-            input: "broadcaster -> a, b, c
-%a -> b
-%b -> c
-%c -> inv
-&inv -> a"
-                .into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 32_000_000;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1_version2() {
-        let mut day = AocDay {
-            input: "broadcaster -> a
-%a -> inv, con
-&inv -> b
-%b -> con
-&con -> output"
-                .into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 11_687_500;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
 }

@@ -73,12 +73,12 @@ fn main() {
             let seconds = duration / 1000;
             let minutes = seconds / 60;
             let seconds = seconds % 60;
-            println!("\nTotal: {minutes:3}:{seconds:3}.{millis:03}");
+            println!("\nTotal: {minutes:3}:{seconds:02}.{millis:03}");
         }
         Some(d) => {
             // Run selected day
             let selected = &mut days[(d - 1).min(len)];
-            run_solution(*selected)
+            run_solution(*selected);
         }
         None => {
             // Run last day

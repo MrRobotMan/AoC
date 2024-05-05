@@ -3,19 +3,11 @@ use std::collections::HashSet;
 
 use aoc::{
     read_lines,
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
 };
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day05.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
-
 #[derive(Default, Clone)]
-struct AocDay {
+pub struct AocDay {
     input: String,
     seeds: Vec<i64>,
     seed_soil: HashSet<(i64, i64, i64)>,
@@ -25,6 +17,25 @@ struct AocDay {
     light_temperature: HashSet<(i64, i64, i64)>,
     temperature_humidity: HashSet<(i64, i64, i64)>,
     humidity_location: HashSet<(i64, i64, i64)>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
+
+    #[cfg(test)]
+    pub fn seeds(&self) -> &[i64] {
+        &self.seeds
+    }
+
+    #[cfg(test)]
+    pub fn humidity_location(&self) -> &HashSet<(i64, i64, i64)> {
+        &self.humidity_location
+    }
 }
 
 impl Runner for AocDay {
@@ -85,7 +96,7 @@ impl AocDay {
         item
     }
 
-    fn get_lowest(&self) -> i64 {
+    pub fn get_lowest(&self) -> i64 {
         let mut lowest = i64::MAX;
         for seed in &self.seeds {
             let mut state = State::default();
@@ -99,7 +110,7 @@ impl AocDay {
         lowest
     }
 
-    fn get_lowest_rev(&self) -> i64 {
+    pub fn get_lowest_rev(&self) -> i64 {
         let ranges = self
             .seeds
             .chunks_exact(2)
@@ -123,7 +134,7 @@ impl AocDay {
         }
     }
 
-    fn process_lines(&mut self, lines: Vec<String>) {
+    pub fn process_lines(&mut self, lines: Vec<String>) {
         let mut lines = lines.iter();
         self.seeds = lines
             .next()
@@ -201,73 +212,11 @@ impl State {
     }
 }
 
-fn get_parts(value: &str) -> (i64, i64, i64) {
+pub fn get_parts(value: &str) -> (i64, i64, i64) {
     let mut numbers = value.split(' ').map(|c| c.parse::<_>().unwrap());
     (
         numbers.next().unwrap(),
         numbers.next().unwrap(),
         numbers.next().unwrap(),
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "seeds: 79 14 55 13
-seed-to-soil map:
-50 98 2
-52 50 48
-soil-to-fertilizer map:
-0 15 37
-37 52 2
-39 0 15
-fertilizer-to-water map:
-49 53 8
-0 11 42
-42 0 7
-57 7 4
-water-to-light map:
-88 18 7
-18 25 70
-light-to-temperature map:
-45 77 23
-81 45 19
-68 64 13
-temperature-to-humidity map:
-0 69 1
-1 0 69
-humidity-to-location map:
-60 56 37
-56 93 4";
-
-    #[test]
-    fn test_conversion() {
-        let expected = (50, 98, 2);
-        let actual = get_parts("50 98 2");
-        assert_eq!(expected, actual)
-    }
-
-    #[test]
-    fn test_pasrse() {
-        let mut actual = AocDay::default();
-        actual.process_lines(INPUT.lines().map(str::to_string).collect::<Vec<String>>());
-        assert_eq!(actual.seeds, vec![79, 14, 55, 13]);
-        assert!(actual.humidity_location.contains(&(56, 93, 4)));
-    }
-
-    #[test]
-    fn test_part1() {
-        let expected = 35;
-        let mut actual = AocDay::default();
-        actual.process_lines(INPUT.lines().map(str::to_string).collect::<Vec<String>>());
-        assert_eq!(expected, actual.get_lowest())
-    }
-    #[test]
-    fn test_part2() {
-        let expected = 46;
-        let mut actual = AocDay::default();
-        actual.process_lines(INPUT.lines().map(str::to_string).collect::<Vec<String>>());
-        assert_eq!(expected, actual.get_lowest_rev())
-    }
 }

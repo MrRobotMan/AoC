@@ -3,23 +3,24 @@ use std::{
     fmt::Display,
 };
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day10.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    grid: HashMap<(i32, i32), Pipe>,
-    mainloop: HashSet<(i32, i32)>,
-    start: (i32, i32),
-    size: (i32, i32),
+pub struct AocDay {
+    pub input: String,
+    pub grid: HashMap<(i32, i32), Pipe>,
+    pub mainloop: HashSet<(i32, i32)>,
+    pub start: (i32, i32),
+    pub size: (i32, i32),
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -88,7 +89,7 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn make_loop(&mut self) {
+    pub fn make_loop(&mut self) {
         let offsets = [(-1, 0), (0, 1), (1, 0), (0, -1)]; // Above, right, below, left
         let neighbors = offsets
             .iter()
@@ -224,7 +225,7 @@ impl Display for AocDay {
 }
 
 #[derive(Debug, Copy, Clone)]
-enum Pipe {
+pub enum Pipe {
     Vertical,   // | N-S
     Horizontal, // - E-W
     NeElbow,    // L Elbow connecting North to East
@@ -263,156 +264,5 @@ impl Display for Pipe {
                 Pipe::Empty => '.',
             }
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_loop_builder() {
-        let mut grid = HashMap::new();
-        let mut start = (0, 0);
-        for (row, line) in ["7-F7-", ".FJ|7", "SJLL7", "|F--J", "LJ.LJ"]
-            .iter()
-            .enumerate()
-        {
-            for (col, chr) in line.chars().enumerate() {
-                match chr {
-                    'S' => start = (row as i32, col as i32),
-                    '.' => (),
-                    c => {
-                        grid.insert((row as i32, col as i32), c.into());
-                    }
-                }
-            }
-        }
-        let mut day = AocDay {
-            grid,
-            start,
-            size: (5, 5),
-            mainloop: HashSet::new(),
-            ..Default::default()
-        };
-        day.make_loop();
-
-        let expected = 16;
-        let actual = day.mainloop.len();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let mut grid = HashMap::new();
-        let mut start = (0, 0);
-        for (row, line) in ["7-F7-", ".FJ|7", "SJLL7", "|F--J", "LJ.LJ"]
-            .iter()
-            .enumerate()
-        {
-            for (col, chr) in line.chars().enumerate() {
-                match chr {
-                    'S' => start = (row as i32, col as i32),
-                    c => {
-                        grid.insert((row as i32, col as i32), c.into());
-                    }
-                }
-            }
-        }
-        let mut day = AocDay {
-            grid,
-            start,
-            size: (5, 5),
-            mainloop: HashSet::new(),
-            ..Default::default()
-        };
-        day.make_loop();
-
-        let expected = 8;
-        let actual = day.part1()[0].parse::<i32>().unwrap();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2_simplified() {
-        let mut grid = HashMap::new();
-        let mut start = (0, 0);
-        for (row, line) in [
-            "...........".to_string(),
-            ".S-------7.".to_string(),
-            ".|F-----7|.".to_string(),
-            ".||OOOOO||.".to_string(),
-            ".||OOOOO||.".to_string(),
-            ".|L-7OF-J|.".to_string(),
-            ".|II|O|II|.".to_string(),
-            ".L--JOL--J.".to_string(),
-            ".....O.....".to_string(),
-        ]
-        .iter()
-        .enumerate()
-        {
-            for (col, chr) in line.chars().enumerate() {
-                match chr {
-                    'S' => start = (row as i32, col as i32),
-                    c => {
-                        grid.insert((row as i32, col as i32), c.into());
-                    }
-                }
-            }
-        }
-        let mut day = AocDay {
-            grid,
-            start,
-            size: (9, 11),
-            mainloop: HashSet::new(),
-            ..Default::default()
-        };
-        day.make_loop();
-
-        let expected = 4;
-        let actual = day.part2()[0].parse::<i32>().unwrap();
-        assert_eq!(expected, actual);
-    }
-    #[test]
-    fn test_part2() {
-        let mut grid = HashMap::new();
-        let mut start = (0, 0);
-        for (row, line) in [
-            "FF7FSF7F7F7F7F7F---7".to_string(),
-            "L|LJ||||||||||||F--J".to_string(),
-            "FL-7LJLJ||||||LJL-77".to_string(),
-            "F--JF--7||LJLJ7F7FJ-".to_string(),
-            "L---JF-JLJ.||-FJLJJ7".to_string(),
-            "|F|F-JF---7F7-L7L|7|".to_string(),
-            "|FFJF7L7F-JF7|JL---7".to_string(),
-            "7-L-JL7||F7|L7F-7F7|".to_string(),
-            "L.L7LFJ|||||FJL7||LJ".to_string(),
-            "L7JLJL-JLJLJL--JLJ.L".to_string(),
-        ]
-        .iter()
-        .enumerate()
-        {
-            for (col, chr) in line.chars().enumerate() {
-                match chr {
-                    'S' => start = (row as i32, col as i32),
-                    '.' => (),
-                    c => {
-                        grid.insert((row as i32, col as i32), c.into());
-                    }
-                }
-            }
-        }
-        let mut day = AocDay {
-            grid,
-            start,
-            size: (10, 20),
-            mainloop: HashSet::new(),
-            ..Default::default()
-        };
-        day.make_loop();
-
-        let expected = 10;
-        let actual = day.part2()[0].parse::<i32>().unwrap();
-        assert_eq!(expected, actual);
     }
 }

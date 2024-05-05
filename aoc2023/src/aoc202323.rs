@@ -1,30 +1,31 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Dir, Point,
 };
 
 use itertools::Itertools;
 use pathfinding::directed::bfs::bfs;
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day23.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub trails: Vec<Vec<Tile>>,
+    pub start: Point<usize>,
+    pub end: Point<usize>,
+    pub poi: HashSet<Point<usize>>,
+    pub height: usize,
+    pub width: usize,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    trails: Vec<Vec<Tile>>,
-    start: Point<usize>,
-    end: Point<usize>,
-    poi: HashSet<Point<usize>>,
-    height: usize,
-    width: usize,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -229,7 +230,7 @@ impl AocDay {
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq)]
-enum Tile {
+pub enum Tile {
     #[default]
     Path, // .
     Forest,     // #
@@ -250,58 +251,5 @@ impl From<&char> for Tile {
             'v' => Self::SlopeDown,
             _ => unreachable!("Found unknown character"),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "#.#####################
-#.......#########...###
-#######.#########.#.###
-###.....#.>.>.###.#.###
-###v#####.#v#.###.#.###
-###.>...#.#.#.....#...#
-###v###.#.#.#########.#
-###...#.#.#.......#...#
-#####.#.#.#######.#.###
-#.....#.#.#.......#...#
-#.#####.#.#.#########v#
-#.#...#...#...###...>.#
-#.#.#v#######v###.###v#
-#...#.>.#...>.>.#.###.#
-#####v#.#.###v#.#.###.#
-#.....#...#...#.#.#...#
-#.#########.###.#.#.###
-#...###...#...#...#.###
-###.###.#.###v#####v###
-#...#...#.#.>.>.#.>.###
-#.###.###.#.###.#.#v###
-#.....###...###...#...#
-#####################.#";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 94;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 154;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

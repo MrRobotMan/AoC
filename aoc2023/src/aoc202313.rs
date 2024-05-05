@@ -1,19 +1,20 @@
 use std::{collections::HashSet, fmt::Display};
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day13.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    patterns: Vec<Pattern>,
+pub struct AocDay {
+    pub input: String,
+    pub patterns: Vec<Pattern>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -43,13 +44,13 @@ impl Runner for AocDay {
 }
 
 #[derive(Debug, PartialEq)]
-struct Pattern {
-    rows: Vec<Vec<char>>,
-    cols: Vec<Vec<char>>,
+pub struct Pattern {
+    pub rows: Vec<Vec<char>>,
+    pub cols: Vec<Vec<char>>,
 }
 
 impl Pattern {
-    fn new(pattern: &str) -> Self {
+    pub fn new(pattern: &str) -> Self {
         let mut rows = Vec::new();
         let mut cols = vec![Vec::new(); pattern.lines().next().unwrap().len()];
         for line in pattern.lines() {
@@ -63,7 +64,7 @@ impl Pattern {
         Self { rows, cols }
     }
 
-    fn score(&self) -> usize {
+    pub fn score(&self) -> usize {
         if let Some(s) = self.base_score(None) {
             s
         } else {
@@ -211,116 +212,4 @@ impl Display for Pattern {
 enum Orientation {
     Rows,
     Cols,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "#.##..##.
-..#.##.#.
-##......#
-##......#
-..#.##.#.
-..##..##.
-#.#.##.#.
-
-#...##..#
-#....#..#
-..##..###
-#####.##.
-#####.##.
-..##..###
-#....#..#";
-
-    #[test]
-    fn test_parsing() {
-        let expected = Pattern {
-            rows: vec![
-                vec!['#', '.', '#', '#', '.', '.', '#', '#', '.'],
-                vec!['.', '.', '#', '.', '#', '#', '.', '#', '.'],
-                vec!['#', '#', '.', '.', '.', '.', '.', '.', '#'],
-                vec!['#', '#', '.', '.', '.', '.', '.', '.', '#'],
-                vec!['.', '.', '#', '.', '#', '#', '.', '#', '.'],
-                vec!['.', '.', '#', '#', '.', '.', '#', '#', '.'],
-                vec!['#', '.', '#', '.', '#', '#', '.', '#', '.'],
-            ],
-            cols: vec![
-                vec!['#', '.', '#', '#', '.', '.', '#'],
-                vec!['.', '.', '#', '#', '.', '.', '.'],
-                vec!['#', '#', '.', '.', '#', '#', '#'],
-                vec!['#', '.', '.', '.', '.', '#', '.'],
-                vec!['.', '#', '.', '.', '#', '.', '#'],
-                vec!['.', '#', '.', '.', '#', '.', '#'],
-                vec!['#', '.', '.', '.', '.', '#', '.'],
-                vec!['#', '#', '.', '.', '#', '#', '#'],
-                vec!['.', '.', '#', '#', '.', '.', '.'],
-            ],
-        };
-        let actual = Pattern::new(INPUT.split("\n\n").next().unwrap());
-
-        assert_eq!(expected.rows, actual.rows);
-        assert_eq!(expected.cols, actual.cols);
-    }
-
-    #[test]
-    fn test_reflected_cols() {
-        let expected = 5;
-        let actual = Pattern::new(INPUT.split("\n\n").next().unwrap()).score();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_reflected_rows() {
-        let expected = 400;
-        let actual = Pattern::new(INPUT.split("\n\n").last().unwrap()).score();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_failing() {
-        let pattern = Pattern::new(
-            ".####..
-###..#.
-..#.###
-#.####.
-#.####.
-..#.###
-###..#.
-.####..
-.....#.
-...#.#.
-.####..
-###..#.
-..#.###",
-        );
-
-        let expected = 400;
-        let actual = pattern.score();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let expected = 405;
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let actual = day.part1()[0].parse::<i32>().unwrap_or(0);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let expected = 400;
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let actual = day.part2()[0].parse::<i32>().unwrap_or(0);
-        assert_eq!(expected, actual);
-    }
 }

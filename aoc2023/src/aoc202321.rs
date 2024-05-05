@@ -1,26 +1,27 @@
 use std::collections::{HashMap, HashSet};
 
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     search::{Graph, Searcher},
     Dir, Point,
 };
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day21.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub garden: Garden,
+    pub steps: usize,
+    pub shortest: HashMap<Point<i64>, i64>,
+    pub visited: HashSet<Point<i64>>,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    garden: Garden,
-    steps: usize,
-    shortest: HashMap<Point<i64>, i64>,
-    visited: HashSet<Point<i64>>,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -132,7 +133,7 @@ impl Searcher<Garden> for Point<i64> {
 }
 
 #[derive(Debug, Default, Clone)]
-struct Garden {
+pub struct Garden {
     layout: HashSet<Point<i64>>,
     width: i64,
     height: i64,
@@ -187,35 +188,5 @@ impl Garden {
             }
             println!();
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "...........
-.....###.#.
-.###.##..#.
-..#.#...#..
-....#.#....
-.##..S####.
-.##..#...#.
-.......##..
-.##.#.####.
-.##..##.##.
-...........";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            steps: 6,
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 16;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

@@ -2,21 +2,22 @@ use std::{cmp::Ordering, fmt::Display};
 
 use aoc::{
     read_lines,
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
 };
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day07.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub hands: Vec<Hand>,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    hands: Vec<Hand>,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -56,10 +57,10 @@ impl Runner for AocDay {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-struct Hand {
-    cards: [u8; 5],
-    bid: i32,
-    score: Score,
+pub struct Hand {
+    pub cards: [u8; 5],
+    pub bid: i32,
+    pub score: Score,
 }
 
 impl Hand {
@@ -149,7 +150,7 @@ impl From<&str> for Hand {
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-enum Score {
+pub enum Score {
     HighCard,
     OnePair,
     TwoPair,
@@ -204,72 +205,5 @@ impl From<&[u8]> for Score {
             [1, 1, 1, 1, 1] => Self::HighCard,
             _ => panic!("Unknown Hand Type {:?}", &counts[..5]),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const INPUT: &str = "32T3K 765
-T55J5 684
-KK677 28
-KTJJT 220
-QQQJA 483";
-
-    #[test]
-    fn test_parsing() {
-        let expected = vec![
-            Hand {
-                cards: [3, 2, 10, 3, 13],
-                bid: 765,
-                score: Score::OnePair,
-            },
-            Hand {
-                cards: [10, 5, 5, 11, 5],
-                bid: 684,
-                score: Score::ThreeOfAKind,
-            },
-            Hand {
-                cards: [13, 13, 6, 7, 7],
-                bid: 28,
-                score: Score::TwoPair,
-            },
-            Hand {
-                cards: [13, 10, 11, 11, 10],
-                bid: 220,
-                score: Score::TwoPair,
-            },
-            Hand {
-                cards: [12, 12, 12, 11, 14],
-                bid: 483,
-                score: Score::ThreeOfAKind,
-            },
-        ];
-        let actual = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let hands = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
-        let mut day = AocDay {
-            hands,
-            ..Default::default()
-        };
-        let expected = 6440;
-        let actual = day.part1()[0].parse().unwrap();
-        assert_eq!(expected, actual);
-    }
-    #[test]
-    fn test_part2() {
-        let hands = INPUT.lines().map(|l| l.into()).collect::<Vec<_>>();
-        let mut day = AocDay {
-            hands,
-            ..Default::default()
-        };
-        let expected = 5905;
-        let actual = day.part2()[0].parse().unwrap();
-        assert_eq!(expected, actual);
     }
 }

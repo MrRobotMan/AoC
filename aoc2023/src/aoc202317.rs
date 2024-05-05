@@ -1,24 +1,25 @@
 use std::{collections::HashMap, fmt::Display};
 
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Dir, Point,
 };
 
 use pathfinding::directed::dijkstra::dijkstra;
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day17.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub map: Map,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    map: Map,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -40,7 +41,7 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn get_path(&self, limits: Point<usize>) -> usize {
+    pub fn get_path(&self, limits: Point<usize>) -> usize {
         dijkstra(
             &Node {
                 pos: Point(0, 0),
@@ -57,7 +58,7 @@ impl AocDay {
 }
 
 #[derive(Debug, Default)]
-struct Map {
+pub struct Map {
     grid: HashMap<Point<usize>, usize>,
     size: Point<usize>,
 }
@@ -152,78 +153,5 @@ impl Display for Map {
             }
         }
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "2413432311323
-3215453535623
-3255245654254
-3446585845452
-4546657867536
-1438598798454
-4457876987766
-3637877979653
-4654967986887
-4564679986453
-1224686865563
-2546548887735
-4322674655533";
-
-    #[test]
-    fn test_parse() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        println!("{}", day.map);
-        let expected = INPUT;
-        let actual = day.map.to_string();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 102;
-        let actual = day.get_path(Point(1, 3));
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 94;
-        let actual = day.get_path(Point(4, 10));
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2_example2() {
-        let mut day = AocDay {
-            input: "111111111111
-999999999991
-999999999991
-999999999991
-999999999991"
-                .into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 71;
-        let actual = day.get_path(Point(4, 10));
-        assert_eq!(expected, actual);
     }
 }

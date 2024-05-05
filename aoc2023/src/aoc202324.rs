@@ -1,26 +1,25 @@
 use aoc::{
-    runner::{output, run_solution, Runner},
+    runner::{output, Runner},
     Point3D,
 };
 
 use itertools::Itertools;
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day24.txt".into(),
-        lower_limit: 200_000_000_000_000.,
-        upper_limit: 400_000_000_000_000.,
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub hailstones: Vec<Hailstone>,
+    pub lower_limit: f64,
+    pub upper_limit: f64,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    hailstones: Vec<Hailstone>,
-    lower_limit: f64,
-    upper_limit: f64,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -207,7 +206,7 @@ impl Runner for AocDay {
 }
 
 #[derive(Debug, Default)]
-struct Hailstone {
+pub struct Hailstone {
     initial_pos: Point3D<i64>,
     velocity: Point3D<i64>,
 }
@@ -261,44 +260,5 @@ impl<S: AsRef<str>> From<S> for Hailstone {
             initial_pos: Point3D(initial_pos[0], initial_pos[1], initial_pos[2]),
             velocity: Point3D(velocity[0], velocity[1], velocity[2]),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "19, 13, 30 @ -2,  1, -2
-18, 19, 22 @ -1, -1, -2
-20, 25, 34 @ -2, -2, -4
-12, 31, 28 @ -1, -2, -1
-20, 19, 15 @  1, -5, -3";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            lower_limit: 7.,
-            upper_limit: 27.,
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 2;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            lower_limit: 7.,
-            upper_limit: 27.,
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 47;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

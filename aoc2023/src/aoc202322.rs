@@ -4,21 +4,22 @@ use std::{
     str::FromStr,
 };
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day22.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    bricks: Vec<Brick>,
-    plane: (i64, i64, i64, i64),
+pub struct AocDay {
+    pub input: String,
+    pub bricks: Vec<Brick>,
+    pub plane: (i64, i64, i64, i64),
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -124,7 +125,7 @@ fn place_brick(idx: usize, bricks: &mut [Brick]) -> bool {
 }
 
 #[derive(Debug, Default, Clone)]
-struct Brick {
+pub struct Brick {
     start: Point,
     end: Point,
     supporting: Vec<i64>,
@@ -213,42 +214,5 @@ impl FromStr for Point {
             .map(|p| p.parse())
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Self(parts[0], parts[1], parts[2]))
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "1,0,1~1,2,1
-0,0,2~2,0,2
-0,2,3~2,2,3
-0,0,4~0,2,4
-2,0,5~2,2,5
-0,1,6~2,1,6
-1,1,8~1,1,9";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 5;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 7;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

@@ -3,21 +3,22 @@ use std::{
     ops::Range,
 };
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day19.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    parts: Vec<Part>,
-    workflows: HashMap<String, Vec<Rule>>,
+pub struct AocDay {
+    pub input: String,
+    pub parts: Vec<Part>,
+    pub workflows: HashMap<String, Vec<Rule>>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -98,7 +99,7 @@ impl AocDay {
     }
 }
 
-fn parse_workflow(workflow: &str) -> (String, Vec<Rule>) {
+pub fn parse_workflow(workflow: &str) -> (String, Vec<Rule>) {
     let (name, rules) = workflow.trim_end_matches('}').split_once('{').unwrap();
     (name.into(), rules.split(',').map(|s| s.into()).collect())
 }
@@ -106,16 +107,16 @@ fn parse_workflow(workflow: &str) -> (String, Vec<Rule>) {
 type Ranges = [Range<usize>; 4];
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
-struct Rule {
-    field: char,
-    comp: char,
-    value: usize,
-    workflow: Status,
-    is_final: bool,
+pub struct Rule {
+    pub field: char,
+    pub comp: char,
+    pub value: usize,
+    pub workflow: Status,
+    pub is_final: bool,
 }
 
 impl Rule {
-    fn split_ranges(&self, ranges: Ranges) -> ((Status, Ranges), Ranges) {
+    pub fn split_ranges(&self, ranges: Ranges) -> ((Status, Ranges), Ranges) {
         if self.is_final {
             return ((self.workflow.clone(), ranges), Ranges::default());
         }
@@ -199,7 +200,7 @@ impl From<&str> for Rule {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
-enum Status {
+pub enum Status {
     Accepted,
     #[default]
     Rejected,
@@ -207,11 +208,11 @@ enum Status {
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone)]
-struct Part {
-    x: usize,
-    m: usize,
-    a: usize,
-    s: usize,
+pub struct Part {
+    pub x: usize,
+    pub m: usize,
+    pub a: usize,
+    pub s: usize,
 }
 
 impl From<&str> for Part {
@@ -231,7 +232,7 @@ impl From<&str> for Part {
 }
 
 impl Part {
-    fn score(&self) -> usize {
+    pub fn score(&self) -> usize {
         self.x + self.m + self.a + self.s
     }
 
@@ -263,132 +264,5 @@ impl Part {
             }
         }
         status
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "px{a<2006:qkq,m>2090:A,rfg}
-pv{a>1716:R,A}
-lnx{m>1548:A,A}
-rfg{s<537:gd,x>2440:R,A}
-qs{s>3448:A,lnx}
-qkq{x<1416:A,crn}
-crn{x>2662:A,R}
-in{s<1351:px,qqz}
-qqz{s>2770:qs,m<1801:hdj,R}
-gd{a>3333:R,R}
-hdj{m>838:A,pv}
-
-{x=787,m=2655,a=1222,s=2876}
-{x=1679,m=44,a=2067,s=496}
-{x=2036,m=264,a=79,s=2244}
-{x=2461,m=1339,a=466,s=291}
-{x=2127,m=1623,a=2188,s=1013}";
-
-    #[test]
-    fn test_parse_workflow() {
-        let expected = (
-            "px".into(),
-            vec![
-                Rule {
-                    field: 'a',
-                    comp: '<',
-                    value: 2006,
-                    workflow: Status::Workflow("qkq".into()),
-                    is_final: false,
-                },
-                Rule {
-                    field: 'm',
-                    comp: '>',
-                    value: 2090,
-                    workflow: Status::Accepted,
-                    is_final: false,
-                },
-                Rule {
-                    workflow: Status::Workflow("rfg".into()),
-                    is_final: true,
-                    ..Default::default()
-                },
-            ],
-        );
-        let actual = parse_workflow(INPUT.lines().next().unwrap());
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_parse_part() {
-        let expected = Part {
-            x: 787,
-            m: 2655,
-            a: 1222,
-            s: 2876,
-        };
-        let actual = "{x=787,m=2655,a=1222,s=2876}".into();
-        assert_eq!(expected, actual);
-        assert_eq!(7540, actual.score());
-    }
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 19114;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_split_range_less() {
-        let rule = Rule {
-            field: 's',
-            comp: '<',
-            value: 1351,
-            workflow: Status::Workflow("px".into()),
-            is_final: false,
-        };
-        let expected = (
-            (
-                Status::Workflow("px".into()),
-                [1..4001, 1..4001, 1..4001, 1..1351],
-            ),
-            [1..4001, 1..4001, 1..4001, 1351..4001],
-        );
-        let actual = rule.split_ranges([1..4001, 1..4001, 1..4001, 1..4001]);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_split_range_more() {
-        let rule = Rule {
-            field: 'm',
-            comp: '>',
-            value: 1548,
-            workflow: Status::Accepted,
-            is_final: false,
-        };
-        let expected = (
-            (Status::Accepted, [1..4001, 1549..4001, 1..4001, 1..4001]),
-            [1..4001, 1..1549, 1..4001, 1..4001],
-        );
-        let actual = rule.split_ranges([1..4001, 1..4001, 1..4001, 1..4001]);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 167409079868000_usize;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

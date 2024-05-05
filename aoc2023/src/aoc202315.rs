@@ -1,17 +1,18 @@
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day15.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    initialization: Vec<Step>,
+pub struct AocDay {
+    pub input: String,
+    pub initialization: Vec<Step>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -87,7 +88,7 @@ fn hash(text: &[char]) -> usize {
 }
 
 #[derive(Debug, PartialEq)]
-struct Step {
+pub struct Step {
     code: Vec<char>,
     score: usize,
     label: String,
@@ -96,7 +97,7 @@ struct Step {
 }
 
 impl Step {
-    fn new(chars: &[char]) -> Self {
+    pub fn new(chars: &[char]) -> Self {
         let mut sp = chars.split(|c| c == &'-' || c == &'=');
         Self {
             code: chars.to_vec(),
@@ -109,60 +110,5 @@ impl Step {
                 .fold(0, |acc, c| 10 * acc + *c as usize - '0' as usize),
             operation: if chars.contains(&'-') { '-' } else { '=' },
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "rn=1,cm-,qp=3,cm=2,qp-,pc=4,ot=9,ab=5,pc-,pc=6,ot=7";
-
-    #[test]
-    fn test_parse() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = vec![
-            Step::new(&['r', 'n', '=', '1']),
-            Step::new(&['c', 'm', '-']),
-            Step::new(&['q', 'p', '=', '3']),
-            Step::new(&['c', 'm', '=', '2']),
-            Step::new(&['q', 'p', '-']),
-            Step::new(&['p', 'c', '=', '4']),
-            Step::new(&['o', 't', '=', '9']),
-            Step::new(&['a', 'b', '=', '5']),
-            Step::new(&['p', 'c', '-']),
-            Step::new(&['p', 'c', '=', '6']),
-            Step::new(&['o', 't', '=', '7']),
-        ];
-        let actual = day.initialization;
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 1320;
-        let actual = day.part1()[0].parse::<u32>().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 145;
-        let actual = day.part2()[0].parse::<u32>().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

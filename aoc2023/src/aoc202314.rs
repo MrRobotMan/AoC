@@ -1,19 +1,20 @@
 use std::collections::HashSet;
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day14.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    grid: Vec<Vec<char>>,
+pub struct AocDay {
+    pub input: String,
+    pub grid: Vec<Vec<char>>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -136,57 +137,5 @@ impl AocDay {
         for col in 2..=cols {
             self.step_col(grid, cols - col, 1);
         }
-    }
-}
-
-#[cfg(test)]
-fn show_grid(grid: &[Vec<char>]) {
-    for row in grid {
-        for col in row {
-            print!("{}", col);
-        }
-        println!();
-    }
-    println!();
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "O....#....
-O.OO#....#
-.....##...
-OO.#O....O
-.O.....O#.
-O.#..O.#.#
-..O..#O..O
-.......O..
-#....###..
-#OO..#....";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        show_grid(&day.grid);
-        let expected = 136;
-        let actual = day.part1()[0].parse::<i32>().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 64;
-        let actual = day.part2()[0].parse::<i32>().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

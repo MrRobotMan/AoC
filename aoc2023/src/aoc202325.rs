@@ -1,23 +1,24 @@
 use std::collections::HashSet;
 
-use aoc::runner::{output, run_solution, Runner};
+use aoc::runner::{output, Runner};
 use rand::prelude::*;
 
 const TARGET: usize = 3; // Target number of edges to cut.
 
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day25.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
+#[derive(Default)]
+pub struct AocDay {
+    pub input: String,
+    pub vertices: HashSet<String>,
+    pub edges: Vec<(String, String)>,
 }
 
-#[derive(Default)]
-struct AocDay {
-    input: String,
-    vertices: HashSet<String>,
-    edges: Vec<(String, String)>,
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -144,46 +145,3 @@ impl Runner for AocDay {
 //         }
 //     }
 // }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "jqt: rhn xhk nvd
-rsh: frs pzl lsr
-xhk: hfx
-cmg: qnr nvd lhk bvb
-rhn: xhk bvb hfx
-bvb: xhk hfx
-pzl: lsr hfx nvd
-qnr: nvd
-ntq: jqt hfx bvb xhk
-nvd: lhk
-lsr: lhk
-rzs: qnr cmg lsr rsh
-frs: qnr lhk lsr";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 54;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 0;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-}

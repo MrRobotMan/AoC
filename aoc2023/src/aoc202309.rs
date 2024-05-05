@@ -1,19 +1,20 @@
 use std::collections::VecDeque;
 
-use aoc::runner::{output, run_solution, Runner};
-
-fn main() {
-    let mut day = AocDay {
-        input: "inputs/day09.txt".into(),
-        ..Default::default()
-    };
-    run_solution(&mut day);
-}
+use aoc::runner::{output, Runner};
 
 #[derive(Default)]
-struct AocDay {
-    input: String,
-    histories: Vec<History>,
+pub struct AocDay {
+    pub input: String,
+    pub histories: Vec<History>,
+}
+
+impl AocDay {
+    pub fn new<S: Into<String>>(input: S) -> Self {
+        Self {
+            input: input.into(),
+            ..Default::default()
+        }
+    }
 }
 
 impl Runner for AocDay {
@@ -52,12 +53,12 @@ impl Runner for AocDay {
 }
 
 #[derive(Debug, Default, Clone)]
-struct History {
-    values: VecDeque<i64>,
+pub struct History {
+    pub values: VecDeque<i64>,
 }
 
 impl History {
-    fn build_next(&mut self) {
+    pub fn build_next(&mut self) {
         self.values.make_contiguous();
         let mut temp = self.values.clone();
         let mut last = Vec::new();
@@ -91,59 +92,5 @@ impl From<&String> for History {
             .map(|n| n.parse().unwrap())
             .collect();
         Self { values }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const INPUT: [[i64; 6]; 3] = [
-        [0, 3, 6, 9, 12, 15],
-        [1, 3, 6, 10, 15, 21],
-        [10, 13, 16, 21, 30, 45],
-    ];
-
-    #[test]
-    fn test_part1() {
-        let expected = 114;
-        let mut day = AocDay {
-            histories: INPUT
-                .iter()
-                .map(|l| History {
-                    values: l.to_vec().into(),
-                })
-                .collect(),
-            ..Default::default()
-        };
-        let actual = day.part1()[0].parse().unwrap_or(0);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let expected = 2;
-        let mut day = AocDay {
-            histories: INPUT
-                .iter()
-                .map(|l| History {
-                    values: l.to_vec().into(),
-                })
-                .collect(),
-            ..Default::default()
-        };
-        let actual = day.part2()[0].parse().unwrap_or(0);
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_build_next() {
-        let expected = VecDeque::from(vec![0, 1, 3, 6, 10, 15, 21, 28]);
-        let mut history = History {
-            values: vec![1, 3, 6, 10, 15, 21].into(),
-        };
-        history.build_next();
-        let actual = history.values;
-        assert_eq!(expected, actual);
     }
 }
