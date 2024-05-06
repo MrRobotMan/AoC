@@ -212,7 +212,7 @@ pub struct AocDay {{
     input: String,
 }}
 
-impl for AocDay {{
+impl AocDay {{
     pub fn new<S: Into<String>>(input: S) -> Self {{
         Self {{
             input: input.into(),
@@ -303,6 +303,8 @@ fn update_bacon(year: i32) {
             for loc in locs {
                 contents.replace_range(loc..loc + bin.len(), &bin);
             }
+            file.seek(SeekFrom::Start(0))
+                .expect("Could not seek bacon.toml to start.");
             file.write_all(contents.as_bytes())
                 .expect("Could not write bacon.toml");
         }
@@ -314,7 +316,6 @@ fn update_main(year: i32, day: u32) {
     let module = format!("mod aoc{year}{day:02};");
     let new_struct = format!(
         r#"    let mut day{day:02} = {module}::AocDay::new("aoc{year}/inputs/day{day:02}.txt");"#
-        
     );
     let days = builds_days_vec(day);
     if let Ok(contents) = fs::read_to_string(&file) {
