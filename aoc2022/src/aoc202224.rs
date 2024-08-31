@@ -7,12 +7,12 @@ use std::{collections::HashMap, hash::Hash};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    groves: Vec<HashMap<Point<i64>, Vec<Valley>>>,
-    height: i64,
-    width: i64,
-    start: Point<i64>,
-    end: Point<i64>,
+    pub(crate) input: String,
+    pub(crate) groves: Vec<HashMap<Point<i64>, Vec<Valley>>>,
+    pub(crate) height: i64,
+    pub(crate) width: i64,
+    pub(crate) start: Point<i64>,
+    pub(crate) end: Point<i64>,
 }
 
 impl AocDay {
@@ -188,43 +188,7 @@ struct State {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-enum Valley {
+pub(crate) enum Valley {
     Wall,
     Blizzard(Dir),
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "#.######
-#>>.<^<#
-#.<..<<#
-#>v.><>#
-#<^v^^>#
-######.#";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 18;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 54;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
 }

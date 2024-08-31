@@ -10,8 +10,8 @@ use aoc::{
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    elf_locations: HashSet<Point<i64>>,
+    pub(crate) input: String,
+    pub(crate) elf_locations: HashSet<Point<i64>>,
 }
 
 impl AocDay {
@@ -144,42 +144,5 @@ impl AocDay {
             self.elf_locations.get(&(elf + Point(1, -1))).is_none(),
             self.elf_locations.get(&(elf + Point(0, -1))).is_none(),
         ]
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "....#..
-..###.#
-#...#.#
-.#...##
-#.###..
-##.#.##
-.#..#..";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 110;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 29;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

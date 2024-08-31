@@ -8,8 +8,8 @@ use aoc::runner::{output, Runner};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    pattern: Vec<char>,
+    pub input: String,
+    pub pattern: Vec<char>,
 }
 
 impl AocDay {
@@ -215,36 +215,5 @@ impl Rock {
         } else {
             None
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = ">>><<><>><<<>><>>><<<>>><<<><<<>><>><<>>";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 3068;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 1_514_285_714_288_usize;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

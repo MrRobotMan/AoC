@@ -9,11 +9,11 @@ const EDGE: i64 = if cfg!(test) { 4 } else { 50 }; // Edge size of the cube face
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    board: HashMap<Point<i64>, Cell>,
-    instructions: Vec<Instruction>,
-    width: i64,
-    height: i64,
+    pub(crate) input: String,
+    pub(crate) board: HashMap<Point<i64>, Cell>,
+    pub(crate) instructions: Vec<Instruction>,
+    pub(crate) width: i64,
+    pub(crate) height: i64,
 }
 
 impl AocDay {
@@ -309,64 +309,19 @@ impl AocDay {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-enum Cell {
+pub(crate) enum Cell {
     Open,
     Solid,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum Instruction {
+pub(crate) enum Instruction {
     Distance(i64),
     Turn(Turn),
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum Turn {
+pub(crate) enum Turn {
     Right,
     Left,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "        ...#
-        .#..
-        #...
-        ....
-...#.......#
-........#...
-..#....#....
-..........#.
-        ...#....
-        .....#..
-        .#......
-        ......#.
-
-10R5L5R10L4R5L5";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        assert_eq!(Instruction::Distance(5), *day.instructions.last().unwrap());
-        let expected = 6032;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 5031;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
 }

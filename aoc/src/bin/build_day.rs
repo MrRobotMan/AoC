@@ -8,7 +8,7 @@ use std::{
     env,
     fmt::Display,
     fs::{self, OpenOptions},
-    io::{Read, Seek, SeekFrom, Write},
+    io::{self, BufRead, BufReader, BufWriter, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -77,10 +77,21 @@ fn build_day(year: i32, day: u32, client: &Client) {
     };
     show_preview(&data);
     write_file(file, data);
-    create_day(year, day);
-    update_tests(year, day);
-    update_main(year, day);
-    update_bacon(year);
+    if let Err(e) = create_day(year, day) {
+        println!("{e}");
+        return;
+    };
+    if let Err(e) = update_tests(year, day) {
+        println!("{e}");
+        return;
+    };
+    if let Err(e) = update_main(year, day) {
+        println!("{e}");
+        return;
+    };
+    if let Err(e) = update_bacon(year) {
+        println!("{e}");
+    };
 }
 
 #[derive(Debug, PartialEq)]
@@ -198,11 +209,11 @@ fn get_args() -> Option<(i32, u32)> {
     }
 }
 
-fn create_day(year: i32, day: u32) {
+fn create_day(year: i32, day: u32) -> io::Result<()> {
     let filename = format!("aoc{year}/src/aoc{year}{day:02}.rs");
     let file = Path::new(&filename);
     if file.exists() {
-        return;
+        return Ok(());
     }
     let template = format!(
         r#"use aoc::runner::{{output, Runner}};
@@ -240,10 +251,10 @@ impl Runner for AocDay {{
 }}
         "#
     );
-    let _ = fs::write(file, template);
+    fs::write(file, template)
 }
 
-fn update_tests(year: i32, day: u32) {
+fn update_tests(year: i32, day: u32) -> io::Result<()> {
     let mut template = format!(
         r#"
 mod aoc_{year}{day:02}_tests {{
@@ -282,64 +293,177 @@ mod aoc_{year}{day:02}_tests {{
             if file.seek(SeekFrom::End(0)).unwrap() == 0 {
                 template.insert_str(0, "use aoc::runner::Runner;\n\n");
             }
-            let _ = file.write(template.as_bytes());
+            file.write_all(template.as_bytes())?;
         }
         Err(_) => println!("Could not update tests."),
     };
+    Ok(())
 }
 
-fn update_bacon(year: i32) {
+/// Update bacon.toml to replace the aoc bin target with the year requested.
+fn update_bacon(year: i32) -> io::Result<()> {
     let bin = format!("aoc{year}");
-    match OpenOptions::new().read(true).write(true).open("bacon.toml") {
-        Err(_) => println!("bacon.toml is missing."),
-        Ok(mut file) => {
-            let mut contents = String::new();
-            file.read_to_string(&mut contents)
-                .expect("Could not read bacon.toml");
-            let locs = contents
-                .match_indices("aoc")
-                .map(|(loc, _)| loc)
-                .collect::<Vec<_>>();
-            for loc in locs {
-                contents.replace_range(loc..loc + bin.len(), &bin);
+    let bacon = fs::File::open("bacon.toml")?;
+    let reader = BufReader::new(bacon);
+    let temp = fs::File::create("tempbacon.toml")?;
+    let mut writer = BufWriter::new(temp);
+    let mut bytes_written = 0;
+
+    for line in reader.lines() {
+        match line {
+            Err(e) => {
+                println!("{e:?}");
+                bytes_written = 0;
+                break;
             }
-            file.seek(SeekFrom::Start(0))
-                .expect("Could not seek bacon.toml to start.");
-            file.write_all(contents.as_bytes())
-                .expect("Could not write bacon.toml");
+            Ok(mut line) => {
+                if let Some(idx) = line.find(&bin) {
+                    line.replace_range(idx..(idx + bin.len()), &bin);
+                };
+                if !line.ends_with('\n') {
+                    line.push('\n');
+                }
+                match writer.write(line.as_bytes()) {
+                    Ok(b) => bytes_written += b,
+                    Err(_) => {
+                        bytes_written = 0;
+                        break;
+                    }
+                };
+            }
         }
     }
+    writer.flush()?;
+    if bytes_written != 0 {
+        fs::rename("tempbacon.toml", "bacon.toml")?
+    }
+    fs::remove_file("tempbacon.toml")
 }
 
-fn update_main(year: i32, day: u32) {
+enum MainState {
+    Start,
+    Mods,
+    Day,
+    Len,
+    Complete,
+}
+
+fn update_main(year: i32, day: u32) -> io::Result<()> {
     let file = format!("aoc{year}/src/main.rs");
     let module = format!("mod aoc{year}{day:02};");
     let new_struct = format!(
         r#"    let mut day{day:02} = {module}::AocDay::new("aoc{year}/inputs/day{day:02}.txt");"#
     );
     let days = builds_days_vec(day);
-    if let Ok(contents) = fs::read_to_string(&file) {
-        let mut lines = contents.lines().collect::<Vec<_>>();
-        // days vec = last_day + 6 + days total
-        // len def = days + d < 5 {1} else {d / 7 + 4}
-        lines.insert(day as usize + 3, &module); // module = day + 4 (01 => line5)
-        lines.insert(2 * day as usize + 8, &new_struct); // struct = module + 5 + day
-        let days_loc = lines
-            .iter()
-            .position(|line| line.contains("let mut days"))
-            .expect("days def missing.");
-        let len_loc = lines
-            .iter()
-            .position(|line| line.contains("let len ="))
-            .expect("len def missing.");
-        lines.splice(days_loc..len_loc, [days.as_str()]);
-
-        let _ = fs::write(file, lines.join("\n"));
-    } else {
-        let _ = fs::write(
-            file,
-            format!(
-                r#"use std::env;
+    let mut temp = BufWriter::new(fs::File::create("tempmain.rs")?);
+    let mut state = MainState::Start;
+    let mut bytes_written = 0;
+    match fs::File::open(&file) {
+        Ok(file) => {
+            for line in BufReader::new(file).lines() {
+                match line {
+                    Ok(line) => match state {
+                        MainState::Start => {
+                            // Write every line until we hit the mod definitions.
+                            match temp.write(line.as_bytes()) {
+                                Err(_) => {bytes_written = 0; break},
+                                Ok(b) => bytes_written += b,
+                            };
+                            match temp.write(&[b'\n']) {
+                                Err(_) => {bytes_written = 0; break},
+                                Ok(b) => bytes_written += b,
+                            };
+                            if line.starts_with("mod") {
+                                state = MainState::Mods;
+                            }
+                        }
+                        MainState::Mods => {
+                            // Once we hit a new line, write the new mod before it.
+                            if line.is_empty() {
+                                match temp.write(module.as_bytes()) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                state = MainState::Day;
+                            }
+                            match temp.write(line.as_bytes()) {
+                                Err(_) => {bytes_written = 0; break},
+                                Ok(b) => bytes_written += b,
+                            };
+                            match temp.write(&[b'\n']) {
+                                Err(_) => {bytes_written = 0; break},
+                                Ok(b) => bytes_written += b,
+                            };
+                        }
+                        MainState::Day => {
+                            // Once we hit the defintion of the days array, add the new struct and the days array.
+                            if line.contains("let mut days") {
+                                match temp.write(new_struct.as_bytes()) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                match temp.write(&[b'\n']) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                match temp.write(days.as_bytes()) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                match temp.write(&[b'\n']) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                state = MainState::Len;
+                            } else {
+                                match temp.write(line.as_bytes()) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                match temp.write(&[b'\n']) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                            }
+                        }
+                        MainState::Len => {
+                            // Skip lines until we define the len.
+                            if line.contains("let len = days.len() - 1;") {
+                                match temp.write(line.as_bytes()) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                match temp.write(&[b'\n']) {
+                                    Err(_) => {bytes_written = 0; break},
+                                    Ok(b) => bytes_written += b,
+                                };
+                                state = MainState::Complete;
+                            }
+                        }
+                        MainState::Complete => {
+                            // Write the rest of the file.
+                            match temp.write(line.as_bytes()) {
+                                Err(_) => {bytes_written = 0; break},
+                                Ok(b) => bytes_written += b,
+                            };
+                            match temp.write(&[b'\n']) {
+                                Err(_) => {bytes_written = 0; break},
+                                Ok(b) => bytes_written += b,
+                            };
+                        }
+                    },
+                    Err(e) => {
+                        println!("{e:?}");
+                        bytes_written = 0;
+                        break;
+                    }
+                }
+            };
+        }
+        Err(_) => {
+            bytes_written = temp.write(
+                format!(
+                    r#"use std::env;
 
 use aoc::runner::{{run_solution, Runner}};
 
@@ -390,9 +514,15 @@ fn get_args() -> Option<usize> {{
     }}
 }}
         "#
-            ),
-        );
-    };
+                )
+                .as_bytes(),
+            ).unwrap_or(0);
+        }
+    }
+    if bytes_written != 0 {
+        fs::rename("tempmain.rs", file)?;
+    }
+    fs::remove_file("tempmain.rs")
 }
 
 fn builds_days_vec(day: u32) -> String {

@@ -28,6 +28,9 @@ mod aoc202223;
 mod aoc202224;
 mod aoc202225;
 
+#[cfg(test)]
+mod tests;
+
 fn main() {
     let mut day01 = aoc202201::AocDay::new("aoc2022/inputs/day01.txt");
     let mut day02 = aoc202202::AocDay::new("aoc2022/inputs/day02.txt");

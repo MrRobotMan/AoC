@@ -4,8 +4,8 @@ use aoc::runner::{output, Runner};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    monkeys: HashMap<String, Monkey>,
+    pub(crate) input: String,
+    pub(crate) monkeys: HashMap<String, Monkey>,
 }
 
 impl AocDay {
@@ -111,7 +111,7 @@ impl AocDay {
 }
 
 #[derive(Clone)]
-enum Monkey {
+pub(crate) enum Monkey {
     Constant(i64),
     Operation(String, (char, fn(i64, i64) -> i64), String),
 }
@@ -160,50 +160,5 @@ impl std::fmt::Debug for Monkey {
             Monkey::Constant(c) => write!(f, "{c}"),
             Monkey::Operation(lhs, (ope, _), rhs) => write!(f, "{lhs} {ope} {rhs}"),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "root: pppw + sjmn
-dbpl: 5
-cczh: sllz + lgvd
-zczc: 2
-ptdq: humn - dvpt
-dvpt: 3
-lfqf: 4
-humn: 5
-ljgn: 2
-sjmn: drzm * dbpl
-sllz: 4
-pppw: cczh / lfqf
-lgvd: ljgn * ptdq
-drzm: hmdt - zczc
-hmdt: 32";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 152;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 301;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

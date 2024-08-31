@@ -4,8 +4,8 @@ use aoc::runner::{output, Runner};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    blueprints: HashMap<usize, Blueprint>,
+    pub(crate) input: String,
+    pub(crate) blueprints: HashMap<usize, Blueprint>,
 }
 
 impl AocDay {
@@ -56,7 +56,7 @@ impl Runner for AocDay {
 }
 
 #[derive(Debug)]
-struct Blueprint {
+pub struct Blueprint {
     ore_robot: usize,               // ore
     clay_robot: usize,              // ore
     obsidian_robot: (usize, usize), // ore, clay
@@ -64,7 +64,7 @@ struct Blueprint {
 }
 
 impl Blueprint {
-    fn collect_geodes(&self, time: usize) -> usize {
+    pub(crate) fn collect_geodes(&self, time: usize) -> usize {
         let mut best = 0;
 
         let max_resources = [
@@ -184,37 +184,5 @@ impl State {
 
         new_state.time -= 1;
         new_state
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
-Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 33;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 62;
-        let actual = day.blueprints[&2].collect_geodes(32);
-        assert_eq!(expected, actual);
     }
 }

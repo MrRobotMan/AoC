@@ -2,9 +2,9 @@ use aoc::runner::{output, Runner};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    layout: Layout,
-    instructions: Vec<Instruction>,
+    pub input: String,
+    pub layout: Layout,
+    pub instructions: Vec<Instruction>,
 }
 
 impl AocDay {
@@ -58,12 +58,12 @@ impl Runner for AocDay {
 }
 
 #[derive(Debug, Default, Clone)]
-struct Layout {
-    stacks: Vec<Vec<char>>,
+pub struct Layout {
+    pub stacks: Vec<Vec<char>>,
 }
 
 impl Layout {
-    fn new(data: &str, step: usize, start: usize) -> Self {
+    pub fn new(data: &str, step: usize, start: usize) -> Self {
         let mut rows: Vec<&str> = data.trim_end().split('\n').collect();
         let stack_count = rows
             .pop() // Last row
@@ -111,71 +111,19 @@ impl Layout {
 }
 
 #[derive(Debug)]
-struct Instruction {
-    from: usize,
-    to: usize,
-    qty: usize,
+pub struct Instruction {
+    pub from: usize,
+    pub to: usize,
+    pub qty: usize,
 }
 
 impl Instruction {
-    fn new(data: &str) -> Self {
+    pub fn new(data: &str) -> Self {
         // instruction is in the from "move _ from _ to _"
         let processed: Vec<&str> = data.split_ascii_whitespace().collect();
         let qty = processed[1].parse::<usize>().unwrap();
         let from = processed[3].parse::<usize>().unwrap() - 1;
         let to = processed[5].parse::<usize>().unwrap() - 1;
         Self { from, to, qty }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "    [D]    
-[N] [C]    
-[Z] [M] [P]
- 1   2   3 
-
-move 1 from 2 to 1
-move 3 from 1 to 3
-move 2 from 2 to 1
-move 1 from 1 to 2";
-
-    #[test]
-    fn make_layout() {
-        let expected = vec![vec!['Z', 'N'], vec!['M', 'C', 'D'], vec!['P']];
-        let actual = Layout::new("    [D]    \n[N] [C]    \n[Z] [M] [P]\n 1   2   3 \n", 4, 1);
-        assert_eq!(actual.stacks, expected);
-    }
-
-    #[test]
-    fn instruction() {
-        let actual = Instruction::new("move 1 from 2 to 8");
-        assert_eq!((actual.from, actual.to, actual.qty), (1, 7, 1));
-    }
-
-    #[test]
-    fn part_one() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = "CMZ";
-        let actual = &day.part1()[0];
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn part_two() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = "MCD";
-        let actual = &day.part2()[0];
-        assert_eq!(actual, expected);
     }
 }

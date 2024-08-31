@@ -8,10 +8,10 @@ use aoc::runner::{output, Runner};
 
 #[derive(Default, Debug)]
 pub struct AocDay {
-    input: String,
-    tunnels: HashMap<String, Valve>,
-    distances: HashMap<String, HashMap<String, u64>>,
-    search: Search,
+    pub input: String,
+    pub tunnels: HashMap<String, Valve>,
+    pub distances: HashMap<String, HashMap<String, u64>>,
+    pub search: Search,
 }
 
 impl AocDay {
@@ -101,7 +101,7 @@ fn get_distances(start: &str, tunnels: &HashMap<String, Valve>) -> HashMap<Strin
 }
 
 #[derive(Default, Debug)]
-struct Search {
+pub struct Search {
     seen: HashMap<Path, u64>,
 }
 
@@ -170,7 +170,7 @@ impl Search {
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
-struct Valve {
+pub struct Valve {
     name: String,
     rate: u64,
     connections: Vec<String>,
@@ -194,45 +194,5 @@ impl Hash for Path {
         for s in v {
             s.hash(state);
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
-Valve BB has flow rate=13; tunnels lead to valves CC, AA
-Valve CC has flow rate=2; tunnels lead to valves DD, BB
-Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
-Valve EE has flow rate=3; tunnels lead to valves FF, DD
-Valve FF has flow rate=0; tunnels lead to valves EE, GG
-Valve GG has flow rate=0; tunnels lead to valves FF, HH
-Valve HH has flow rate=22; tunnel leads to valve GG
-Valve II has flow rate=0; tunnels lead to valves AA, JJ
-Valve JJ has flow rate=21; tunnel leads to valve II";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 1651;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 1707;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }

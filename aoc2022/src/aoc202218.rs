@@ -6,8 +6,8 @@ use std::collections::{HashSet, VecDeque};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    cubes: HashSet<Point3D<i64>>,
+    pub(crate) input: String,
+    pub(crate) cubes: HashSet<Point3D<i64>>,
 }
 
 impl AocDay {
@@ -101,46 +101,3 @@ const DIR: [Point3D<i64>; 6] = [
     Point3D(1, 0, 0),
     Point3D(-1, 0, 0),
 ];
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "2,2,2
-1,2,2
-3,2,2
-2,1,2
-2,3,2
-2,2,1
-2,2,3
-2,2,4
-2,2,6
-1,2,5
-3,2,5
-2,1,5
-2,3,5";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 64;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 58;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-}

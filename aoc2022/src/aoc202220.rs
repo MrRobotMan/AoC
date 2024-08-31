@@ -2,8 +2,8 @@ use aoc::runner::{output, Runner};
 
 #[derive(Default)]
 pub struct AocDay {
-    input: String,
-    encrypted_coordinates: Vec<(usize, i64)>,
+    pub(crate) input: String,
+    pub(crate) encrypted_coordinates: Vec<(usize, i64)>,
 }
 
 impl AocDay {
@@ -83,42 +83,5 @@ impl Runner for AocDay {
                 + nums[(2000 + idx) % nums.len()].1
                 + nums[(3000 + idx) % nums.len()].1,
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    static INPUT: &str = "1
-2
--3
-3
--2
-0
-4";
-
-    #[test]
-    fn test_part1() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 3;
-        let actual = day.part1()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }
-
-    #[test]
-    fn test_part2() {
-        let mut day = AocDay {
-            input: INPUT.into(),
-            ..Default::default()
-        };
-        day.parse();
-        let expected = 1623178306;
-        let actual = day.part2()[0].parse().unwrap_or_default();
-        assert_eq!(expected, actual);
     }
 }
