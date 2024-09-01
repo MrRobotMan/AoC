@@ -5,7 +5,6 @@ target/
 inputs/
 **/*.rs.bk
 *.pdb
-bacon.toml
 Cargo.lock
 tests.rs
 *2024*

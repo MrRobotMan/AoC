@@ -173,7 +173,7 @@ impl AocDay {
     fn get_next(&self, prev: &(i32, i32), current: &(i32, i32)) -> (i32, i32) {
         let delta_row = current.0 - prev.0;
         let delta_col = current.1 - prev.1;
-        match self.grid[&current] {
+        match self.grid[current] {
             Pipe::Vertical => (current.0 + delta_row, current.1),
             Pipe::Horizontal => (current.0, current.1 + delta_col),
             Pipe::NeElbow => {

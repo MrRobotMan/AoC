@@ -67,11 +67,11 @@ impl Runner for AocDay {
                 .collect(),
         );
         for c in 0..self.width {
-            if self.start == Point::default() && self.groves[0].get(&Point(0, c)).is_none() {
+            if self.start == Point::default() && !self.groves[0].contains_key(&Point(0, c)) {
                 self.start = Point(0, c);
             };
             if self.end == Point::default()
-                && self.groves[0].get(&Point(self.height - 1, c)).is_none()
+                && !self.groves[0].contains_key(&Point(self.height - 1, c))
             {
                 self.end = Point(self.height - 1, c);
             };

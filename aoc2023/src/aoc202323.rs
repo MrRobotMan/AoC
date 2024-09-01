@@ -115,7 +115,7 @@ impl AocDay {
                 path_length = path_length.max(length);
                 continue;
             }
-            for next_move in graph[&node.last().unwrap()].keys() {
+            for next_move in graph[node.last().unwrap()].keys() {
                 if node.contains(next_move) {
                     continue;
                 }

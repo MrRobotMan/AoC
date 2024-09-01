@@ -93,7 +93,7 @@ impl Runner for AocDay {
     fn part1(&mut self) -> Vec<String> {
         let mut pos = Point(0, 0);
         for c in 0..self.width {
-            if self.board.get(&Point(0, c)).is_some() {
+            if self.board.contains_key(&Point(0, c)) {
                 pos.1 = c;
                 break;
             }
@@ -116,7 +116,7 @@ impl Runner for AocDay {
     fn part2(&mut self) -> Vec<String> {
         let mut pos = Point(0, 0);
         for c in 0..self.width {
-            if self.board.get(&Point(0, c)).is_some() {
+            if self.board.contains_key(&Point(0, c)) {
                 pos.1 = c;
                 break;
             }
@@ -158,7 +158,7 @@ impl AocDay {
                         next_pos += heading.value();
                         next_pos.0 = next_pos.0.rem_euclid(self.height); // Wrap the height
                         next_pos.1 = next_pos.1.rem_euclid(self.width); // Wrap the width
-                        if self.board.get(&next_pos).is_some() {
+                        if self.board.contains_key(&next_pos) {
                             // Walk until we're back in the valid area
                             break;
                         }
@@ -214,7 +214,7 @@ impl AocDay {
                 for _ in 0..*distance {
                     let mut next_pos = pos + heading.value();
                     let mut temp_heading = heading;
-                    if self.board.get(&next_pos).is_none() {
+                    if !self.board.contains_key(&next_pos) {
                         // Stepped off the edge
                         if heading == Dir::North {
                             // Faces A, B, D
@@ -293,7 +293,7 @@ impl AocDay {
                         // Hit a wall, exit early.
                         break;
                     }
-                    if self.board.get(&next_pos).is_none() {
+                    if !self.board.contains_key(&next_pos) {
                         // Since I'm not writing the conditions for the test input,
                         // verify we're always on the map.
                         panic!("Ran off the edge at {pos:?} going {heading:?}, mapped to {next_pos:?} going {temp_heading:?}");

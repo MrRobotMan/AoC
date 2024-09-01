@@ -123,7 +123,7 @@ pub fn a_star<S: Searcher<G> + Weighted<G>, G: Graph, H: Fn(&S) -> usize>(
     while !queue.is_empty() {
         let cur = queue
             .iter()
-            .min_by(|a, b| f_score[&a].cmp(&f_score[&b]))
+            .min_by(|a, b| f_score[a].cmp(&f_score[b]))
             .unwrap()
             .clone();
 

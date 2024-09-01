@@ -48,7 +48,7 @@ impl AocDay {
             .map(|(loc, value)| {
                 if offsets(loc, value.len())
                     .iter()
-                    .any(|l| self.symbols.get(l).is_some())
+                    .any(|l| self.symbols.contains_key(l))
                 {
                     value.parse::<u32>().unwrap()
                 } else {

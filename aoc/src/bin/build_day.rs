@@ -220,7 +220,7 @@ fn create_day(year: i32, day: u32) -> io::Result<()> {
 
 #[derive(Default)]
 pub struct AocDay {{
-    input: String,
+    pub(crate) input: String,
 }}
 
 impl AocDay {{
@@ -366,11 +366,17 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                         MainState::Start => {
                             // Write every line until we hit the mod definitions.
                             match temp.write(line.as_bytes()) {
-                                Err(_) => {bytes_written = 0; break},
+                                Err(_) => {
+                                    bytes_written = 0;
+                                    break;
+                                }
                                 Ok(b) => bytes_written += b,
                             };
                             match temp.write(&[b'\n']) {
-                                Err(_) => {bytes_written = 0; break},
+                                Err(_) => {
+                                    bytes_written = 0;
+                                    break;
+                                }
                                 Ok(b) => bytes_written += b,
                             };
                             if line.starts_with("mod") {
@@ -381,17 +387,26 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                             // Once we hit a new line, write the new mod before it.
                             if line.is_empty() {
                                 match temp.write(module.as_bytes()) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 state = MainState::Day;
                             }
                             match temp.write(line.as_bytes()) {
-                                Err(_) => {bytes_written = 0; break},
+                                Err(_) => {
+                                    bytes_written = 0;
+                                    break;
+                                }
                                 Ok(b) => bytes_written += b,
                             };
                             match temp.write(&[b'\n']) {
-                                Err(_) => {bytes_written = 0; break},
+                                Err(_) => {
+                                    bytes_written = 0;
+                                    break;
+                                }
                                 Ok(b) => bytes_written += b,
                             };
                         }
@@ -399,29 +414,47 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                             // Once we hit the defintion of the days array, add the new struct and the days array.
                             if line.contains("let mut days") {
                                 match temp.write(new_struct.as_bytes()) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 match temp.write(&[b'\n']) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 match temp.write(days.as_bytes()) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 match temp.write(&[b'\n']) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 state = MainState::Len;
                             } else {
                                 match temp.write(line.as_bytes()) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 match temp.write(&[b'\n']) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                             }
@@ -430,11 +463,17 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                             // Skip lines until we define the len.
                             if line.contains("let len = days.len() - 1;") {
                                 match temp.write(line.as_bytes()) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 match temp.write(&[b'\n']) {
-                                    Err(_) => {bytes_written = 0; break},
+                                    Err(_) => {
+                                        bytes_written = 0;
+                                        break;
+                                    }
                                     Ok(b) => bytes_written += b,
                                 };
                                 state = MainState::Complete;
@@ -443,11 +482,17 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                         MainState::Complete => {
                             // Write the rest of the file.
                             match temp.write(line.as_bytes()) {
-                                Err(_) => {bytes_written = 0; break},
+                                Err(_) => {
+                                    bytes_written = 0;
+                                    break;
+                                }
                                 Ok(b) => bytes_written += b,
                             };
                             match temp.write(&[b'\n']) {
-                                Err(_) => {bytes_written = 0; break},
+                                Err(_) => {
+                                    bytes_written = 0;
+                                    break;
+                                }
                                 Ok(b) => bytes_written += b,
                             };
                         }
@@ -458,12 +503,13 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                         break;
                     }
                 }
-            };
+            }
         }
         Err(_) => {
-            bytes_written = temp.write(
-                format!(
-                    r#"use std::env;
+            bytes_written = temp
+                .write(
+                    format!(
+                        r#"use std::env;
 
 use aoc::runner::{{run_solution, Runner}};
 
@@ -514,9 +560,10 @@ fn get_args() -> Option<usize> {{
     }}
 }}
         "#
+                    )
+                    .as_bytes(),
                 )
-                .as_bytes(),
-            ).unwrap_or(0);
+                .unwrap_or(0);
         }
     }
     if bytes_written != 0 {
@@ -592,18 +639,14 @@ mod tests {
 
     #[test]
     fn test_successful_data() {
-        let expected = Ok(aoc::read_line("inputs/2015/day01.txt")
-            .iter()
-            .collect::<String>()
-            .trim()
-            .into());
+        let expected = Ok(String::from("bgvyzdsv\n"));
         let _ = dotenv::dotenv();
         let cookie_store = Arc::new(CookieStoreMutex::new(load_cookies()));
         let client = ClientBuilder::new()
             .cookie_provider(cookie_store)
             .build()
             .unwrap();
-        let actual = get_input(&client, 2015, 1);
+        let actual = get_input(&client, 2015, 4);
         assert_eq!(expected, actual);
     }
 }

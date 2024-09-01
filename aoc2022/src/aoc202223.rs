@@ -135,14 +135,14 @@ impl AocDay {
     ///  6 5 4
     fn surrounding(&self, elf: Point<i64>) -> [bool; 8] {
         [
-            self.elf_locations.get(&(elf + Point(-1, -1))).is_none(),
-            self.elf_locations.get(&(elf + Point(-1, 0))).is_none(),
-            self.elf_locations.get(&(elf + Point(-1, 1))).is_none(),
-            self.elf_locations.get(&(elf + Point(0, 1))).is_none(),
-            self.elf_locations.get(&(elf + Point(1, 1))).is_none(),
-            self.elf_locations.get(&(elf + Point(1, 0))).is_none(),
-            self.elf_locations.get(&(elf + Point(1, -1))).is_none(),
-            self.elf_locations.get(&(elf + Point(0, -1))).is_none(),
+            self.elf_locations.contains(&(elf + Point(-1, -1))),
+            self.elf_locations.contains(&(elf + Point(-1, 0))),
+            self.elf_locations.contains(&(elf + Point(-1, 1))),
+            self.elf_locations.contains(&(elf + Point(0, 1))),
+            self.elf_locations.contains(&(elf + Point(1, 1))),
+            self.elf_locations.contains(&(elf + Point(1, 0))),
+            self.elf_locations.contains(&(elf + Point(1, -1))),
+            self.elf_locations.contains(&(elf + Point(0, -1))),
         ]
     }
 }
