@@ -31,14 +31,14 @@ impl Runner for AocDay {
         self.rows = self.report.len();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let bit_totals = bit_totals(&self.report.iter().collect::<Vec<_>>());
         let gamma = BinaryNumber::from_bit_totals(&bit_totals, self.report.len());
         let epsilon = gamma.flip();
         output(gamma.value() * epsilon.value())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut o2 = self.report.iter().collect::<Vec<_>>();
         let mut co2 = self.report.iter().collect::<Vec<_>>();
         let mut idx = 0;

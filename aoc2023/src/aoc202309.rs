@@ -29,7 +29,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut last = self.histories.clone();
         for hist in last.iter_mut() {
             hist.build_next();
@@ -40,7 +40,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut last = self.histories.clone();
         for hist in last.iter_mut() {
             hist.build_next();

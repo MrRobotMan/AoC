@@ -42,12 +42,12 @@ impl Runner for AocDay {
         self.cave = Cave::new(&rocks, (min_col, max_col), max_row, 500);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         self.cave.drop_sand();
         output(self.cave.grains)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         self.cave.set_floor();
         self.cave.drop_sand();
         output(self.cave.grains)

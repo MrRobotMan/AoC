@@ -40,11 +40,11 @@ impl Runner for AocDay {
             .collect::<HashMap<String, (String, String)>>();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.find_cycle("AAA".into()))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(
             self.nodes
                 .keys()

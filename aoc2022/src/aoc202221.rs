@@ -32,11 +32,11 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.monkeys["root"].process(&self.monkeys))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let (left, right) = if let Monkey::Operation(left, _, right) = &self.monkeys["root"] {
             (left, right)
         } else {

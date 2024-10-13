@@ -37,7 +37,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut rng = rand::thread_rng();
         loop {
             let mut vertices = self.vertices.clone();
@@ -91,7 +91,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output("Unsolved")
     }
 }

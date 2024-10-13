@@ -24,7 +24,7 @@ impl Runner for AocDay {
         self.calories = aoc::read_number_records(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(
             self.calories
                 .iter()
@@ -34,7 +34,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut top = self
             .calories
             .iter()

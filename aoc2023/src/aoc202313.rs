@@ -29,11 +29,11 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.patterns.iter().map(Pattern::score).sum::<usize>())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(
             self.patterns
                 .iter()

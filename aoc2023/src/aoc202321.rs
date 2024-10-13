@@ -54,7 +54,7 @@ impl Runner for AocDay {
             }));
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         self.visited.insert(self.garden.start);
         for step in 0..self.steps as i64 {
             self.visited = self
@@ -72,7 +72,7 @@ impl Runner for AocDay {
         output(self.visited.len())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         for step in self.steps as i64..(3 * self.steps as i64) {
             self.visited = self
                 .visited

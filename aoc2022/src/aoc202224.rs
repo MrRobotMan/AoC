@@ -84,7 +84,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let start = State {
             valley: 0,
             cur: self.start,
@@ -98,7 +98,7 @@ impl Runner for AocDay {
         output(path.1)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let there = dijkstra(
             &State {
                 valley: 0,

@@ -29,7 +29,7 @@ impl Runner for AocDay {
         self.instructions = read_lines(&self.input).iter().map(|l| l.into()).collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut position = Point::<i64>::default();
         for instruction in self.instructions.iter() {
             match instruction {
@@ -41,7 +41,7 @@ impl Runner for AocDay {
         output(position.0 * position.1)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut position = Point::<i64>::default();
         let mut aim = 0;
         for instruction in self.instructions.iter() {

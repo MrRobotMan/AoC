@@ -28,7 +28,7 @@ impl Runner for AocDay {
         self.instructions = insructions.lines().map(Instruction::new).collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut layout = self.layout.clone();
         for inst in &self.instructions {
             layout.process_instruction(inst);
@@ -42,7 +42,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut layout = self.layout.clone();
         for inst in &self.instructions {
             layout.process_many(inst);

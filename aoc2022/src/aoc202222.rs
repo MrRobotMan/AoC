@@ -90,7 +90,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut pos = Point(0, 0);
         for c in 0..self.width {
             if self.board.contains_key(&Point(0, c)) {
@@ -113,7 +113,7 @@ impl Runner for AocDay {
         output(score)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut pos = Point(0, 0);
         for c in 0..self.width {
             if self.board.contains_key(&Point(0, c)) {

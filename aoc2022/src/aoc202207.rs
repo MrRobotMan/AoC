@@ -50,7 +50,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut total = 0;
         let mut to_visit = vec![self.tree.clone()];
         while let Some(dir) = to_visit.pop() {
@@ -65,7 +65,7 @@ impl Runner for AocDay {
         output(total)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let disk = 70_000_000;
         let required = 30_000_000;
         let used = self.tree.size_of();

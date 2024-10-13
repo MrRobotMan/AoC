@@ -31,7 +31,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let total = self.cubes.iter().fold(0, |acc, cube| {
             acc + DIR
                 .iter()
@@ -41,7 +41,7 @@ impl Runner for AocDay {
         output(total)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let (mut min_x, mut min_y, mut min_z) = (i64::MAX, i64::MAX, i64::MAX);
         let (mut max_x, mut max_y, mut max_z) = (i64::MIN, i64::MIN, i64::MIN);
         for cube in &self.cubes {

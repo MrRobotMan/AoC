@@ -26,7 +26,7 @@ impl Runner for AocDay {
         self.grid = aoc::read_grid(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut grid = self.grid.clone();
         for row in 1..self.grid.len() {
             self.step_row(&mut grid, row, -1);
@@ -40,7 +40,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut grids = HashSet::new();
         let mut grid = self.grid.clone();
         let mut first_repeat_time = 0;

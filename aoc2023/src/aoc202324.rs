@@ -34,7 +34,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(
             self.hailstones
                 .iter()
@@ -44,7 +44,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         // Thanks to DeadlyRedCube for the excellent walkthrough on the linear algrebra.
         // https://github.com/DeadlyRedCube/AdventOfCode/blob/main/2023/AOC2023/D24.h
         // Find 3 velocity vectors that aren't parallel.

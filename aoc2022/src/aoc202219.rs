@@ -39,7 +39,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(
             self.blueprints
                 .iter()
@@ -47,7 +47,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let bp1 = self.blueprints[&1].collect_geodes(32);
         let bp2 = self.blueprints[&2].collect_geodes(32);
         let bp3 = self.blueprints[&3].collect_geodes(32);

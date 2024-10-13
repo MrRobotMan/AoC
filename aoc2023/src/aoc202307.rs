@@ -31,7 +31,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut hands = self.hands.clone();
         hands.sort();
         output(
@@ -43,7 +43,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut hands = self.hands.iter().map(|h| h.jokers()).collect::<Vec<_>>();
         hands.sort();
         output(

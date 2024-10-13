@@ -43,11 +43,11 @@ impl Runner for AocDay {
             .collect::<Vec<(i64, i64)>>();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.races.iter().map(get_best_times).product::<i64>())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut time = String::new();
         let mut dist = String::new();
         for race in &self.races {

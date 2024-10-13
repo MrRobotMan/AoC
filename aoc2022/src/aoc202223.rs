@@ -47,7 +47,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         for cur in 0..10 {
             self.round(cur);
         }
@@ -58,7 +58,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut rounds = 10; // Aleady done in part 1.
         loop {
             if !self.round(rounds) {

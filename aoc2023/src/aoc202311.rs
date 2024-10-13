@@ -42,7 +42,7 @@ impl Runner for AocDay {
         self.galaxies = galaxies;
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(
             self.galaxies
                 .iter()
@@ -52,7 +52,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(
             self.galaxies
                 .iter()

@@ -32,11 +32,11 @@ impl Runner for AocDay {
         self.symbols = symbols;
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.get_part_total())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.get_gear_ratios())
     }
 }

@@ -36,7 +36,7 @@ impl Runner for AocDay {
         self.target_range = (0, 4_000_000);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut res = 0;
         let mut crossings = HashSet::new();
         for ((x, y), distance) in self.beacons.iter() {
@@ -62,7 +62,7 @@ impl Runner for AocDay {
         output(res)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let scale = 4_000_000;
         for row in self.target_range.0..self.target_range.1 {
             let mut crossings = HashSet::new();

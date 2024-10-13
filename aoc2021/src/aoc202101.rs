@@ -28,11 +28,11 @@ impl Runner for AocDay {
         self.measurements = read_numbers(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(count_increasing(&self.measurements))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let sums = self
             .measurements
             .as_slice()

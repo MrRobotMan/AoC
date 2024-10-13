@@ -49,7 +49,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let disintigratable = self
             .bricks
             .iter()
@@ -63,7 +63,7 @@ impl Runner for AocDay {
         output(disintigratable)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let canditates = self
             .bricks
             .iter()

@@ -1,8 +1,6 @@
-use aho_corasick::AhoCorasick;
 use chrono::{Datelike, FixedOffset, TimeZone, Utc};
-use colored::{ColoredString, Colorize};
 use reqwest::{
-    blocking::{self, Client, ClientBuilder},
+    blocking::{Client, ClientBuilder},
     Url,
 };
 use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
@@ -44,12 +42,6 @@ fn main() {
             build_day(year, day, &client);
         }
     } else {
-        if let Ok(text) = show_instructions(year, day) {
-            for t in text {
-                print!("{t}");
-            }
-            println!();
-        };
         build_day(year, day, &client);
     }
 }
@@ -143,45 +135,8 @@ fn get_input<T: Display, U: Display>(
     }
 }
 
-fn show_instructions(year: i32, day: u32) -> Result<Vec<ColoredString>, InputResult> {
-    let url = match format!("{URL}/{year}/day/{day}").parse::<Url>() {
-        Err(_) => return Err(InputResult::BadUrl),
-        Ok(url) => url,
-    };
-    let response = match blocking::get(url) {
-        Err(_) => return Err(InputResult::RequestError),
-        Ok(resp) => resp,
-    };
-    match response.text() {
-        Ok(text) => Ok(prettify(text)),
-        Err(_) => Err(InputResult::BadText),
-    }
-}
-
-fn prettify(text: String) -> Vec<ColoredString> {
-    let Some((_, clean)) = text.split_once(r#"<article class="day-desc">"#) else {
-        return Vec::new();
-    };
-    let Some((clean, _)) = clean.split_once("</article>") else {
-        return Vec::new();
-    };
-    let patterns = &[
-        "<h2>", "</h2>", "<p>", "</p>", "<code>", "</code>", "<pre>", "</pre>",
-    ];
-    let replace_with = &["", "\n", "", "", "", "", "", ""];
-    let ac = AhoCorasick::new(patterns).unwrap();
-    let clean = ac.replace_all(clean, replace_with);
-    clean
-        .split("<em>")
-        .flat_map(|sub| match sub.split_once("</em>") {
-            Some((bold, regular)) => vec![bold.bold(), regular.normal()],
-            None => vec![sub.bold()],
-        })
-        .collect::<Vec<_>>()
-}
-
 fn load_cookies() -> CookieStore {
-    let cookie_value = env::var("AOC_COOKIE").unwrap();
+    let cookie_value = env::var("ADVENT_OF_CODE_SESSION").unwrap();
     let cookie = RawCookie::build("session", cookie_value)
         .domain(DOMAIN)
         .path("/")
@@ -286,11 +241,11 @@ impl Runner for AocDay {{
         // Parse the input
     }}
 
-    fn part1(&mut self) -> Vec<String> {{
+    fn part1(&mut self) -> String {{
         output("Unsolved")
     }}
 
-    fn part2(&mut self) -> Vec<String> {{
+    fn part2(&mut self) -> String {{
         output("Unsolved")
     }}
 }}
@@ -313,7 +268,7 @@ mod aoc_{year}{day:02}_tests {{
         let mut day = AocDay::new(INPUT);
         day.parse();
         let expected = 0;
-        let actual = day.part1()[0].parse().unwrap_or_default();
+        let actual = day.part1().parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }}
 
@@ -322,7 +277,7 @@ mod aoc_{year}{day:02}_tests {{
         let mut day = AocDay::new(INPUT);
         day.parse();
         let expected = 0;
-        let actual = day.part2()[0].parse().unwrap_or_default();
+        let actual = day.part2().parse().unwrap_or_default();
         assert_eq!(expected, actual);
     }}
 }}
@@ -397,7 +352,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
     let file = format!("aoc{year}/src/main.rs");
     let module = format!("mod aoc{year}{day:02};");
     let new_struct = format!(
-        r#"    let mut day{day:02} = {module}::AocDay::new("aoc{year}/inputs/day{day:02}.txt");"#
+        r#"    let mut day{day:02} = aoc{year}{day:02}::AocDay::new("aoc{year}/inputs/day{day:02}.txt");"#
     );
     let days = builds_days_vec(day);
     let mut temp = BufWriter::new(fs::File::create("tempmain.rs")?);
@@ -663,7 +618,7 @@ mod tests {
     #[test]
     fn test_load_cookies() {
         let _ = dotenv::dotenv();
-        let expected = env::var("AOC_COOKIE").unwrap();
+        let expected = env::var("ADVENT_OF_CODE_SESSION").unwrap();
 
         let cookies = load_cookies();
         let actual = cookies.get_any(DOMAIN, "/", "session").unwrap();

@@ -31,7 +31,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut head = Knot::default();
         let mut tail = Knot::default();
         for (direction, qty) in &self.instructions {
@@ -43,7 +43,7 @@ impl Runner for AocDay {
         output(tail.visited.len())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut knots = vec![Knot::default(); 10];
         for (direction, qty) in &self.instructions {
             for _ in 0..*qty {

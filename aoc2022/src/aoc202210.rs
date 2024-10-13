@@ -32,7 +32,7 @@ impl Runner for AocDay {
         self.machine = Machine::new(40);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut strength = 0;
         let mut check = 20;
         let step = 40;
@@ -58,7 +58,7 @@ impl Runner for AocDay {
         output(strength)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(&self.machine.display)
     }
 }

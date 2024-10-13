@@ -48,11 +48,11 @@ impl Runner for AocDay {
         self.process_lines(lines);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.get_lowest())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.get_lowest_rev())
     }
 }

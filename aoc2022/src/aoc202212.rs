@@ -40,12 +40,12 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         // -2 beacuse the start and end nodes aren't included in the steps taken.
         output(self.grid.breadth_first(self.grid.start).len() - 2)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut paths = Vec::new();
         for (r, row) in self.grid.nodes.iter().enumerate() {
             for (c, node) in row.iter().enumerate() {

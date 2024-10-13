@@ -29,7 +29,7 @@ impl Runner for AocDay {
         self.calibrations = read_lines(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let result = restore_calibrations(
             &self.calibrations,
             &HashMap::from([
@@ -47,7 +47,7 @@ impl Runner for AocDay {
         output(result)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let result = restore_calibrations(
             &self.calibrations,
             &HashMap::from([

@@ -27,7 +27,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut nums = self.encrypted_coordinates.clone();
         let total = nums.len() as i64 - 1;
         for v in &self.encrypted_coordinates {
@@ -53,7 +53,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let key = 811589153;
         let mut nums = self
             .encrypted_coordinates

@@ -6,12 +6,12 @@ use std::{
 pub trait Runner {
     fn name(&self) -> (usize, usize);
     fn parse(&mut self);
-    fn part1(&mut self) -> Vec<String>;
-    fn part2(&mut self) -> Vec<String>;
+    fn part1(&mut self) -> String;
+    fn part2(&mut self) -> String;
 }
 
-pub fn output<T: Display>(output: T) -> Vec<String> {
-    vec![format!("{}", output)]
+pub fn output<T: Display>(output: T) -> String {
+    format!("{}", output)
 }
 
 pub fn run_solution<T: Runner + ?Sized>(solution: &mut T) {
@@ -34,17 +34,18 @@ pub fn run_solution<T: Runner + ?Sized>(solution: &mut T) {
     print_solution(2, &part2, end);
 }
 
-fn print_solution(which: usize, output: &[String], duration: Duration) {
+fn print_solution(which: usize, output: &str, duration: Duration) {
     let ms = duration.as_millis();
     let sec_part = ms / 1000;
     let ms_part = ms % 1000;
 
-    let mut i = output.iter();
-    println!(
-        "{sec_part:3}.{ms_part:03} Part {which}: {}",
-        i.next().unwrap()
-    );
-    for line in i {
-        println!("{:16}{line}", "");
-    }
+    println!("{sec_part:3}.{ms_part:03} Part {which}: {output}");
+    // let mut i = output.iter();
+    // println!(
+    //     "{sec_part:3}.{ms_part:03} Part {which}: {}",
+    //     i.next().unwrap()
+    // );
+    // for line in i {
+    //     println!("{:16}{line}", "");
+    // }
 }

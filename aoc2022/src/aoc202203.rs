@@ -26,7 +26,7 @@ impl Runner for AocDay {
         self.items = aoc::read_lines(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.items.iter().fold(0, |acc, item| {
             let (first, second) = item.split_at(item.len() / 2);
             let first = first.chars().collect::<HashSet<_>>();
@@ -37,7 +37,7 @@ impl Runner for AocDay {
         }))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.items.chunks(3).fold(0, |acc, sacks| {
             let s1 = sacks[0].chars().collect::<HashSet<_>>();
             let s2 = sacks[1].chars().collect::<HashSet<_>>();

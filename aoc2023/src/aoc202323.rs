@@ -62,7 +62,7 @@ impl Runner for AocDay {
         self._dump();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut paths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
         for pair in self.poi.iter().permutations(2) {
             if let Some(path) = bfs(
@@ -88,7 +88,7 @@ impl Runner for AocDay {
         output(self.bad_bfs(&paths))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut paths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
         for pair in self.poi.iter().permutations(2) {
             if let Some(path) = self.get_longest(pair[0], pair[1]) {

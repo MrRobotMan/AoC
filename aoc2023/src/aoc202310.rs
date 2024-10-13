@@ -46,11 +46,11 @@ impl Runner for AocDay {
         self.make_loop();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output((self.mainloop.len() + 1) / 2)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut inside = false;
         let mut count = 0;
         for row in 0..self.size.0 {

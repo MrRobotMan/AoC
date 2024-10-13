@@ -5,7 +5,6 @@ use aoc::runner::{run_solution, Runner};
 mod aoc202101;
 mod aoc202102;
 mod aoc202103;
-
 #[cfg(test)]
 mod tests;
 

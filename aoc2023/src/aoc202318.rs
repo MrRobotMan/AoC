@@ -33,12 +33,12 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let (nodes, border) = build_map(&self.instructions);
         output(get_area(&nodes, border))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let instructions = self
             .instructions
             .iter()

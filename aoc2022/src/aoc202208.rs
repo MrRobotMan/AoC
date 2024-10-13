@@ -47,11 +47,11 @@ impl Runner for AocDay {
         };
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.grid.visible_trees())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.grid.tree_score())
     }
 }

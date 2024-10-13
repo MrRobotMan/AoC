@@ -30,7 +30,7 @@ impl Runner for AocDay {
         self.pattern = aoc::read_line(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let mut rocks = ROCKS.iter().cycle();
         let mut height = 0;
         let mut placed = HashSet::new();
@@ -43,7 +43,7 @@ impl Runner for AocDay {
         output(height)
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let total_drops = 1_000_000_000_000_usize;
         let mut rocks = ROCKS.iter().cycle();
         let mut height = 0;

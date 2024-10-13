@@ -31,7 +31,7 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.packets.iter().enumerate().fold(
             0,
             |acc, (idx, (l, r))| {
@@ -44,7 +44,7 @@ impl Runner for AocDay {
         ))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut packets = Vec::new();
         for (l, r) in self.packets.iter() {
             packets.push(l.clone());

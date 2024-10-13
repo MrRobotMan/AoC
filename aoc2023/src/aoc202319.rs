@@ -39,7 +39,7 @@ impl Runner for AocDay {
         self.parts = lines.map(|p| p.into()).collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(
             self.parts
                 .iter()
@@ -54,7 +54,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.split_workflows())
     }
 }

@@ -40,7 +40,7 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(
             self.rounds
                 .iter()
@@ -48,7 +48,7 @@ impl Runner for AocDay {
         )
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.known.iter().fold(0, |acc, (opp, you)| {
             let you = you.outcome(opp);
             acc + you.value() + you.battle(*opp)

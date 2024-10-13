@@ -27,11 +27,11 @@ impl Runner for AocDay {
             .collect();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.initialization.iter().map(|s| s.score).sum::<usize>())
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let mut boxes = vec![LensBox::default(); 256];
         for step in &self.initialization {
             let lens_box = boxes

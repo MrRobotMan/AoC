@@ -86,11 +86,11 @@ impl Runner for AocDay {
         }
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.send_pulses(1000))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         // The configuration of the modules is a binary couter with 4 branches.
         // The final trigger occurs when all 4 branches send high pulses to the
         // penultimate conjugation module. Calculate when each sends this pulse

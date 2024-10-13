@@ -55,7 +55,7 @@ impl Runner for AocDay {
         println!("{:?}", self.distances);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let path = Path {
             valve: "AA".to_string(),
             turned_on: HashSet::new(),
@@ -65,7 +65,7 @@ impl Runner for AocDay {
         output(self.search.bfs(&path, &self.tunnels, &self.distances))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         let path = Path {
             valve: "AA".to_string(),
             turned_on: HashSet::new(),

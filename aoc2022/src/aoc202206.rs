@@ -26,11 +26,11 @@ impl Runner for AocDay {
         self.signal = aoc::read_line(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.process_signal(4))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.process_signal(14))
     }
 }

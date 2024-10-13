@@ -31,11 +31,11 @@ impl Runner for AocDay {
         self.map = aoc::read_grid(&self.input).into();
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         output(self.get_path(Point(1, 3)))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output(self.get_path(Point(4, 10)))
     }
 }

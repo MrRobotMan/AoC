@@ -24,12 +24,12 @@ impl Runner for AocDay {
         self.burners = aoc::read_lines(&self.input);
     }
 
-    fn part1(&mut self) -> Vec<String> {
+    fn part1(&mut self) -> String {
         let total = self.burners.iter().map(decrypt).sum::<i64>();
         output(encrypt(total))
     }
 
-    fn part2(&mut self) -> Vec<String> {
+    fn part2(&mut self) -> String {
         output("Unsolved")
     }
 }
