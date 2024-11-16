@@ -43,7 +43,7 @@ impl Runner for AocDay {
         for board in self.boards.iter_mut() {
             board.reset()
         }
-        output("Unsolved")
+        output(self.play_until_end())
     }
 }
 
@@ -56,7 +56,23 @@ impl AocDay {
                 }
             }
         }
-        0
+        panic!("No winner found")
+    }
+
+    fn play_until_end(&mut self) -> i64 {
+        let mut skip = vec![];
+        let length = self.boards.len();
+        for draw in &self.draws.clone() {
+            for (idx, board) in self.boards.iter_mut().enumerate() {
+                if !skip.contains(&idx) && board.check_number(*draw) {
+                    skip.push(idx)
+                }
+                if skip.len() == length {
+                    return board.score(*draw);
+                }
+            }
+        }
+        panic!("No winner found")
     }
 }
 
@@ -183,8 +199,7 @@ mod test {
                 },
             ],
         };
-        let expected = 4512;
-        let actual = day.play();
-        assert_eq!(expected, actual);
+        assert_eq!(4512, day.play());
+        assert_eq!(1924, day.play_until_end());
     }
 }
