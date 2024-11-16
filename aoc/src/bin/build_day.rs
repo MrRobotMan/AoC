@@ -249,6 +249,18 @@ impl Runner for AocDay {{
         output("Unsolved")
     }}
 }}
+
+#[cfg(test)]
+mod test {{
+    use super::*;
+
+    #[test]
+    fn test_example1() {{
+        let expected = 0;
+        let actual = 0;
+        assert_eq!(expected, actual);
+    }}
+}}
         "#
     );
     fs::write(file, template)
