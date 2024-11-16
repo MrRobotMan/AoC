@@ -6,7 +6,8 @@ use aoc::{
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    ages: Vec<u64>,
+    ages: [usize; 9],
+    starting: Vec<usize>,
 }
 
 impl AocDay {
@@ -24,7 +25,8 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.ages = read_line_record(&self.input);
+        self.starting = read_line_record(&self.input);
+        self.reset();
     }
 
     fn part1(&mut self) -> String {
@@ -32,7 +34,8 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        self.reset();
+        output(self.simulate(256))
     }
 }
 
@@ -41,20 +44,30 @@ impl AocDay {
         for _ in 0..days {
             self.step_day();
         }
-        self.ages.len()
+        self.ages.iter().sum()
     }
 
     fn step_day(&mut self) {
-        let mut born = 0;
-        for fish in self.ages.iter_mut() {
-            if *fish == 0 {
-                born += 1;
-                *fish = 6;
-            } else {
-                *fish -= 1;
+        let prev = self.ages;
+        for (age, count) in prev.into_iter().enumerate() {
+            match age {
+                0 => {
+                    self.ages[8] = count;
+                    self.ages[6] = count;
+                }
+                7 => self.ages[6] += count,
+                _ => self.ages[age - 1] = count,
             }
         }
-        self.ages.extend_from_slice(&vec![8; born]);
+    }
+
+    fn reset(&mut self) {
+        for age in self.ages.iter_mut() {
+            *age = 0;
+        }
+        for age in &self.starting {
+            self.ages[*age] += 1;
+        }
     }
 }
 
@@ -65,9 +78,12 @@ mod test {
     #[test]
     fn test_example1() {
         let mut day = AocDay {
-            ages: vec![3, 4, 3, 1, 2],
+            ages: [0, 1, 1, 2, 1, 0, 0, 0, 0],
+            starting: vec![3, 4, 3, 1, 2],
             ..Default::default()
         };
         assert_eq!(5934, day.simulate(80));
+        day.reset();
+        assert_eq!(26984457539, day.simulate(256));
     }
 }
