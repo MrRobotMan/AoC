@@ -84,6 +84,18 @@ pub fn read_line<T: AsRef<Path> + Display>(path: T) -> Vec<char> {
     lines(path).chars().filter(|&chr| chr != '\n').collect()
 }
 
+/// Reads the file to a list of chars.
+pub fn read_line_record<T: AsRef<Path> + Display, U: FromStr>(path: T) -> Vec<U>
+where
+    <U as FromStr>::Err: Debug,
+{
+    lines(path)
+        .trim()
+        .split(",")
+        .map(|v| v.parse().expect("Could not parse number {v:?}"))
+        .collect()
+}
+
 /// Reads the file to a grid (vec of vec) of chars
 pub fn read_grid<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
     lines(path).lines().map(|l| l.chars().collect()).collect()

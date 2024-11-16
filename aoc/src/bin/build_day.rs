@@ -77,21 +77,25 @@ fn build_day(year: i32, day: u32, client: &Client) {
     };
     show_preview(&data);
     write_file(file, data);
+    println!("Created input.");
     if let Err(e) = create_day(year, day) {
         println!("{e}");
         return;
     };
-    if let Err(e) = update_tests(year, day) {
-        println!("{e}");
-        return;
-    };
+    println!("Created aoc{year}{day:02}");
+    // if let Err(e) = update_tests(year, day) {
+    //     println!("{e}");
+    //     return;
+    // };
     if let Err(e) = update_main(year, day) {
         println!("{e}");
         return;
     };
+    println!("Updated {year} main");
     if let Err(e) = update_bacon(year) {
         println!("{e}");
     };
+    println!("Updated bacon.")
 }
 
 #[derive(Debug, PartialEq)]
@@ -362,7 +366,7 @@ enum MainState {
 
 fn update_main(year: i32, day: u32) -> io::Result<()> {
     let file = format!("aoc{year}/src/main.rs");
-    let module = format!("mod aoc{year}{day:02};");
+    let module = format!("mod aoc{year}{day:02};\n");
     let new_struct = format!(
         r#"    let mut day{day:02} = aoc{year}{day:02}::AocDay::new("aoc{year}/inputs/day{day:02}.txt");"#
     );
@@ -578,8 +582,8 @@ fn get_args() -> Option<usize> {{
                 .unwrap_or(0);
         }
     }
-    if bytes_written != 0 {
-        fs::rename("tempmain.rs", file)?;
+    if bytes_written != 0 && fs::rename("tempmain.rs", file).is_ok() {
+        return Ok(());
     }
     fs::remove_file("tempmain.rs")
 }
