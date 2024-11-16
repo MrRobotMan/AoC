@@ -5,15 +5,20 @@ use aoc::runner::{run_solution, Runner};
 mod aoc202101;
 mod aoc202102;
 mod aoc202103;
+mod aoc202104;
+mod aoc202105;
+
 #[cfg(test)]
 mod tests;
-mod aoc202104;
+
 fn main() {
     let mut day01 = aoc202101::AocDay::new("aoc2021/inputs/day01.txt");
     let mut day02 = aoc202102::AocDay::new("aoc2021/inputs/day02.txt");
     let mut day03 = aoc202103::AocDay::new("aoc2021/inputs/day03.txt");
     let mut day04 = aoc202104::AocDay::new("aoc2021/inputs/day04.txt");
-    let mut days: Vec<&mut dyn Runner> = vec![&mut day01, &mut day02, &mut day03, &mut day04];
+    let mut day05 = aoc202105::AocDay::new("aoc2021/inputs/day05.txt");
+    let mut days: Vec<&mut dyn Runner> =
+        vec![&mut day01, &mut day02, &mut day03, &mut day04, &mut day05];
     let len = days.len() - 1;
     match get_args() {
         Some(0) => {
