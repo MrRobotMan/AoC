@@ -7,8 +7,8 @@ use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
 use std::{
     env,
     fmt::Display,
-    fs::{self, OpenOptions},
-    io::{self, BufRead, BufReader, BufWriter, Seek, SeekFrom, Write},
+    fs::{self},
+    io::{self, BufRead, BufReader, BufWriter, Write},
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -83,10 +83,6 @@ fn build_day(year: i32, day: u32, client: &Client) {
         return;
     };
     println!("Created aoc{year}{day:02}");
-    // if let Err(e) = update_tests(year, day) {
-    //     println!("{e}");
-    //     return;
-    // };
     if let Err(e) = update_main(year, day) {
         println!("{e}");
         return;
@@ -268,52 +264,6 @@ mod test {{
         "#
     );
     fs::write(file, template)
-}
-
-fn update_tests(year: i32, day: u32) -> io::Result<()> {
-    let mut template = format!(
-        r#"
-mod aoc_{year}{day:02}_tests {{
-    use super::*;
-    use crate::aoc{year}{day:02}::*;
-
-    static INPUT: &str = "";
-
-    #[test]
-    fn test_part1() {{
-        let mut day = AocDay::new(INPUT);
-        day.parse();
-        let expected = 0;
-        let actual = day.part1().parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }}
-
-    #[test]
-    fn test_part2() {{
-        let mut day = AocDay::new(INPUT);
-        day.parse();
-        let expected = 0;
-        let actual = day.part2().parse().unwrap_or_default();
-        assert_eq!(expected, actual);
-    }}
-}}
-"#
-    );
-    match OpenOptions::new()
-        .read(true)
-        .append(true)
-        .create(true)
-        .open(format!("aoc{year}/src/tests.rs"))
-    {
-        Ok(mut file) => {
-            if file.seek(SeekFrom::End(0)).unwrap() == 0 {
-                template.insert_str(0, "use aoc::runner::Runner;\n\n");
-            }
-            file.write_all(template.as_bytes())?;
-        }
-        Err(_) => println!("Could not update tests."),
-    };
-    Ok(())
 }
 
 /// Update bacon.toml to replace the aoc bin target with the year requested.
