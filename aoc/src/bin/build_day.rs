@@ -350,8 +350,8 @@ fn update_bacon(year: i32) -> io::Result<()> {
         }
     }
     writer.flush()?;
-    if bytes_written != 0 {
-        fs::rename("tempbacon.toml", "bacon.toml")?
+    if bytes_written != 0 && fs::rename("tempbacon.toml", "bacon.toml").is_ok() {
+        return Ok(());
     }
     fs::remove_file("tempbacon.toml")
 }
