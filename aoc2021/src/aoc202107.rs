@@ -51,23 +51,11 @@ impl Runner for AocDay {
 
 impl AocDay {
     fn step_total(&self, idx: usize) -> usize {
-        self.crabs
-            .iter()
-            .map(|v| if *v > idx { *v - idx } else { idx - *v })
-            .sum()
+        self.crabs.iter().map(|v| v.abs_diff(idx)).sum()
     }
 
     fn weighted_step_total(&self, idx: usize) -> usize {
-        self.crabs
-            .iter()
-            .map(|v| {
-                if *v > idx {
-                    triangular(*v - idx)
-                } else {
-                    triangular(idx - *v)
-                }
-            })
-            .sum()
+        self.crabs.iter().map(|v| triangular(v.abs_diff(idx))).sum()
     }
 }
 
