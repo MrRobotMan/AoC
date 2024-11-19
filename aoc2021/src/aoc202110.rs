@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aoc::{
     read_lines,
     runner::{output, Runner},
@@ -42,20 +44,28 @@ impl Runner for AocDay {
             self.subsystem_lines
                 .iter()
                 .filter_map(|(_, s)| match s {
-                    State::Error(ch) => Some(ch),
+                    State::Error(ch) => Some(error_score(ch)),
                     _ => None,
                 })
-                .map(score)
                 .sum::<usize>(),
         )
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut scores = self
+            .subsystem_lines
+            .iter()
+            .filter_map(|(_, s)| match s {
+                State::Incomplete(chrs) => Some(correction_score(chrs)),
+                _ => None,
+            })
+            .collect::<Vec<_>>();
+        scores.sort();
+        output(scores[scores.len() / 2])
     }
 }
 
-fn score(ch: &char) -> usize {
+fn error_score(ch: &char) -> usize {
     match ch {
         ')' => 3,
         ']' => 57,
@@ -63,6 +73,11 @@ fn score(ch: &char) -> usize {
         '>' => 25137,
         _ => unreachable!("Unknown bracket {ch}"),
     }
+}
+
+fn correction_score(ch: &[char]) -> usize {
+    let scores = HashMap::from([(')', 1), (']', 2), ('}', 3), ('>', 4)]);
+    ch.iter().fold(0, |acc, v| acc * 5 + scores[v])
 }
 
 enum State {
@@ -84,7 +99,48 @@ impl From<&Vec<char>> for State {
         if closing.is_empty() {
             Self::Complete
         } else {
+            closing.reverse();
             Self::Incomplete(closing)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_correction() {
+        let state = std::convert::Into::<State>::into(
+            &"<{([{{}}[<[[[<>{}]]]>[]]".chars().collect::<Vec<_>>(),
+        );
+        if let State::Incomplete(actual) = state {
+            assert_eq!(vec![']', ')', '}', '>'], actual);
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn test_calc_correction() {
+        let correction = vec![']', ')', '}', '>'];
+        assert_eq!(294, correction_score(&correction))
+    }
+
+    #[test]
+    fn test_example() {
+        let mut day = AocDay::new("[({(<(())[]>[[{[]{<()<>>\n[(()[<>])]({[<{<<[]>>(\n{([(<{}[<>[]}>{[]{[(<()>\n(((({<>}<{<{<>}{[]{[]{}\n[[<[([]))<([[{}[[()]]]\n[{[{({}]{}}([{[{{{}}([]\n{<[[]]>}<{[{[{[]{()[[[]\n[<(<(<(<{}))><([]([]()\n<{([([[(<>()){}]>(<<{{\n<{([{{}}[<[[[<>{}]]]>[]]");
+        day.parse();
+        for (line, res) in &day.subsystem_lines {
+            if let State::Incomplete(add) = res {
+                println!(
+                    "{} -> {} = {}",
+                    line.iter().collect::<String>(),
+                    add.iter().collect::<String>(),
+                    correction_score(add)
+                );
+            }
+        }
+        assert_eq!("288957", day.part2())
     }
 }
