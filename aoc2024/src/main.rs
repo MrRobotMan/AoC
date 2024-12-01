@@ -1,15 +1,12 @@
-use std::env;
+use std::{env, time::Instant};
 
 use aoc::runner::{run_solution, Runner};
 
 mod aoc202401;
 
-#[cfg(test)]
-mod tests;
-
 fn main() {
-    let mut day01 = aoc202401::AocDay::new("inputs/day01.txt");
-    let mut days: Vec<&mut dyn Runner> = vev![&mut day01];
+    let mut day01 = aoc202401::AocDay::new("aoc2024/inputs/day01.txt");
+    let mut days: Vec<&mut dyn Runner> = vec![&mut day01];
     let len = days.len() - 1;
     match get_args() {
         Some(0) => {
@@ -28,12 +25,12 @@ fn main() {
         Some(d) => {
             // Run selected day
             let selected = &mut days[(d - 1).min(len)];
-            run_solution(selected);
+            run_solution(*selected);
         }
         None => {
             // Run last day
             let selected = &mut days[len];
-            run_solution(selected);
+            run_solution(*selected);
         }
     };
 }
@@ -48,4 +45,3 @@ fn get_args() -> Option<usize> {
         _ => None,
     }
 }
-        
