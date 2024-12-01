@@ -7,4 +7,3 @@ inputs/
 *.pdb
 Cargo.lock
 tests.rs
-*2024*
