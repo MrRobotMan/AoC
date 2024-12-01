@@ -268,7 +268,7 @@ mod test {{
 
 /// Update bacon.toml to replace the aoc bin target with the year requested.
 fn update_bacon(year: i32) -> io::Result<()> {
-    let bin = format!("aoc{year}");
+    let bin = format!(r#"    "--bin", "aoc{year}"\n"#);
     let bacon = fs::File::open("bacon.toml")?;
     let reader = BufReader::new(bacon);
     let temp = fs::File::create("tempbacon.toml")?;
@@ -283,9 +283,9 @@ fn update_bacon(year: i32) -> io::Result<()> {
                 break;
             }
             Ok(mut line) => {
-                if let Some(idx) = line.find(&bin) {
-                    line.replace_range(idx..(idx + bin.len()), &bin);
-                };
+                if line.contains("--bin") {
+                    line = bin.clone();
+                }
                 if !line.ends_with('\n') {
                     line.push('\n');
                 }
@@ -475,18 +475,15 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
             bytes_written = temp
                 .write(
                     format!(
-                        r#"use std::env;
-
+                        r#"use std::{{env, time::Instant}};
+                        
 use aoc::runner::{{run_solution, Runner}};
 
 mod aoc{year}01;
 
-#[cfg(test)]
-mod tests;
-
 fn main() {{
     let mut day01 = aoc{year}01::AocDay::new("inputs/day01.txt");
-    let mut days: Vec<&mut dyn Runner> = vev![&mut day01];
+    let mut days: Vec<&mut dyn Runner> = vec![&mut day01];
     let len = days.len() - 1;
     match get_args() {{
         Some(0) => {{
@@ -505,12 +502,12 @@ fn main() {{
         Some(d) => {{
             // Run selected day
             let selected = &mut days[(d - 1).min(len)];
-            run_solution(selected);
+            run_solution(*selected);
         }}
         None => {{
             // Run last day
             let selected = &mut days[len];
-            run_solution(selected);
+            run_solution(*selected);
         }}
     }};
 }}
