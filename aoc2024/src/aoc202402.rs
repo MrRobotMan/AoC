@@ -37,7 +37,7 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(self.reports.iter().filter(|report| dampen(report)).count())
     }
 }
 
@@ -50,6 +50,20 @@ fn check_levels(report: &[i64]) -> bool {
         }
     }
     true
+}
+
+fn dampen(report: &[i64]) -> bool {
+    if check_levels(report) {
+        return true;
+    }
+    for index in 0..report.len() {
+        let mut other = report.to_vec();
+        other.remove(index);
+        if check_levels(&other) {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -74,5 +88,18 @@ mod test {
     #[test]
     fn test_failing_no_change() {
         assert!(!check_levels(&[8, 6, 4, 4, 1]));
+    }
+
+    #[test]
+    fn test_dampen() {
+        let reports = [
+            vec![7, 6, 4, 2, 1],
+            vec![1, 2, 7, 8, 9],
+            vec![9, 7, 6, 2, 1],
+            vec![1, 3, 2, 4, 5],
+            vec![8, 6, 4, 4, 1],
+            vec![1, 3, 6, 7, 9],
+        ];
+        assert_eq!(4, reports.iter().filter(|r| dampen(r)).count());
     }
 }
