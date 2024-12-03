@@ -23,7 +23,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.patterns = aoc::lines(&self.input)
+        self.patterns = aoc::contents(&self.input)
             .split("\n\n")
             .map(Pattern::new)
             .collect();

@@ -22,7 +22,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = aoc::lines(self.input.clone());
+        let lines = aoc::contents(self.input.clone());
         let (layout, insructions) = lines.split_once("\n\n").unwrap();
         self.layout = Layout::new(layout, 4, 1);
         self.instructions = insructions.lines().map(Instruction::new).collect();

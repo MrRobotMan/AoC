@@ -7,7 +7,7 @@ use std::{
 
 /// Read the text of a file to a vec of strings
 pub fn read_lines<T: AsRef<Path> + Display>(path: T) -> Vec<String> {
-    lines(path)
+    contents(path)
         .lines()
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
@@ -15,7 +15,7 @@ pub fn read_lines<T: AsRef<Path> + Display>(path: T) -> Vec<String> {
 }
 
 /// Gather a string of text or file name to a string
-pub fn lines<T: AsRef<Path> + Display>(path: T) -> String {
+pub fn contents<T: AsRef<Path> + Display>(path: T) -> String {
     match path.as_ref().exists() {
         false => path.to_string(),
         true => read_to_string(path).expect("Failed to open file {path}"),
@@ -32,7 +32,7 @@ pub fn read_number_records<T: AsRef<Path> + Display, U: FromStr>(path: T) -> Vec
 where
     <U as FromStr>::Err: Debug,
 {
-    lines(path)
+    contents(path)
         .split("\n\n")
         .filter(|s| !s.is_empty())
         .map(|s| {
@@ -46,7 +46,7 @@ where
 
 /// Return records split by \n\n.
 pub fn read_string_records<T: AsRef<Path> + Display>(path: T) -> Vec<String> {
-    lines(path)
+    contents(path)
         .split("\n\n")
         .filter(|s| !s.is_empty())
         .map(|s| s.to_string())
@@ -81,7 +81,7 @@ where
 
 /// Reads the file to a list of chars.
 pub fn read_line<T: AsRef<Path> + Display>(path: T) -> Vec<char> {
-    lines(path).chars().filter(|&chr| chr != '\n').collect()
+    contents(path).chars().filter(|&chr| chr != '\n').collect()
 }
 
 /// Reads the file to a list of chars.
@@ -89,7 +89,7 @@ pub fn read_line_record<T: AsRef<Path> + Display, U: FromStr>(path: T) -> Vec<U>
 where
     <U as FromStr>::Err: Debug,
 {
-    lines(path)
+    contents(path)
         .trim()
         .split(",")
         .map(|v| v.parse().expect("Could not parse number {v:?}"))
@@ -98,7 +98,10 @@ where
 
 /// Reads the file to a grid (vec of vec) of chars
 pub fn read_grid<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
-    lines(path).lines().map(|l| l.chars().collect()).collect()
+    contents(path)
+        .lines()
+        .map(|l| l.chars().collect())
+        .collect()
 }
 
 /// Reads the file to grids (vec of vec) of char records line delineated
@@ -122,7 +125,7 @@ pub fn read_grid<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
 /// assert_eq!(expected, actual);
 /// ```
 pub fn read_grid_records<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<Vec<char>>> {
-    lines(path)
+    contents(path)
         .split("\n\n")
         .map(|l| l.lines().map(|r| r.chars().collect()).collect())
         .collect()

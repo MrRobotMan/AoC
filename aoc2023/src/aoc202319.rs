@@ -27,7 +27,7 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        let lines = aoc::lines(&self.input);
+        let lines = aoc::contents(&self.input);
         let mut lines = lines.lines();
         for line in lines.by_ref() {
             if line.is_empty() {
