@@ -32,7 +32,7 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(self.grid.count_crosses())
     }
 }
 
@@ -107,6 +107,32 @@ impl Grid {
         }
         count
     }
+
+    fn count_crosses(&self) -> usize {
+        (1..self.rows.len() - 1)
+            .map(|row| {
+                (1..self.columns.len() - 1)
+                    .map(|col| {
+                        if self.rows[row][col] == 'A' && self.check_diags(row, col) {
+                            1
+                        } else {
+                            0
+                        }
+                    })
+                    .sum::<usize>()
+            })
+            .sum()
+    }
+
+    fn check_diags(&self, row: usize, col: usize) -> bool {
+        let negative_diag = (self.rows[row - 1][col - 1] == 'S'
+            && self.rows[row + 1][col + 1] == 'M')
+            || (self.rows[row - 1][col - 1] == 'M' && self.rows[row + 1][col + 1] == 'S');
+        let positive_diag = (self.rows[row - 1][col + 1] == 'S'
+            && self.rows[row + 1][col - 1] == 'M')
+            || (self.rows[row - 1][col + 1] == 'M' && self.rows[row + 1][col - 1] == 'S');
+        negative_diag && positive_diag
+    }
 }
 
 #[cfg(test)]
@@ -129,6 +155,25 @@ mod test {
         ]);
         let expected = 18;
         let actual = grid.search();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_example2() {
+        let grid = Grid::new(vec![
+            vec!['M', 'M', 'M', 'S', 'X', 'X', 'M', 'A', 'S', 'M'],
+            vec!['M', 'S', 'A', 'M', 'X', 'M', 'S', 'M', 'S', 'A'],
+            vec!['A', 'M', 'X', 'S', 'X', 'M', 'A', 'A', 'M', 'M'],
+            vec!['M', 'S', 'A', 'M', 'A', 'S', 'M', 'S', 'M', 'X'],
+            vec!['X', 'M', 'A', 'S', 'A', 'M', 'X', 'A', 'M', 'M'],
+            vec!['X', 'X', 'A', 'M', 'M', 'X', 'X', 'A', 'M', 'A'],
+            vec!['S', 'M', 'S', 'M', 'S', 'A', 'S', 'X', 'S', 'S'],
+            vec!['S', 'A', 'X', 'A', 'M', 'A', 'S', 'A', 'A', 'A'],
+            vec!['M', 'A', 'M', 'M', 'M', 'X', 'M', 'M', 'M', 'M'],
+            vec!['M', 'X', 'M', 'X', 'A', 'X', 'M', 'A', 'S', 'X'],
+        ]);
+        let expected = 9;
+        let actual = grid.count_crosses();
         assert_eq!(expected, actual);
     }
 }
