@@ -4,11 +4,13 @@ use aoc::runner::{run_solution, Runner};
 
 mod aoc202401;
 mod aoc202402;
+mod aoc202403;
 
 fn main() {
     let mut day01 = aoc202401::AocDay::new("aoc2024/inputs/day01.txt");
     let mut day02 = aoc202402::AocDay::new("aoc2024/inputs/day02.txt");
-    let mut days: Vec<&mut dyn Runner> = vec![&mut day01, &mut day02];
+    let mut day03 = aoc202403::AocDay::new("aoc2024/inputs/day03.txt");
+    let mut days: Vec<&mut dyn Runner> = vec![&mut day01, &mut day02, &mut day03];
     let len = days.len() - 1;
     match get_args() {
         Some(0) => {
