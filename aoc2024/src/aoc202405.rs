@@ -50,7 +50,7 @@ impl Runner for AocDay {
             self.pages
                 .iter()
                 .filter(|p| self.ordered(p))
-                .map(|p| p[p.len() / 2 + 1])
+                .map(|p| p[p.len() / 2])
                 .sum::<i32>(),
         )
     }
