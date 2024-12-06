@@ -11,6 +11,7 @@ pub struct AocDay {
     pub(crate) input: String,
     lab: HashMap<Point<i64>, char>,
     start: Point<i64>,
+    nodes_walked: HashSet<Point<i64>>,
 }
 
 impl AocDay {
@@ -44,6 +45,43 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
+        let mut turns = CARDINALS.iter().cycle();
+        let mut dir = turns.next().unwrap();
+        let mut cur = self.start;
+        while let Some(p) = self.lab.get(&cur) {
+            match p {
+                '#' => {
+                    cur -= *dir; // Back up.
+                    dir = turns.next().unwrap();
+                }
+                _ => {
+                    self.nodes_walked.insert(cur);
+                    cur += *dir;
+                }
+            }
+        }
+        self.nodes_walked = self.walk().unwrap();
+        output(self.nodes_walked.len())
+    }
+
+    fn part2(&mut self) -> String {
+        let mut valid_new_obstacle = 0;
+        for node in &self.nodes_walked {
+            if *node == self.start {
+                continue;
+            }
+            self.lab.entry(*node).and_modify(|ch| *ch = '#');
+            if self.walk().is_none() {
+                valid_new_obstacle += 1;
+            }
+            self.lab.entry(*node).and_modify(|ch| *ch = '.');
+        }
+        output(valid_new_obstacle)
+    }
+}
+
+impl AocDay {
+    fn walk(&self) -> Option<HashSet<Point<i64>>> {
         let mut visited = HashSet::new();
         let mut turns = CARDINALS.iter().cycle();
         let mut dir = turns.next().unwrap();
@@ -55,16 +93,14 @@ impl Runner for AocDay {
                     dir = turns.next().unwrap();
                 }
                 _ => {
-                    visited.insert(cur);
+                    if !visited.insert((cur, dir)) {
+                        return None; // Found a loop
+                    };
                     cur += *dir;
                 }
             }
         }
-        output(visited.len())
-    }
-
-    fn part2(&mut self) -> String {
-        output("Unsolved")
+        Some(visited.iter().map(|(p, _)| *p).collect())
     }
 }
 
@@ -90,6 +126,28 @@ mod test {
         day.parse();
         let expected = "41";
         let actual = day.part1();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_example2() {
+        let mut day = AocDay::new(
+            "....#.....
+.........#
+..........
+..#.......
+.......#..
+..........
+.#..^.....
+........#.
+#.........
+......#...
+",
+        );
+        day.parse();
+        day.part1();
+        let expected = "6";
+        let actual = day.part2();
         assert_eq!(expected, actual);
     }
 }
