@@ -2,6 +2,24 @@ use std::str::FromStr;
 
 use num::{Integer, Num};
 
+/// N, E, S, W Steps
+pub const CARDINALS: [Point<i64>; 4] = [Point(-1, 0), Point(0, 1), Point(1, 0), Point(0, -1)];
+
+/// NE, SE, SW, NW Steps
+pub const ORDINALS: [Point<i64>; 4] = [Point(-1, 1), Point(1, 1), Point(1, -1), Point(-1, -1)];
+
+/// N, NE, E, SE, S, SW, W, NW Steps
+pub const COMPASS: [Point<i64>; 8] = [
+    Point(-1, 0),
+    Point(-1, 1),
+    Point(0, 1),
+    Point(1, 1),
+    Point(1, 0),
+    Point(1, -1),
+    Point(0, -1),
+    Point(-1, -1),
+];
+
 /// Directions you can move in a grid
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash, Ord, PartialOrd)]
 pub enum Dir {
