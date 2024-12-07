@@ -45,22 +45,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let mut turns = CARDINALS.iter().cycle();
-        let mut dir = turns.next().unwrap();
-        let mut cur = self.start;
-        while let Some(p) = self.lab.get(&cur) {
-            match p {
-                '#' => {
-                    cur -= *dir; // Back up.
-                    dir = turns.next().unwrap();
-                }
-                _ => {
-                    self.nodes_walked.insert(cur);
-                    cur += *dir;
-                }
-            }
-        }
-        self.nodes_walked = self.walk().unwrap();
+        self.nodes_walked = self.walk().unwrap().iter().map(|(p, _)| *p).collect();
         output(self.nodes_walked.len())
     }
 
@@ -81,7 +66,7 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn walk(&self) -> Option<HashSet<Point<i64>>> {
+    fn walk(&self) -> Option<HashSet<(Point<i64>, Point<i64>)>> {
         let mut visited = HashSet::new();
         let mut turns = CARDINALS.iter().cycle();
         let mut dir = turns.next().unwrap();
@@ -93,14 +78,14 @@ impl AocDay {
                     dir = turns.next().unwrap();
                 }
                 _ => {
-                    if !visited.insert((cur, dir)) {
+                    if !visited.insert((cur, *dir)) {
                         return None; // Found a loop
                     };
                     cur += *dir;
                 }
             }
         }
-        Some(visited.iter().map(|(p, _)| *p).collect())
+        Some(visited)
     }
 }
 
