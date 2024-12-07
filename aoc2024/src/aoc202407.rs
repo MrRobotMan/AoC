@@ -41,7 +41,7 @@ impl Runner for AocDay {
             self.equations
                 .iter()
                 .map(|(validate, values)| {
-                    if calibration(values).iter().any(|v| v == validate) {
+                    if calibration(*validate, values, false) {
                         *validate
                     } else {
                         0
@@ -52,20 +52,47 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(
+            self.equations
+                .iter()
+                .map(|(validate, values)| {
+                    if calibration(*validate, values, true) {
+                        *validate
+                    } else {
+                        0
+                    }
+                })
+                .sum::<i64>(),
+        )
     }
 }
 
-fn calibration(values: &[i64]) -> Vec<i64> {
+fn calibration(check: i64, values: &[i64], concat: bool) -> bool {
     match values.len() {
-        2 => vec![values[0] + values[1], values[0] * values[1]],
+        2 => {
+            values.iter().sum::<i64>() == check
+                || values.iter().product::<i64>() == check
+                || (concat && values[0] * 10_i64.pow(values[1].ilog10() + 1) + values[1] == check)
+        }
         _ => {
-            let sub_res = calibration(&values[..2]);
-            let mut left = vec![sub_res[0]];
-            left.extend(values[2..].iter());
-            let mut right = vec![sub_res[1]];
-            right.extend(values[2..].iter());
-            [calibration(&left), calibration(&right)].concat()
+            calibration(
+                check,
+                &[vec![values[0] + values[1]], values[2..].to_vec()].concat(),
+                concat,
+            ) || calibration(
+                check,
+                &[vec![values[0] * values[1]], values[2..].to_vec()].concat(),
+                concat,
+            ) || (concat
+                && calibration(
+                    check,
+                    &[
+                        vec![values[0] * 10_i64.pow(values[1].ilog10() + 1) + values[1]],
+                        values[2..].to_vec(),
+                    ]
+                    .concat(),
+                    concat,
+                ))
         }
     }
 }
@@ -76,23 +103,34 @@ mod test {
 
     #[test]
     fn test_1() {
-        let expected = vec![9, 20];
-        let actual = calibration(&[4, 5]);
+        let expected = true;
+        let actual = calibration(9, &[4, 5], false);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_2() {
-        let expected = vec![14, 45, 25, 100];
-        let actual = calibration(&[4, 5, 5]);
+        let expected = true;
+        let actual = calibration(25, &[4, 5, 5], false);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_3() {
-        let expected = vec![53, 660, 292, 5440, 102, 1640, 1076, 21120];
-        let actual = calibration(&[11, 6, 16, 20]);
+        let expected = true;
+        let actual = calibration(292, &[11, 6, 16, 20], false);
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_4() {
+        assert!(!calibration(156, &[15, 6], false));
+        assert!(calibration(156, &[15, 6], true));
+    }
+
+    #[test]
+    fn test_5() {
+        assert!(calibration(7290, &[6, 8, 6, 15], true))
     }
 
     #[test]
@@ -113,6 +151,27 @@ mod test {
         };
         let expected = "3749";
         let actual = day.part1();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_example2() {
+        let mut day = AocDay {
+            equations: vec![
+                (190, vec![10, 19]),
+                (3267, vec![81, 40, 27]),
+                (83, vec![17, 5]),
+                (156, vec![15, 6]),
+                (7290, vec![6, 8, 6, 15]),
+                (161011, vec![16, 10, 13]),
+                (192, vec![17, 8, 14]),
+                (21037, vec![9, 7, 18, 13]),
+                (292, vec![11, 6, 16, 20]),
+            ],
+            ..Default::default()
+        };
+        let expected = "11387";
+        let actual = day.part2();
         assert_eq!(expected, actual);
     }
 }
