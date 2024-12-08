@@ -66,10 +66,41 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut antinodes = HashSet::new();
+        self.antennae.values().for_each(|arr| {
+            arr.iter().enumerate().for_each(|(idx, left)| {
+                arr[idx + 1..].iter().for_each(|right| {
+                    self.get_all_antinodes(*left, *right)
+                        .iter()
+                        .for_each(|node| {
+                            antinodes.insert(*node);
+                        });
+                })
+            })
+        });
+        output(antinodes.len())
     }
 }
 
+impl AocDay {
+    fn get_all_antinodes(&self, a: Point<i64>, b: Point<i64>) -> HashSet<Point<i64>> {
+        let delta = b - a; // Point(row, col) => (dy, dx)
+        if delta.1 == 0 {
+            panic!("Slope vertical! {a:?}, {b:?}") // Let's see if we have vertical lines.
+        }
+        let slope = delta.0 as f64 / delta.1 as f64;
+        let mut res = HashSet::new();
+        for col in 0..=self.max.1 {
+            // Max stored as (rows, cols)...max.1 = cols = x
+            let row = slope * ((col - a.1) as f64) + a.0 as f64; // (y-y1) = m*(x-x1) => y = m*(x-x1) + y1
+            if row.fract() == 0.0 && row as i64 <= self.max.0 && row as i64 >= 0 {
+                // Row is an integer and in bounds
+                res.insert(Point(row as i64, col));
+            }
+        }
+        res
+    }
+}
 fn get_antinodes(a: Point<i64>, b: Point<i64>) -> [Point<i64>; 2] {
     let delta = b - a;
     [a - delta, b + delta]
@@ -108,10 +139,7 @@ mod test {
     }
 
     #[test]
-    fn test_get_antinodes5() {}
-
-    #[test]
-    fn test_parse() {
+    fn test_ex2() {
         let mut day = AocDay::new(
             "............
 ........0...
@@ -128,14 +156,6 @@ mod test {
 ",
         );
         day.parse();
-        let expected = HashMap::from([
-            (
-                '0',
-                vec![Point(1, 8), Point(2, 5), Point(3, 7), Point(4, 4)],
-            ),
-            ('A', vec![Point(5, 6), Point(8, 8), Point(9, 9)]),
-        ]);
-        assert_eq!(expected, day.antennae);
-        assert_eq!("14", day.part1());
+        assert_eq!("34", day.part2());
     }
 }
