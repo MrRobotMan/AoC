@@ -21,29 +21,27 @@ impl AocDay {
         }
     }
 
-    fn paths(&self, loc: Point<i64>) -> usize {
-        let mut queue = vec![loc];
+    fn path_counts(&self, loc: Point<i64>, count_unique: bool) -> usize {
+        let mut queue = vec![(loc, 0)];
         let mut visited = HashSet::new();
-        let mut nines = HashSet::new();
-        while let Some(loc) = queue.pop() {
-            visited.insert(loc);
-            for dir in CARDINALS {
-                let point = loc + dir;
-                if visited.contains(&point) {
+        let mut nines = 0;
+        while let Some((loc, elev)) = queue.pop() {
+            if count_unique || visited.insert(loc) {
+                if elev == 9 {
+                    nines += 1;
                     continue;
                 }
-                if let Some(v) = self.map.get(&point) {
-                    if v.saturating_sub(self.map[&loc]) == 1 {
-                        if *v == 9 {
-                            nines.insert(point);
-                        } else {
-                            queue.push(point);
+                for dir in CARDINALS {
+                    let point = loc + dir;
+                    if let Some(v) = self.map.get(&point) {
+                        if elev + 1 == *v {
+                            queue.push((point, *v));
                         }
                     }
                 }
             }
         }
-        nines.len()
+        nines
     }
 }
 
@@ -67,13 +65,18 @@ impl Runner for AocDay {
         output(
             self.zeroes
                 .iter()
-                .map(|loc| self.paths(*loc))
+                .map(|loc| self.path_counts(*loc, false))
                 .sum::<usize>(),
         )
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(
+            self.zeroes
+                .iter()
+                .map(|loc| self.path_counts(*loc, true))
+                .sum::<usize>(),
+        )
     }
 }
 
@@ -95,5 +98,6 @@ mod test {
         );
         day.parse();
         assert_eq!("36", day.part1());
+        assert_eq!("81", day.part2());
     }
 }
