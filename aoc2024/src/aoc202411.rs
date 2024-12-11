@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use aoc::{
     read_lines,
     runner::{output, Runner},
@@ -33,13 +35,27 @@ impl Runner for AocDay {
     fn part1(&mut self) -> String {
         let mut stones = self.stones.clone();
         for _ in 0..25 {
-            stones = blink(&stones)
+            stones = blink(&stones);
         }
         output(stones.len())
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut stones = self
+            .stones
+            .iter()
+            .map(|v| (*v, 1))
+            .collect::<HashMap<u64, u64>>();
+        for _ in 0..75 {
+            let mut next = HashMap::new();
+            for (stone, count) in stones {
+                for new in split(stone) {
+                    next.entry(new).and_modify(|c| *c += count).or_insert(count);
+                }
+            }
+            stones = next;
+        }
+        output(stones.values().sum::<u64>())
     }
 }
 
