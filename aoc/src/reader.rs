@@ -104,6 +104,14 @@ pub fn read_grid<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<char>> {
         .collect()
 }
 
+/// Reads the file to a grid (vec of vec) of chars
+pub fn read_grid_numbers<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<u8>> {
+    contents(path)
+        .lines()
+        .map(|l| l.chars().map(|c| c as u8 - b'0').collect())
+        .collect()
+}
+
 /// Reads the file to grids (vec of vec) of char records line delineated
 /// ```
 /// let input = "..##.

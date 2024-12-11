@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use num::{Integer, Num};
 
@@ -113,6 +113,12 @@ impl<T: Num + Copy + std::ops::SubAssign> std::ops::SubAssign for Point<T> {
     fn sub_assign(&mut self, rhs: Self) {
         self.0 -= rhs.0;
         self.1 -= rhs.1;
+    }
+}
+
+impl<T: Num + Display> Display for Point<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.0, self.1)
     }
 }
 
