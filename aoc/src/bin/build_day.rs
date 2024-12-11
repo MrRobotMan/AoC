@@ -338,7 +338,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                 }
                                 Ok(b) => bytes_written += b,
                             };
-                            match temp.write(&[b'\n']) {
+                            match temp.write(b"\n") {
                                 Err(_) => {
                                     bytes_written = 0;
                                     break;
@@ -368,7 +368,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                 }
                                 Ok(b) => bytes_written += b,
                             };
-                            match temp.write(&[b'\n']) {
+                            match temp.write(b"\n") {
                                 Err(_) => {
                                     bytes_written = 0;
                                     break;
@@ -386,7 +386,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                     }
                                     Ok(b) => bytes_written += b,
                                 };
-                                match temp.write(&[b'\n']) {
+                                match temp.write(b"\n") {
                                     Err(_) => {
                                         bytes_written = 0;
                                         break;
@@ -400,7 +400,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                     }
                                     Ok(b) => bytes_written += b,
                                 };
-                                match temp.write(&[b'\n']) {
+                                match temp.write(b"\n") {
                                     Err(_) => {
                                         bytes_written = 0;
                                         break;
@@ -416,7 +416,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                     }
                                     Ok(b) => bytes_written += b,
                                 };
-                                match temp.write(&[b'\n']) {
+                                match temp.write(b"\n") {
                                     Err(_) => {
                                         bytes_written = 0;
                                         break;
@@ -435,7 +435,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                     }
                                     Ok(b) => bytes_written += b,
                                 };
-                                match temp.write(&[b'\n']) {
+                                match temp.write(b"\n") {
                                     Err(_) => {
                                         bytes_written = 0;
                                         break;
@@ -454,7 +454,7 @@ fn update_main(year: i32, day: u32) -> io::Result<()> {
                                 }
                                 Ok(b) => bytes_written += b,
                             };
-                            match temp.write(&[b'\n']) {
+                            match temp.write(b"\n") {
                                 Err(_) => {
                                     bytes_written = 0;
                                     break;
