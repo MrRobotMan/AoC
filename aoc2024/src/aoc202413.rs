@@ -34,14 +34,20 @@ impl Runner for AocDay {
         output(
             self.machines
                 .iter()
-                .filter_map(|m| m.tokens_needed())
+                .filter_map(|m| m.tokens_needed(true))
                 .map(|(a, b)| 3 * a + b)
                 .sum::<i64>(),
         )
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(
+            self.machines
+                .iter()
+                .filter_map(|m| m.tokens_needed(false))
+                .map(|(a, b)| 3 * a + b)
+                .sum::<i64>(),
+        )
     }
 }
 
@@ -53,7 +59,7 @@ struct Machine {
 }
 
 impl Machine {
-    fn tokens_needed(&self) -> Option<(i64, i64)> {
+    fn tokens_needed(&self, limit: bool) -> Option<(i64, i64)> {
         // px = a*ax + b*bx
         // py = a*ay + b*by
         // a = (px - b*bx)/ax
@@ -65,10 +71,17 @@ impl Machine {
         // b = (ax*py - ay*px) / (ax*by-ay*bx)
         let (ax, ay) = self.button_a;
         let (bx, by) = self.button_b;
-        let (px, py) = self.prize;
+        let (mut px, mut py) = self.prize;
+        if !limit {
+            px += 10_000_000_000_000;
+            py += 10_000_000_000_000;
+        }
         let b = (ax * py - ay * px) / (ax * by - ay * bx);
         let a = (px - b * bx) / ax;
         if a * ax + b * bx == px && a * ay + b * by == py {
+            if limit && a > 100 && b > 100 {
+                return None;
+            }
             Some((a, b))
         } else {
             None
@@ -113,7 +126,7 @@ mod test {
             button_b: (22, 67),
             prize: (8400, 5400),
         };
-        let actual = machine.tokens_needed();
+        let actual = machine.tokens_needed(true);
         assert_eq!(expected, actual);
     }
 
@@ -125,7 +138,7 @@ mod test {
             button_b: (67, 21),
             prize: (12748, 12176),
         };
-        let actual = machine.tokens_needed();
+        let actual = machine.tokens_needed(true);
         assert_eq!(expected, actual);
     }
 }
