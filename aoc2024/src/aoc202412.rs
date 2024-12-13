@@ -40,15 +40,14 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
+        let mut farm = self.farm.clone();
         let mut regions = vec![];
         for row in 0..self.rows {
             for col in 0..self.cols {
-                if self.farm[&Point(row, col)].1.is_none() {
-                    let region = find_region(&self.farm, Point(row, col));
+                if farm[&Point(row, col)].1.is_none() {
+                    let region = find_region(&farm, Point(row, col));
                     for point in &region {
-                        self.farm
-                            .entry(*point)
-                            .and_modify(|v| v.1 = Some(regions.len()));
+                        farm.entry(*point).and_modify(|v| v.1 = Some(regions.len()));
                     }
                     regions.push(region);
                 }
@@ -62,7 +61,20 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut farm = self.farm.clone();
+        let mut regions = vec![];
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                if farm[&Point(row, col)].1.is_none() {
+                    let region = find_region(&farm, Point(row, col));
+                    for point in &region {
+                        farm.entry(*point).and_modify(|v| v.1 = Some(regions.len()));
+                    }
+                    regions.push(region);
+                }
+            }
+        }
+        output(regions.iter().fold(0, |acc, r| acc + (r.len() * sides(r))))
     }
 }
 
@@ -76,6 +88,40 @@ fn get_perimeter(region: &[Point<i64>]) -> usize {
         }
     }
     edges
+}
+
+fn sides(region: &[Point<i64>]) -> usize {
+    if region.len() == 1 {
+        return 4;
+    }
+    let mut edges = HashSet::new();
+    let mut sides = 0;
+    for point in region.iter() {
+        for dir in CARDINALS {
+            if !region.contains(&(*point + dir)) {
+                edges.insert((*point, *point + dir));
+            }
+        }
+    }
+    while let Some(s) = edges.iter().copied().next() {
+        let (mut inside, mut outside) = s;
+        let (forward, back) = if inside.0 == outside.0 {
+            (CARDINALS[0], CARDINALS[2])
+        } else {
+            (CARDINALS[1], CARDINALS[3])
+        };
+        let mut step = (inside + forward, outside + forward);
+        while edges.contains(&step) {
+            (inside, outside) = step;
+            step = (inside + forward, outside + forward);
+        }
+        sides += 1;
+        while edges.remove(&(inside, outside)) {
+            (inside, outside) = (inside + back, outside + back)
+        }
+    }
+
+    sides
 }
 
 fn find_region(
@@ -153,6 +199,7 @@ mod test {
         ];
         let actual = find_region(&get_farm(), Point(0, 0));
         assert_eq!(expected, actual);
+        assert_eq!(10, sides(&actual))
     }
 
     #[test]
@@ -206,8 +253,7 @@ mod test {
             cols: 10,
             ..Default::default()
         };
-        let expected = "1930";
-        let actual = day.part1();
-        assert_eq!(expected, actual);
+        assert_eq!("1930", day.part1());
+        assert_eq!("1206", day.part2());
     }
 }
