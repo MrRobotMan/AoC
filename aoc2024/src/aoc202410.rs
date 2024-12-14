@@ -3,14 +3,14 @@ use std::collections::{HashMap, HashSet};
 use aoc::{
     read_grid_numbers,
     runner::{output, Runner},
-    Point, CARDINALS,
+    Vec2D, CARDINALS,
 };
 
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    map: HashMap<Point<i64>, u8>,
-    zeroes: Vec<Point<i64>>,
+    map: HashMap<Vec2D<i64>, u8>,
+    zeroes: Vec<Vec2D<i64>>,
 }
 
 impl AocDay {
@@ -21,7 +21,7 @@ impl AocDay {
         }
     }
 
-    fn path_counts(&self, loc: Point<i64>, count_unique: bool) -> usize {
+    fn path_counts(&self, loc: Vec2D<i64>, count_unique: bool) -> usize {
         let mut queue = vec![(loc, 0)];
         let mut visited = HashSet::new();
         let mut nines = 0;
@@ -53,9 +53,9 @@ impl Runner for AocDay {
     fn parse(&mut self) {
         for (r, row) in read_grid_numbers(&self.input).into_iter().enumerate() {
             for (c, value) in row.into_iter().enumerate() {
-                self.map.insert(Point(r as i64, c as i64), value);
+                self.map.insert(Vec2D(r as i64, c as i64), value);
                 if value == 0 {
-                    self.zeroes.push(Point(r as i64, c as i64));
+                    self.zeroes.push(Vec2D(r as i64, c as i64));
                 }
             }
         }

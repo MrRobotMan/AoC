@@ -3,15 +3,15 @@ use std::collections::{HashMap, HashSet};
 use aoc::{
     read_grid,
     runner::{output, Runner},
-    Point, CARDINALS,
+    Vec2D, CARDINALS,
 };
 
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    lab: HashMap<Point<i64>, char>,
-    start: Point<i64>,
-    nodes_walked: HashSet<Point<i64>>,
+    lab: HashMap<Vec2D<i64>, char>,
+    start: Vec2D<i64>,
+    nodes_walked: HashSet<Vec2D<i64>>,
 }
 
 impl AocDay {
@@ -33,11 +33,11 @@ impl Runner for AocDay {
             for (c, ch) in row.iter().enumerate() {
                 match ch {
                     '^' => {
-                        self.start = Point(r as i64, c as i64);
-                        self.lab.insert(Point(r as i64, c as i64), '.');
+                        self.start = Vec2D(r as i64, c as i64);
+                        self.lab.insert(Vec2D(r as i64, c as i64), '.');
                     }
                     _ => {
-                        self.lab.insert(Point(r as i64, c as i64), *ch);
+                        self.lab.insert(Vec2D(r as i64, c as i64), *ch);
                     }
                 }
             }
@@ -66,7 +66,7 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn walk(&self) -> Option<HashSet<(Point<i64>, Point<i64>)>> {
+    fn walk(&self) -> Option<HashSet<(Vec2D<i64>, Vec2D<i64>)>> {
         let mut visited = HashSet::new();
         let mut turns = CARDINALS.iter().cycle();
         let mut dir = turns.next().unwrap();

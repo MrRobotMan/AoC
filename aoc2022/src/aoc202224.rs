@@ -1,6 +1,6 @@
 use aoc::{
     runner::{output, Runner},
-    Dir, Point,
+    Dir, Vec2D,
 };
 use pathfinding::prelude::dijkstra;
 use std::{collections::HashMap, hash::Hash};
@@ -8,11 +8,11 @@ use std::{collections::HashMap, hash::Hash};
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    pub(crate) groves: Vec<HashMap<Point<i64>, Vec<Valley>>>,
+    pub(crate) groves: Vec<HashMap<Vec2D<i64>, Vec<Valley>>>,
     pub(crate) height: i64,
     pub(crate) width: i64,
-    pub(crate) start: Point<i64>,
-    pub(crate) end: Point<i64>,
+    pub(crate) start: Vec2D<i64>,
+    pub(crate) end: Vec2D<i64>,
 }
 
 impl AocDay {
@@ -41,21 +41,21 @@ impl Runner for AocDay {
                         .filter_map(|(c, ch)| {
                             self.width = self.width.max(c as i64 + 1);
                             match ch {
-                                '#' => Some((Point(r as i64, c as i64), vec![Valley::Wall])),
+                                '#' => Some((Vec2D(r as i64, c as i64), vec![Valley::Wall])),
                                 '^' => Some((
-                                    Point(r as i64, c as i64),
+                                    Vec2D(r as i64, c as i64),
                                     vec![Valley::Blizzard(Dir::North)],
                                 )),
                                 'v' => Some((
-                                    Point(r as i64, c as i64),
+                                    Vec2D(r as i64, c as i64),
                                     vec![Valley::Blizzard(Dir::South)],
                                 )),
                                 '<' => Some((
-                                    Point(r as i64, c as i64),
+                                    Vec2D(r as i64, c as i64),
                                     vec![Valley::Blizzard(Dir::West)],
                                 )),
                                 '>' => Some((
-                                    Point(r as i64, c as i64),
+                                    Vec2D(r as i64, c as i64),
                                     vec![Valley::Blizzard(Dir::East)],
                                 )),
                                 '.' => None,
@@ -67,13 +67,13 @@ impl Runner for AocDay {
                 .collect(),
         );
         for c in 0..self.width {
-            if self.start == Point::default() && !self.groves[0].contains_key(&Point(0, c)) {
-                self.start = Point(0, c);
+            if self.start == Vec2D::default() && !self.groves[0].contains_key(&Vec2D(0, c)) {
+                self.start = Vec2D(0, c);
             };
-            if self.end == Point::default()
-                && !self.groves[0].contains_key(&Point(self.height - 1, c))
+            if self.end == Vec2D::default()
+                && !self.groves[0].contains_key(&Vec2D(self.height - 1, c))
             {
-                self.end = Point(self.height - 1, c);
+                self.end = Vec2D(self.height - 1, c);
             };
         }
         let mut next = Some(self.generate_maps());
@@ -146,7 +146,7 @@ impl AocDay {
         res
     }
 
-    fn generate_maps(&self) -> HashMap<Point<i64>, Vec<Valley>> {
+    fn generate_maps(&self) -> HashMap<Vec2D<i64>, Vec<Valley>> {
         let cur = self.groves.last().unwrap();
         let mut valley = HashMap::new();
         for (point, vals) in cur {
@@ -184,7 +184,7 @@ impl AocDay {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct State {
     valley: usize,
-    cur: Point<i64>,
+    cur: Vec2D<i64>,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]

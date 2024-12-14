@@ -3,13 +3,13 @@ use std::collections::{HashMap, HashSet};
 use aoc::{
     read_grid,
     runner::{output, Runner},
-    Point, CARDINALS,
+    Vec2D, CARDINALS,
 };
 
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    farm: HashMap<Point<i64>, (char, Option<usize>)>,
+    farm: HashMap<Vec2D<i64>, (char, Option<usize>)>,
     rows: i64,
     cols: i64,
 }
@@ -34,7 +34,7 @@ impl Runner for AocDay {
         self.cols = lines[0].len() as i64;
         for (r, line) in lines.iter().enumerate() {
             for (c, ch) in line.iter().enumerate() {
-                self.farm.insert(Point(r as i64, c as i64), (*ch, None));
+                self.farm.insert(Vec2D(r as i64, c as i64), (*ch, None));
             }
         }
     }
@@ -44,8 +44,8 @@ impl Runner for AocDay {
         let mut regions = vec![];
         for row in 0..self.rows {
             for col in 0..self.cols {
-                if farm[&Point(row, col)].1.is_none() {
-                    let region = find_region(&farm, Point(row, col));
+                if farm[&Vec2D(row, col)].1.is_none() {
+                    let region = find_region(&farm, Vec2D(row, col));
                     for point in &region {
                         farm.entry(*point).and_modify(|v| v.1 = Some(regions.len()));
                     }
@@ -65,8 +65,8 @@ impl Runner for AocDay {
         let mut regions = vec![];
         for row in 0..self.rows {
             for col in 0..self.cols {
-                if farm[&Point(row, col)].1.is_none() {
-                    let region = find_region(&farm, Point(row, col));
+                if farm[&Vec2D(row, col)].1.is_none() {
+                    let region = find_region(&farm, Vec2D(row, col));
                     for point in &region {
                         farm.entry(*point).and_modify(|v| v.1 = Some(regions.len()));
                     }
@@ -78,7 +78,7 @@ impl Runner for AocDay {
     }
 }
 
-fn get_perimeter(region: &[Point<i64>]) -> usize {
+fn get_perimeter(region: &[Vec2D<i64>]) -> usize {
     let mut edges = 0;
     for point in region.iter() {
         for dir in CARDINALS {
@@ -90,7 +90,7 @@ fn get_perimeter(region: &[Point<i64>]) -> usize {
     edges
 }
 
-fn sides(region: &[Point<i64>]) -> usize {
+fn sides(region: &[Vec2D<i64>]) -> usize {
     if region.len() == 1 {
         return 4;
     }
@@ -125,9 +125,9 @@ fn sides(region: &[Point<i64>]) -> usize {
 }
 
 fn find_region(
-    farm: &HashMap<Point<i64>, (char, Option<usize>)>,
-    loc: Point<i64>,
-) -> Vec<Point<i64>> {
+    farm: &HashMap<Vec2D<i64>, (char, Option<usize>)>,
+    loc: Vec2D<i64>,
+) -> Vec<Vec2D<i64>> {
     let ch = farm[&loc].0;
     let mut found = HashSet::new();
     let mut visited = HashSet::new();
@@ -157,7 +157,7 @@ fn find_region(
 mod test {
     use super::*;
 
-    fn get_farm() -> HashMap<Point<i64>, (char, Option<usize>)> {
+    fn get_farm() -> HashMap<Vec2D<i64>, (char, Option<usize>)> {
         let grid = [
             "RRRRIICCFF",
             "RRRRIICCCF",
@@ -175,7 +175,7 @@ mod test {
             .flat_map(|(r, row)| {
                 row.chars()
                     .enumerate()
-                    .map(|(c, ch)| (Point(r as i64, c as i64), (ch, None)))
+                    .map(|(c, ch)| (Vec2D(r as i64, c as i64), (ch, None)))
                     .collect::<Vec<_>>()
             })
             .collect()
@@ -184,28 +184,28 @@ mod test {
     #[test]
     fn test_region() {
         let expected = vec![
-            Point(0, 0),
-            Point(0, 1),
-            Point(0, 2),
-            Point(0, 3),
-            Point(1, 0),
-            Point(1, 1),
-            Point(1, 2),
-            Point(1, 3),
-            Point(2, 2),
-            Point(2, 3),
-            Point(2, 4),
-            Point(3, 2),
+            Vec2D(0, 0),
+            Vec2D(0, 1),
+            Vec2D(0, 2),
+            Vec2D(0, 3),
+            Vec2D(1, 0),
+            Vec2D(1, 1),
+            Vec2D(1, 2),
+            Vec2D(1, 3),
+            Vec2D(2, 2),
+            Vec2D(2, 3),
+            Vec2D(2, 4),
+            Vec2D(3, 2),
         ];
-        let actual = find_region(&get_farm(), Point(0, 0));
+        let actual = find_region(&get_farm(), Vec2D(0, 0));
         assert_eq!(expected, actual);
         assert_eq!(10, sides(&actual))
     }
 
     #[test]
     fn test_region2() {
-        let expected = vec![Point(4, 7)];
-        let actual = find_region(&get_farm(), Point(4, 7));
+        let expected = vec![Vec2D(4, 7)];
+        let actual = find_region(&get_farm(), Vec2D(4, 7));
         assert_eq!(expected, actual);
     }
 
@@ -213,18 +213,18 @@ mod test {
     fn test_perimeter() {
         let expected = 18;
         let actual = get_perimeter(&[
-            Point(0, 0),
-            Point(0, 1),
-            Point(0, 2),
-            Point(0, 3),
-            Point(1, 0),
-            Point(1, 1),
-            Point(1, 2),
-            Point(1, 3),
-            Point(2, 2),
-            Point(2, 3),
-            Point(2, 4),
-            Point(3, 2),
+            Vec2D(0, 0),
+            Vec2D(0, 1),
+            Vec2D(0, 2),
+            Vec2D(0, 3),
+            Vec2D(1, 0),
+            Vec2D(1, 1),
+            Vec2D(1, 2),
+            Vec2D(1, 3),
+            Vec2D(2, 2),
+            Vec2D(2, 3),
+            Vec2D(2, 4),
+            Vec2D(3, 2),
         ]);
         assert_eq!(expected, actual);
     }
@@ -233,14 +233,14 @@ mod test {
     fn test_perimeter2() {
         let expected = 16;
         let actual = get_perimeter(&[
-            Point(0, 0),
-            Point(0, 1),
-            Point(0, 2),
-            Point(1, 0),
-            Point(1, 2),
-            Point(2, 0),
-            Point(2, 1),
-            Point(2, 2),
+            Vec2D(0, 0),
+            Vec2D(0, 1),
+            Vec2D(0, 2),
+            Vec2D(1, 0),
+            Vec2D(1, 2),
+            Vec2D(2, 0),
+            Vec2D(2, 1),
+            Vec2D(2, 2),
         ]);
         assert_eq!(expected, actual);
     }

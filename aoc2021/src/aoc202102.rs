@@ -1,7 +1,7 @@
 use aoc::{
     read_lines,
     runner::{output, Runner},
-    Point,
+    Vec2D,
 };
 
 #[derive(Default)]
@@ -30,7 +30,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let mut position = Point::<i64>::default();
+        let mut position = Vec2D::<i64>::default();
         for instruction in self.instructions.iter() {
             match instruction {
                 Instruction::Forward(x) => position.0 += x,
@@ -42,7 +42,7 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        let mut position = Point::<i64>::default();
+        let mut position = Vec2D::<i64>::default();
         let mut aim = 0;
         for instruction in self.instructions.iter() {
             match instruction {

@@ -3,13 +3,13 @@ use std::collections::{HashMap, HashSet};
 use aoc::{
     read_grid,
     runner::{output, Runner},
-    Point,
+    Vec2D,
 };
 
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    antennae: HashMap<char, Vec<Point<i64>>>,
+    antennae: HashMap<char, Vec<Vec2D<i64>>>,
     max: (i64, i64),
 }
 
@@ -36,8 +36,8 @@ impl Runner for AocDay {
                     if *ch != '.' {
                         self.antennae
                             .entry(*ch)
-                            .and_modify(|v| v.push(Point(r as i64, c as i64)))
-                            .or_insert_with(|| vec![Point(r as i64, c as i64)]);
+                            .and_modify(|v| v.push(Vec2D(r as i64, c as i64)))
+                            .or_insert_with(|| vec![Vec2D(r as i64, c as i64)]);
                     }
                     self.max.1 = self.max.1.max(c as i64);
                 });
@@ -83,7 +83,7 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn get_all_antinodes(&self, a: Point<i64>, b: Point<i64>) -> HashSet<Point<i64>> {
+    fn get_all_antinodes(&self, a: Vec2D<i64>, b: Vec2D<i64>) -> HashSet<Vec2D<i64>> {
         let delta = b - a; // Point(row, col) => (dy, dx)
         if delta.1 == 0 {
             panic!("Slope vertical! {a:?}, {b:?}") // Let's see if we have vertical lines.
@@ -95,13 +95,13 @@ impl AocDay {
             let row = slope * ((col - a.1) as f64) + a.0 as f64; // (y-y1) = m*(x-x1) => y = m*(x-x1) + y1
             if row.fract() == 0.0 && row as i64 <= self.max.0 && row as i64 >= 0 {
                 // Row is an integer and in bounds
-                res.insert(Point(row as i64, col));
+                res.insert(Vec2D(row as i64, col));
             }
         }
         res
     }
 }
-fn get_antinodes(a: Point<i64>, b: Point<i64>) -> [Point<i64>; 2] {
+fn get_antinodes(a: Vec2D<i64>, b: Vec2D<i64>) -> [Vec2D<i64>; 2] {
     let delta = b - a;
     [a - delta, b + delta]
 }
@@ -112,29 +112,29 @@ mod test {
 
     #[test]
     fn test_get_antinodes1() {
-        let expected = [Point(1, 1), Point(7, 7)];
-        let actual = get_antinodes(Point(3, 3), Point(5, 5));
+        let expected = [Vec2D(1, 1), Vec2D(7, 7)];
+        let actual = get_antinodes(Vec2D(3, 3), Vec2D(5, 5));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_get_antinodes2() {
-        let expected = [Point(-1, -2), Point(5, 7)];
-        let actual = get_antinodes(Point(1, 1), Point(3, 4));
+        let expected = [Vec2D(-1, -2), Vec2D(5, 7)];
+        let actual = get_antinodes(Vec2D(1, 1), Vec2D(3, 4));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_get_antinodes3() {
-        let expected = [Point(6, 2), Point(0, 8)];
-        let actual = get_antinodes(Point(4, 4), Point(2, 6));
+        let expected = [Vec2D(6, 2), Vec2D(0, 8)];
+        let actual = get_antinodes(Vec2D(4, 4), Vec2D(2, 6));
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_get_antinodes4() {
-        let expected = [Point(0, 6), Point(6, 3)];
-        let actual = get_antinodes(Point(2, 5), Point(4, 4));
+        let expected = [Vec2D(0, 6), Vec2D(6, 3)];
+        let actual = get_antinodes(Vec2D(2, 5), Vec2D(4, 4));
         assert_eq!(expected, actual);
     }
 

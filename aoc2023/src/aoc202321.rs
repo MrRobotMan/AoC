@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use aoc::{
     runner::{output, Runner},
     search::{Graph, Searcher},
-    Dir, Point,
+    Dir, Vec2D,
 };
 
 #[derive(Default)]
@@ -11,8 +11,8 @@ pub struct AocDay {
     pub input: String,
     pub garden: Garden,
     pub steps: usize,
-    pub shortest: HashMap<Point<i64>, i64>,
-    pub visited: HashSet<Point<i64>>,
+    pub shortest: HashMap<Vec2D<i64>, i64>,
+    pub visited: HashSet<Vec2D<i64>>,
 }
 
 impl AocDay {
@@ -44,10 +44,10 @@ impl Runner for AocDay {
                         if ch == '.' {
                             None
                         } else if ch == 'S' {
-                            self.garden.start = Point(row as i64, col as i64);
+                            self.garden.start = Vec2D(row as i64, col as i64);
                             None
                         } else {
-                            Some(Point(row as i64, col as i64))
+                            Some(Vec2D(row as i64, col as i64))
                         }
                     })
                     .collect::<Vec<_>>()
@@ -104,7 +104,7 @@ impl Runner for AocDay {
     }
 }
 
-impl Searcher<Garden> for Point<i64> {
+impl Searcher<Garden> for Vec2D<i64> {
     fn moves(&self, graph: &Garden) -> Vec<Self>
     where
         Self: Sized,
@@ -112,7 +112,7 @@ impl Searcher<Garden> for Point<i64> {
         [Dir::North, Dir::South, Dir::East, Dir::West]
             .iter()
             .filter_map(|dir| {
-                let new_pos = dir.delta(&Point(self.0, self.1));
+                let new_pos = dir.delta(&Vec2D(self.0, self.1));
                 if new_pos.0 < 0
                     || new_pos.0 >= graph.height() as i64
                     || new_pos.1 < 0
@@ -134,11 +134,11 @@ impl Searcher<Garden> for Point<i64> {
 
 #[derive(Debug, Default, Clone)]
 pub struct Garden {
-    layout: HashSet<Point<i64>>,
+    layout: HashSet<Vec2D<i64>>,
     width: i64,
     height: i64,
-    start: Point<i64>,
-    target: Point<i64>,
+    start: Vec2D<i64>,
+    target: Vec2D<i64>,
 }
 
 impl Graph for Garden {
@@ -156,7 +156,7 @@ impl Graph for Garden {
 }
 
 impl Garden {
-    fn step(&self, position: &Point<i64>) -> Vec<Point<i64>> {
+    fn step(&self, position: &Vec2D<i64>) -> Vec<Vec2D<i64>> {
         [Dir::North, Dir::South, Dir::East, Dir::West]
             .iter()
             .filter_map(|dir| {
@@ -180,7 +180,7 @@ impl Garden {
             for col in 0..self.width {
                 print!(
                     "{}",
-                    match self.layout.get(&Point(row, col)) {
+                    match self.layout.get(&Vec2D(row, col)) {
                         Some(_) => '#',
                         None => '.',
                     }

@@ -5,13 +5,13 @@ use std::{
 
 use aoc::{
     runner::{output, Runner},
-    Point,
+    Vec2D,
 };
 
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    pub(crate) elf_locations: HashSet<Point<i64>>,
+    pub(crate) elf_locations: HashSet<Vec2D<i64>>,
 }
 
 impl AocDay {
@@ -37,7 +37,7 @@ impl Runner for AocDay {
                     .enumerate()
                     .filter_map(|(c, ch)| {
                         if ch == &'#' {
-                            Some(Point(r as i64, c as i64))
+                            Some(Vec2D(r as i64, c as i64))
                         } else {
                             None
                         }
@@ -75,11 +75,11 @@ impl Runner for AocDay {
 // 7 x 3
 // 6 5 4
 const DIRS: [[usize; 3]; 4] = [[0, 1, 2], [4, 5, 6], [6, 7, 0], [2, 3, 4]];
-const DIR: [Point<i64>; 4] = [Point(-1, 0), Point(1, 0), Point(0, -1), Point(0, 1)];
+const DIR: [Vec2D<i64>; 4] = [Vec2D(-1, 0), Vec2D(1, 0), Vec2D(0, -1), Vec2D(0, 1)];
 
 impl AocDay {
     fn round(&mut self, cur: usize) -> bool {
-        let mut proposed: HashMap<Point<i64>, Vec<Point<i64>>> = HashMap::new();
+        let mut proposed: HashMap<Vec2D<i64>, Vec<Vec2D<i64>>> = HashMap::new();
         for elf in &self.elf_locations {
             if let Some(loc) = self.propose(*elf, cur) {
                 proposed
@@ -114,7 +114,7 @@ impl AocDay {
         (row_range.0..=row_range.1, col_range.0..=col_range.1)
     }
 
-    fn propose(&self, elf: Point<i64>, dir: usize) -> Option<Point<i64>> {
+    fn propose(&self, elf: Vec2D<i64>, dir: usize) -> Option<Vec2D<i64>> {
         let surrounding = self.surrounding(elf);
         if surrounding.iter().all(|c| *c) {
             return None;
@@ -133,16 +133,16 @@ impl AocDay {
     ///  0 1 2
     ///  7 x 3
     ///  6 5 4
-    fn surrounding(&self, elf: Point<i64>) -> [bool; 8] {
+    fn surrounding(&self, elf: Vec2D<i64>) -> [bool; 8] {
         [
-            self.elf_locations.contains(&(elf + Point(-1, -1))),
-            self.elf_locations.contains(&(elf + Point(-1, 0))),
-            self.elf_locations.contains(&(elf + Point(-1, 1))),
-            self.elf_locations.contains(&(elf + Point(0, 1))),
-            self.elf_locations.contains(&(elf + Point(1, 1))),
-            self.elf_locations.contains(&(elf + Point(1, 0))),
-            self.elf_locations.contains(&(elf + Point(1, -1))),
-            self.elf_locations.contains(&(elf + Point(0, -1))),
+            self.elf_locations.contains(&(elf + Vec2D(-1, -1))),
+            self.elf_locations.contains(&(elf + Vec2D(-1, 0))),
+            self.elf_locations.contains(&(elf + Vec2D(-1, 1))),
+            self.elf_locations.contains(&(elf + Vec2D(0, 1))),
+            self.elf_locations.contains(&(elf + Vec2D(1, 1))),
+            self.elf_locations.contains(&(elf + Vec2D(1, 0))),
+            self.elf_locations.contains(&(elf + Vec2D(1, -1))),
+            self.elf_locations.contains(&(elf + Vec2D(0, -1))),
         ]
     }
 }

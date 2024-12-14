@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use aoc::{
-    measure::Point,
+    measure::Vec2D,
     runner::{output, Runner},
     Dir,
 };
@@ -65,7 +65,7 @@ fn build_map(instructions: &[Instruction]) -> (Vec<(i64, i64)>, i64) {
     let mut border = Vec::new();
     for inst in instructions.iter() {
         length += inst.distance;
-        let Point(dx, dy) = inst.direction.scale(inst.distance);
+        let Vec2D(dx, dy) = inst.direction.scale(inst.distance);
         cur = (cur.0 + dx, cur.1 + dy);
         border.push(cur);
     }

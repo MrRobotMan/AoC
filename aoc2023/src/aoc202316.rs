@@ -5,14 +5,14 @@ use std::{
 
 use aoc::{
     runner::{output, Runner},
-    Dir, Point,
+    Dir, Vec2D,
 };
 
 #[derive(Default)]
 pub struct AocDay {
     pub input: String,
-    pub grid: HashMap<Point<i32>, Cave>,
-    pub size: Point<i32>,
+    pub grid: HashMap<Vec2D<i32>, Cave>,
+    pub size: Vec2D<i32>,
 }
 
 impl AocDay {
@@ -32,38 +32,38 @@ impl Runner for AocDay {
     fn parse(&mut self) {
         for (row, line) in aoc::read_lines(&self.input).iter().enumerate() {
             for (col, chr) in line.chars().enumerate() {
-                self.grid.insert(Point(row as i32, col as i32), chr.into());
-                self.size = Point(row as i32 + 1, col as i32 + 1);
+                self.grid.insert(Vec2D(row as i32, col as i32), chr.into());
+                self.size = Vec2D(row as i32 + 1, col as i32 + 1);
             }
         }
     }
 
     fn part1(&mut self) -> String {
-        output(self.light_path(Point(0, 0), Dir::East))
+        output(self.light_path(Vec2D(0, 0), Dir::East))
     }
 
     fn part2(&mut self) -> String {
         let mut res = 0;
         for row in 0..self.size.0 {
             // First col going east
-            res = res.max(self.light_path(Point(row, 0), Dir::East));
+            res = res.max(self.light_path(Vec2D(row, 0), Dir::East));
 
             // Last col going west
-            res = res.max(self.light_path(Point(row, self.size.1 - 1), Dir::West));
+            res = res.max(self.light_path(Vec2D(row, self.size.1 - 1), Dir::West));
         }
         for col in 0..self.size.1 {
             // First row going south
-            res = res.max(self.light_path(Point(0, col), Dir::South));
+            res = res.max(self.light_path(Vec2D(0, col), Dir::South));
 
             // Last row going north
-            res = res.max(self.light_path(Point(self.size.0 - 1, col), Dir::North));
+            res = res.max(self.light_path(Vec2D(self.size.0 - 1, col), Dir::North));
         }
         output(res)
     }
 }
 
 impl AocDay {
-    fn light_path(&mut self, start_point: Point<i32>, dir: Dir) -> usize {
+    fn light_path(&mut self, start_point: Vec2D<i32>, dir: Dir) -> usize {
         let mut to_visit = vec![(start_point, dir)];
         let mut visited = HashSet::new();
         let mut energized = HashSet::new();
@@ -92,7 +92,7 @@ impl Display for AocDay {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in 0..self.size.0 {
             for col in 0..self.size.1 {
-                write!(f, "{}", self.grid[&Point(row, col)])?;
+                write!(f, "{}", self.grid[&Vec2D(row, col)])?;
             }
             writeln!(f)?;
         }

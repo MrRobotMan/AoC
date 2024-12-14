@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use aoc::{
     runner::{output, Runner},
-    Dir, Point,
+    Dir, Vec2D,
 };
 
 const EDGE: i64 = if cfg!(test) { 4 } else { 50 }; // Edge size of the cube face
@@ -10,7 +10,7 @@ const EDGE: i64 = if cfg!(test) { 4 } else { 50 }; // Edge size of the cube face
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    pub(crate) board: HashMap<Point<i64>, Cell>,
+    pub(crate) board: HashMap<Vec2D<i64>, Cell>,
     pub(crate) instructions: Vec<Instruction>,
     pub(crate) width: i64,
     pub(crate) height: i64,
@@ -43,8 +43,8 @@ impl Runner for AocDay {
                 line.chars()
                     .enumerate()
                     .filter_map(|(c, ch)| match ch {
-                        '.' => Some((Point(r as i64, c as i64), Cell::Open)),
-                        '#' => Some((Point(r as i64, c as i64), Cell::Solid)),
+                        '.' => Some((Vec2D(r as i64, c as i64), Cell::Open)),
+                        '#' => Some((Vec2D(r as i64, c as i64), Cell::Solid)),
                         ' ' => None,
                         _ => panic!("Unknown character {ch}"),
                     })
@@ -77,7 +77,7 @@ impl Runner for AocDay {
                 for cell in 0..self.width {
                     print!(
                         "{}",
-                        match self.board.get(&Point(row, cell)) {
+                        match self.board.get(&Vec2D(row, cell)) {
                             Some(Cell::Open) => '.',
                             Some(Cell::Solid) => '#',
                             None => ' ',
@@ -91,9 +91,9 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let mut pos = Point(0, 0);
+        let mut pos = Vec2D(0, 0);
         for c in 0..self.width {
-            if self.board.contains_key(&Point(0, c)) {
+            if self.board.contains_key(&Vec2D(0, c)) {
                 pos.1 = c;
                 break;
             }
@@ -114,9 +114,9 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        let mut pos = Point(0, 0);
+        let mut pos = Vec2D(0, 0);
         for c in 0..self.width {
-            if self.board.contains_key(&Point(0, c)) {
+            if self.board.contains_key(&Vec2D(0, c)) {
                 pos.1 = c;
                 break;
             }
@@ -141,9 +141,9 @@ impl AocDay {
     fn flat_step(
         &self,
         instruction: &Instruction,
-        mut pos: Point<i64>,
+        mut pos: Vec2D<i64>,
         heading: Dir,
-    ) -> (Point<i64>, Dir) {
+    ) -> (Vec2D<i64>, Dir) {
         match instruction {
             Instruction::Turn(turn) => match (heading, turn) {
                 (Dir::North, Turn::Right) | (Dir::South, Turn::Left) => (pos, Dir::East),
@@ -178,9 +178,9 @@ impl AocDay {
     fn cube_step(
         &self,
         instruction: &Instruction,
-        mut pos: Point<i64>,
+        mut pos: Vec2D<i64>,
         mut heading: Dir,
-    ) -> (Point<i64>, Dir) {
+    ) -> (Vec2D<i64>, Dir) {
         // This won't be generic to any input. The input layout is for this specific wrapping.
         // .## -> A, B
         // .#. -> C
@@ -220,49 +220,49 @@ impl AocDay {
                             // Faces A, B, D
                             if (0..50).contains(&next_pos.1) {
                                 // Face D top -> C left (C0->R50, C49->R99)
-                                next_pos = Point(pos.1 + EDGE, EDGE);
+                                next_pos = Vec2D(pos.1 + EDGE, EDGE);
                                 temp_heading = Dir::East;
                             } else if (50..100).contains(&next_pos.1) {
                                 // Face A top -> F left (C50->R150, C99->R149)
-                                next_pos = Point(pos.1 + 2 * EDGE, 0);
+                                next_pos = Vec2D(pos.1 + 2 * EDGE, 0);
                                 temp_heading = Dir::East;
                             } else {
                                 // Face B top -> F bottom (C100->C0, C149->C49)
-                                next_pos = Point(4 * EDGE - 1, pos.1 - 2 * EDGE);
+                                next_pos = Vec2D(4 * EDGE - 1, pos.1 - 2 * EDGE);
                             }
                         } else if heading == Dir::East {
                             // Faces B, C, E, F
                             if (0..50).contains(&next_pos.0) {
                                 // Face B right -> E right (R0->R149, R49->R100)
                                 // NewRow = 3 * EDGE - 1 - OldRow
-                                next_pos = Point(3 * EDGE - pos.0 - 1, 2 * EDGE - 1);
+                                next_pos = Vec2D(3 * EDGE - pos.0 - 1, 2 * EDGE - 1);
                                 temp_heading = Dir::West;
                             } else if (50..100).contains(&next_pos.0) {
                                 // Face C right -> B bottom (R50->C100, R99->C149)
-                                next_pos = Point(EDGE - 1, pos.0 + EDGE);
+                                next_pos = Vec2D(EDGE - 1, pos.0 + EDGE);
                                 temp_heading = Dir::North;
                             } else if (100..150).contains(&next_pos.0) {
                                 // Face E right -> B right (R149->R100, R100->R149)
                                 // NewRow = 3 * EDGE - 1 - OldRow
-                                next_pos = Point(3 * EDGE - pos.0 - 1, 3 * EDGE - 1);
+                                next_pos = Vec2D(3 * EDGE - pos.0 - 1, 3 * EDGE - 1);
                                 temp_heading = Dir::West;
                             } else {
                                 // Face F right -> E bottom (R150->C50, R199->C99)
-                                next_pos = Point(3 * EDGE - 1, pos.0 - 2 * EDGE);
+                                next_pos = Vec2D(3 * EDGE - 1, pos.0 - 2 * EDGE);
                                 temp_heading = Dir::North;
                             }
                         } else if heading == Dir::South {
                             // Faces F, E, B
                             if (0..50).contains(&next_pos.1) {
                                 // Face F bottom -> B top (C0->C100, C49->C149)
-                                next_pos = Point(0, pos.1 + 2 * EDGE);
+                                next_pos = Vec2D(0, pos.1 + 2 * EDGE);
                             } else if (50..100).contains(&next_pos.1) {
                                 // Face E bottom -> F right (C50->R150, C99-R199)
-                                next_pos = Point(pos.1 + 2 * EDGE, EDGE - 1);
+                                next_pos = Vec2D(pos.1 + 2 * EDGE, EDGE - 1);
                                 temp_heading = Dir::West;
                             } else {
                                 // Face B bottom -> C right (C100->R50, C149->R99)
-                                next_pos = Point(pos.1 - EDGE, 2 * EDGE - 1);
+                                next_pos = Vec2D(pos.1 - EDGE, 2 * EDGE - 1);
                                 temp_heading = Dir::West
                             }
                         } else {
@@ -271,20 +271,20 @@ impl AocDay {
                             if (0..50).contains(&next_pos.0) {
                                 // Face A left -> D left (R0->R149, R49->R100)
                                 // NewRow = 3 * EDGE - 1 - OldRow
-                                next_pos = Point(3 * EDGE - 1 - pos.0, 0);
+                                next_pos = Vec2D(3 * EDGE - 1 - pos.0, 0);
                                 temp_heading = Dir::East;
                             } else if (50..100).contains(&next_pos.0) {
                                 // Face C left -> D top (R50->C0, R99->C49)
-                                next_pos = Point(2 * EDGE, pos.0 - EDGE);
+                                next_pos = Vec2D(2 * EDGE, pos.0 - EDGE);
                                 temp_heading = Dir::South;
                             } else if (100..150).contains(&next_pos.0) {
                                 // Face D left -> A left (R100->R49, R149->R0)
                                 // NewRow = 3 * EDGE - 1 - OldRow
-                                next_pos = Point(3 * EDGE - 1 - pos.0, EDGE);
+                                next_pos = Vec2D(3 * EDGE - 1 - pos.0, EDGE);
                                 temp_heading = Dir::East;
                             } else {
                                 // Face F left -> A top (R150->C50, R199->C99)
-                                next_pos = Point(0, pos.0 - 2 * EDGE);
+                                next_pos = Vec2D(0, pos.0 - 2 * EDGE);
                                 temp_heading = Dir::South;
                             }
                         };

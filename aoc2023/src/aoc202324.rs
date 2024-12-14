@@ -1,6 +1,6 @@
 use aoc::{
     runner::{output, Runner},
-    Point3D,
+    Vec3D,
 };
 
 use itertools::Itertools;
@@ -207,8 +207,8 @@ impl Runner for AocDay {
 
 #[derive(Debug, Default)]
 pub struct Hailstone {
-    initial_pos: Point3D<i64>,
-    velocity: Point3D<i64>,
+    initial_pos: Vec3D<i64>,
+    velocity: Vec3D<i64>,
 }
 
 impl Hailstone {
@@ -257,8 +257,8 @@ impl<S: AsRef<str>> From<S> for Hailstone {
             .map(|v| v.trim().parse().unwrap())
             .collect::<Vec<_>>();
         Self {
-            initial_pos: Point3D(initial_pos[0], initial_pos[1], initial_pos[2]),
-            velocity: Point3D(velocity[0], velocity[1], velocity[2]),
+            initial_pos: Vec3D(initial_pos[0], initial_pos[1], initial_pos[2]),
+            velocity: Vec3D(velocity[0], velocity[1], velocity[2]),
         }
     }
 }

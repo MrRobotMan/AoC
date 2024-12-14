@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet, VecDeque};
 
 use aoc::{
     runner::{output, Runner},
-    Dir, Point,
+    Dir, Vec2D,
 };
 
 use itertools::Itertools;
@@ -12,9 +12,9 @@ use pathfinding::directed::bfs::bfs;
 pub struct AocDay {
     pub input: String,
     pub trails: Vec<Vec<Tile>>,
-    pub start: Point<usize>,
-    pub end: Point<usize>,
-    pub poi: HashSet<Point<usize>>,
+    pub start: Vec2D<usize>,
+    pub end: Vec2D<usize>,
+    pub poi: HashSet<Vec2D<usize>>,
     pub height: usize,
     pub width: usize,
 }
@@ -40,14 +40,14 @@ impl Runner for AocDay {
         }
         self.height = self.trails.len();
         self.width = self.trails[0].len();
-        self.start = Point(
+        self.start = Vec2D(
             0,
             self.trails[0]
                 .iter()
                 .position(|t| *t == Tile::Path)
                 .unwrap(),
         );
-        self.end = Point(
+        self.end = Vec2D(
             self.width - 1,
             self.trails[self.width - 1]
                 .iter()
@@ -63,7 +63,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let mut paths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
+        let mut paths: HashMap<Vec2D<usize>, HashMap<Vec2D<usize>, usize>> = HashMap::new();
         for pair in self.poi.iter().permutations(2) {
             if let Some(path) = bfs(
                 pair[0],
@@ -89,7 +89,7 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        let mut paths: HashMap<Point<usize>, HashMap<Point<usize>, usize>> = HashMap::new();
+        let mut paths: HashMap<Vec2D<usize>, HashMap<Vec2D<usize>, usize>> = HashMap::new();
         for pair in self.poi.iter().permutations(2) {
             if let Some(path) = self.get_longest(pair[0], pair[1]) {
                 paths
@@ -105,7 +105,7 @@ impl Runner for AocDay {
 }
 
 impl AocDay {
-    fn bad_bfs(&self, graph: &HashMap<Point<usize>, HashMap<Point<usize>, usize>>) -> usize {
+    fn bad_bfs(&self, graph: &HashMap<Vec2D<usize>, HashMap<Vec2D<usize>, usize>>) -> usize {
         let mut path_length = 0;
         let mut to_visit = VecDeque::new();
         to_visit.push_front(vec![self.start]);
@@ -127,7 +127,7 @@ impl AocDay {
         path_length
     }
 
-    fn get_longest(&self, start: &Point<usize>, end: &Point<usize>) -> Option<Vec<Point<usize>>> {
+    fn get_longest(&self, start: &Vec2D<usize>, end: &Vec2D<usize>) -> Option<Vec<Vec2D<usize>>> {
         let mut path = None;
         let mut path_length = 0;
         let mut to_visit = VecDeque::new();
@@ -153,7 +153,7 @@ impl AocDay {
         path
     }
 
-    fn intersections(&self) -> Vec<Point<usize>> {
+    fn intersections(&self) -> Vec<Vec2D<usize>> {
         self.trails
             .iter()
             .enumerate()
@@ -162,8 +162,8 @@ impl AocDay {
                     .enumerate()
                     .filter_map(|(c, tile)| {
                         if *tile == Tile::Path {
-                            if self.moves(&Point(r, c), false).len() > 2 {
-                                Some(Point(r, c))
+                            if self.moves(&Vec2D(r, c), false).len() > 2 {
+                                Some(Vec2D(r, c))
                             } else {
                                 None
                             }
@@ -176,7 +176,7 @@ impl AocDay {
             .collect::<Vec<_>>()
     }
 
-    fn moves(&self, point: &Point<usize>, check_slopes: bool) -> Vec<Point<usize>> {
+    fn moves(&self, point: &Vec2D<usize>, check_slopes: bool) -> Vec<Vec2D<usize>> {
         [Dir::North, Dir::South, Dir::East, Dir::West]
             .iter()
             .filter_map(|d| {

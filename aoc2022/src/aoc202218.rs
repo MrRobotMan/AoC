@@ -1,13 +1,13 @@
 use aoc::{
     runner::{output, Runner},
-    Point3D,
+    Vec3D,
 };
 use std::collections::{HashSet, VecDeque};
 
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    pub(crate) cubes: HashSet<Point3D<i64>>,
+    pub(crate) cubes: HashSet<Vec3D<i64>>,
 }
 
 impl AocDay {
@@ -62,7 +62,7 @@ impl Runner for AocDay {
         min_z -= 1;
         max_z += 1;
 
-        let mut queue = VecDeque::from([Point3D(min_x, min_y, min_z)]);
+        let mut queue = VecDeque::from([Vec3D(min_x, min_y, min_z)]);
         let mut seen = HashSet::new();
         let mut count = 0;
         while let Some(cube) = queue.pop_front() {
@@ -93,11 +93,11 @@ impl Runner for AocDay {
     }
 }
 
-const DIR: [Point3D<i64>; 6] = [
-    Point3D(0, 0, 1),
-    Point3D(0, 0, -1),
-    Point3D(0, 1, 0),
-    Point3D(0, -1, 0),
-    Point3D(1, 0, 0),
-    Point3D(-1, 0, 0),
+const DIR: [Vec3D<i64>; 6] = [
+    Vec3D(0, 0, 1),
+    Vec3D(0, 0, -1),
+    Vec3D(0, 1, 0),
+    Vec3D(0, -1, 0),
+    Vec3D(1, 0, 0),
+    Vec3D(-1, 0, 0),
 ];
