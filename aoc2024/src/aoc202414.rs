@@ -1,6 +1,7 @@
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
 use aoc::{
+    measure::CARDINALS,
     read_lines,
     runner::{output, Runner},
     Vec2D,
@@ -22,6 +23,20 @@ impl AocDay {
             cols: 101,
             ..Default::default()
         }
+    }
+    fn show(&self, guards: &[Guard]) {
+        let guards = guards.iter().map(|g| g.pos).collect::<HashSet<_>>();
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                if guards.contains(&Vec2D(col, row)) {
+                    print!("#");
+                } else {
+                    print!(" ")
+                }
+            }
+            println!();
+        }
+        println!()
     }
 }
 
@@ -62,8 +77,49 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut guards = self.guards.clone();
+        for idx in 0..(self.rows * self.cols) {
+            for guard in guards.iter_mut() {
+                guard.step(self.cols, self.rows);
+            }
+            if is_tree(&guards) || idx == 8279 {
+                self.show(&guards);
+                return output(idx + 1);
+            }
+        }
+        output("No tree")
     }
+}
+
+fn is_tree(guards: &[Guard]) -> bool {
+    // Tree is made when there's a rectangle frame
+    let guards = guards.iter().map(|g| g.pos).collect::<HashSet<_>>();
+    for guard in &guards {
+        if makes_rect(*guard, &guards) {
+            return true;
+        }
+    }
+    false
+}
+
+fn makes_rect(pos: Vec2D<i64>, guards: &HashSet<Vec2D<i64>>) -> bool {
+    let start = pos;
+    let mut visited = HashSet::new();
+    let mut queue = vec![pos];
+    while let Some(p) = queue.pop() {
+        if visited.insert(p) {
+            for dir in CARDINALS.iter() {
+                let next = *dir + p;
+                if next == start && visited.len() > 80 {
+                    return true;
+                }
+                if guards.contains(&next) {
+                    queue.push(next);
+                }
+            }
+        }
+    }
+    false
 }
 
 #[derive(Debug, Default, PartialEq, Clone, Copy)]
