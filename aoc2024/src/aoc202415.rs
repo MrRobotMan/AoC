@@ -9,7 +9,7 @@ use aoc::{
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    warehouse: Warehouse,
+    warehouse: String,
     instructions: Vec<Vec2D<i64>>,
 }
 
@@ -29,22 +29,8 @@ impl Runner for AocDay {
 
     fn parse(&mut self) {
         let contents = contents(&self.input);
-        let mut warehouse = Warehouse::default();
         let (grid, inst) = contents.split_once("\n\n").unwrap();
-        for (point, chr) in read_grid_to_map(grid) {
-            match chr {
-                '#' | 'O' => {
-                    warehouse
-                        .layout
-                        .insert(Vec2D(point.0 as i64, point.1 as i64), chr);
-                }
-                '@' => warehouse.robot = Vec2D(point.0 as i64, point.1 as i64),
-                _ => (),
-            }
-            warehouse.rows = warehouse.rows.max(point.0 as i64 + 1);
-            warehouse.cols = warehouse.cols.max(point.1 as i64 + 1);
-        }
-        self.warehouse = warehouse;
+        self.warehouse = grid.into();
         self.instructions = read_line(inst)
             .iter()
             .copied()
@@ -53,14 +39,9 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let mut warehouse = self.warehouse.clone();
-        // println!("Initial State\n{warehouse}\n");
+        let mut warehouse: Warehouse = self.warehouse.as_str().into();
         for inst in &self.instructions {
-            // println!("Move {inst}:");
-            if warehouse.valid_move(*inst) {
-                warehouse.step(*inst);
-            }
-            // println!("{warehouse}\n");
+            warehouse.step(*inst, false);
         }
         output(warehouse.goods_score())
     }
@@ -79,7 +60,7 @@ struct Warehouse {
 }
 
 impl Warehouse {
-    fn valid_move(&self, inst: Vec2D<i64>) -> bool {
+    fn valid_move_small(&self, inst: Vec2D<i64>) -> bool {
         let mut next_move = self.robot + inst;
         while let Some(chr) = self.layout.get(&next_move) {
             if *chr == '#' {
@@ -90,7 +71,10 @@ impl Warehouse {
         true
     }
 
-    fn step(&mut self, inst: Vec2D<i64>) {
+    fn step(&mut self, inst: Vec2D<i64>, big: bool) {
+        if (!big && !self.valid_move_small(inst)) || (big && !self.valid_move_big(inst)) {
+            return;
+        }
         let mut next_move = self.robot + inst;
         self.robot += inst;
         let mut to_insert = vec![];
@@ -114,6 +98,25 @@ impl Warehouse {
     }
 }
 
+impl From<&str> for Warehouse {
+    fn from(value: &str) -> Self {
+        let mut warehouse = Self::default();
+        for (point, chr) in read_grid_to_map(value) {
+            match chr {
+                '#' | 'O' => {
+                    warehouse
+                        .layout
+                        .insert(Vec2D(point.0 as i64, point.1 as i64), chr);
+                }
+                '@' => warehouse.robot = Vec2D(point.0 as i64, point.1 as i64),
+                _ => (),
+            }
+            warehouse.rows = warehouse.rows.max(point.0 as i64 + 1);
+            warehouse.cols = warehouse.cols.max(point.1 as i64 + 1);
+        }
+        warehouse
+    }
+}
 impl Display for Warehouse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for row in 0..self.rows {
