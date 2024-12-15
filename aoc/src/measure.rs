@@ -87,11 +87,17 @@ impl Dir {
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Vec2D<T: Num>(pub T, pub T);
 
-impl<T: Num + Copy> std::ops::Add for Vec2D<T> {
-    type Output = Vec2D<T>;
+impl TryFrom<char> for Vec2D<i64> {
+    type Error = String;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Self(self.0 + rhs.0, self.1 + rhs.1)
+    fn try_from(value: char) -> Result<Self, Self::Error> {
+        match value {
+            'N' | 'U' | '^' => Ok(Self(-1, 0)),
+            'S' | 'D' | 'v' => Ok(Self(1, 0)),
+            'E' | 'R' | '<' => Ok(Self(0, -1)),
+            'W' | 'L' | '>' => Ok(Self(0, 1)),
+            d => Err(format!("Unknown direction {d}")),
+        }
     }
 }
 
@@ -105,6 +111,13 @@ impl<T: Num + Copy> FromIterator<T> for Vec2D<T> {
     }
 }
 
+impl<T: Num + Copy> std::ops::Add for Vec2D<T> {
+    type Output = Vec2D<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
 impl<T: Num + Copy> std::ops::Sub for Vec2D<T> {
     type Output = Vec2D<T>;
 

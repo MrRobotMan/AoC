@@ -1,7 +1,6 @@
 use std::{
     fmt::{Debug, Display},
     fs::read_to_string,
-    iter::FlatMap,
     path::Path,
     str::FromStr,
 };
@@ -114,14 +113,14 @@ pub fn read_grid_numbers<T: AsRef<Path> + Display>(path: T) -> Vec<Vec<u8>> {
 }
 
 /// Reads the contents to an iterator of coordinates / char pairs
-pub fn read_grid_to_map<T: AsRef<Path> + Display>(path: T) -> Vec<([usize; 2], char)> {
+pub fn read_grid_to_map<T: AsRef<Path> + Display>(path: T) -> Vec<((usize, usize), char)> {
     contents(path)
         .lines()
         .enumerate()
         .flat_map(|(row, line)| {
             line.chars()
                 .enumerate()
-                .map(|(col, ch)| ([row, col], ch))
+                .map(|(col, ch)| ((row, col), ch))
                 .collect::<Vec<_>>()
         })
         .collect()
