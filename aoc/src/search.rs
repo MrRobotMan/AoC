@@ -1,7 +1,6 @@
-use core::panic;
 use std::{
     cmp::Eq,
-    collections::{HashMap, HashSet, VecDeque},
+    collections::{BinaryHeap, HashMap, HashSet, VecDeque},
     hash::Hash,
 };
 
@@ -19,7 +18,7 @@ pub trait Searcher<G: Graph>: Eq + Hash + Clone {
 }
 
 pub trait Weighted<G: Graph> {
-    fn weight(&self, graph: &G) -> usize;
+    fn weight(&self, next: &Self, graph: &G) -> usize;
 }
 
 pub fn dfs<S: Searcher<G>, G: Graph>(start: &S, graph: &G) -> Option<Vec<S>> {
@@ -59,92 +58,69 @@ pub fn bfs<S: Searcher<G>, G: Graph>(start: &S, graph: &G) -> Option<Vec<S>> {
     None
 }
 
-pub fn dijkstra<S: Searcher<G> + Weighted<G>, G: Graph>(start: &S, graph: &G) -> Option<usize> {
-    let mut queue: HashSet<S> = HashSet::new();
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct MinHeapState<S: Hash + Ord + PartialOrd + Eq + PartialEq> {
+    node: S,
+    cost: usize,
+}
+
+impl<S: Hash + Ord> Ord for MinHeapState<S> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        other
+            .cost
+            .cmp(&self.cost)
+            .then_with(|| self.node.cmp(&other.node))
+    }
+}
+
+impl<S: Hash + Ord> PartialOrd for MinHeapState<S> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+pub fn dijkstra<S: Searcher<G> + Weighted<G> + Ord + PartialOrd, G: Graph>(
+    start: &S,
+    graph: &G,
+) -> Option<usize> {
+    let mut heap = BinaryHeap::new();
     let mut dist: HashMap<S, usize> = HashMap::new();
     let mut index: HashSet<S> = HashSet::new();
 
-    queue.insert(start.clone());
+    heap.push(MinHeapState {
+        node: start.clone(),
+        cost: 0,
+    });
     dist.insert(start.clone(), 0);
     index.insert(start.clone());
 
-    while !queue.is_empty() {
-        let cur = queue
-            .iter()
-            .map(|item| (item, dist.get(item).unwrap()))
-            .min_by(|a, b| a.1.cmp(b.1))
-            .unwrap()
-            .0
-            .clone();
-
-        if cur.is_done(graph) {
-            return Some(dist[&cur]);
+    while let Some(MinHeapState { node, cost }) = heap.pop() {
+        // Reached our goal.
+        if node.is_done(graph) {
+            return Some(dist[&node]);
         }
 
-        if !queue.remove(&cur) {
-            panic!("Tried to remove shortest from queue but it was not found.")
+        // Already have a better path to node.
+        if cost > dist[&node] {
+            continue;
         }
 
-        for next_move in cur.moves(graph) {
-            let step = if queue.contains(&next_move) {
-                next_move
-            } else if index.insert(next_move.clone()) {
-                // Build the queue as we go instead of putting all nodes in at the start.
+        for next_move in node.moves(graph) {
+            let next_cost = cost + node.weight(&next_move, graph);
+            // Build the queue as we go instead of putting all nodes in at the start.
+            if index.insert(next_move.clone()) {
                 dist.insert(next_move.clone(), usize::MAX);
-                queue.insert(next_move.clone());
-                next_move
-            } else {
-                continue;
-            };
-            let alt = dist[&cur] + step.weight(graph);
-            if alt < dist[&step] {
-                dist.insert(step.clone(), alt);
+            }
+            if next_cost < dist[&next_move] {
+                heap.push(MinHeapState {
+                    node: next_move.clone(),
+                    cost: next_cost,
+                });
+                dist.entry(next_move).and_modify(|v| *v = next_cost);
             }
         }
     }
 
-    None
-}
-
-pub fn a_star<S: Searcher<G> + Weighted<G>, G: Graph, H: Fn(&S) -> usize>(
-    start: &S,
-    graph: &G,
-    heuristic: H,
-) -> Option<(Vec<S>, usize)> {
-    let mut queue: HashSet<S> = HashSet::new();
-    let mut path: HashMap<S, S> = HashMap::new();
-    let mut g_score: HashMap<S, usize> = HashMap::new();
-    let mut f_score: HashMap<S, usize> = HashMap::new();
-
-    queue.insert(start.clone());
-    g_score.insert(start.clone(), 0);
-    f_score.insert(start.clone(), heuristic(start));
-
-    while !queue.is_empty() {
-        let cur = queue
-            .iter()
-            .min_by(|a, b| f_score[a].cmp(&f_score[b]))
-            .unwrap()
-            .clone();
-
-        if cur.is_done(graph) {
-            return Some((get_path(path, cur.clone(), start), g_score[&cur]));
-        }
-
-        if !queue.remove(&cur) {
-            panic!("Tried to remove an item from the queue that was not present.");
-        }
-
-        for valid in cur.moves(graph) {
-            let tentative = g_score[&cur] + valid.weight(graph);
-            if tentative < *g_score.entry(valid.clone()).or_insert(usize::MAX) {
-                path.insert(valid.clone(), cur.clone());
-                g_score.insert(valid.clone(), tentative);
-                f_score.insert(valid.clone(), tentative + heuristic(&valid));
-                queue.insert(valid.clone());
-            }
-        }
-    }
     None
 }
 
@@ -163,4 +139,71 @@ pub fn get_path<S: PartialEq + Eq + Hash + Clone>(
     }
     found.reverse();
     found
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_dijkstra() {
+        // Testing the example from https://doc.rust-lang.org/stable/std/collections/binary_heap/index.html
+        let start = 3;
+        let graph = Layout {
+            nodes: vec![
+                // Node 0
+                vec![(2, 10), (1, 1)],
+                // Node 1
+                vec![(3, 2)],
+                // Node 2
+                vec![(1, 1), (3, 3), (4, 1)],
+                // Node 3
+                vec![(0, 7), (4, 2)],
+                // Node 4
+                vec![],
+            ],
+        };
+        assert_eq!(Some(7), dijkstra(&start, &graph));
+    }
+
+    struct Layout {
+        nodes: Vec<Vec<(usize, usize)>>,
+    }
+
+    impl Graph for Layout {
+        fn value(&self, _row: usize, _col: usize) -> usize {
+            todo!()
+        }
+
+        fn height(&self) -> usize {
+            todo!()
+        }
+
+        fn width(&self) -> usize {
+            todo!()
+        }
+    }
+
+    impl Searcher<Layout> for usize {
+        fn moves(&self, graph: &Layout) -> Vec<Self>
+        where
+            Self: Sized,
+        {
+            graph.nodes[*self].iter().map(|v| v.0).collect()
+        }
+
+        fn is_done(&self, _graph: &Layout) -> bool {
+            *self == 0
+        }
+    }
+
+    impl Weighted<Layout> for usize {
+        fn weight(&self, next: &Self, graph: &Layout) -> usize {
+            graph.nodes[*self]
+                .iter()
+                .filter_map(|v| if v.0 == *next { Some(v.1) } else { None })
+                .next()
+                .unwrap()
+        }
+    }
 }
