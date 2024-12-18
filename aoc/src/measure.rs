@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use num::{Integer, Num};
+use num::{abs, traits::SaturatingSub, Integer, Num, Signed};
 
 /// N, E, S, W Steps
 pub const CARDINALS: [Vec2D<i64>; 4] = [Vec2D(-1, 0), Vec2D(0, 1), Vec2D(1, 0), Vec2D(0, -1)];
@@ -86,6 +86,12 @@ impl Dir {
 
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Vec2D<T: Num>(pub T, pub T);
+
+impl<T: Num + SaturatingSub + Signed> Vec2D<T> {
+    pub fn manhatten(&self, other: &Self) -> T {
+        abs(self.0.saturating_sub(&other.0)) + abs(self.1.saturating_sub(&other.1))
+    }
+}
 
 impl TryFrom<char> for Vec2D<i64> {
     type Error = String;
