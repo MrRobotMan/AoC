@@ -5,7 +5,6 @@ use std::{
 };
 
 pub trait Graph {
-    fn value(&self, row: usize, col: usize) -> usize;
     fn height(&self) -> usize;
     fn width(&self) -> usize;
 }
@@ -15,10 +14,6 @@ pub trait Searcher<G: Graph>: Eq + Hash + Clone {
     where
         Self: Sized;
     fn is_done(&self, graph: &G) -> bool;
-}
-
-pub trait Weighted<G: Graph> {
-    fn weight(&self, next: &Self, graph: &G) -> usize;
 }
 
 pub fn dfs<S: Searcher<G>, G: Graph>(start: &S, graph: &G) -> Option<Vec<S>> {
@@ -79,13 +74,20 @@ impl<S: Hash + Ord> PartialOrd for MinHeapState<S> {
     }
 }
 
-pub fn dijkstra<S: Searcher<G> + Weighted<G> + Ord + PartialOrd, G: Graph>(
-    start: &S,
+pub trait Weighted {
+    type Node: Eq + Hash + Clone;
+    fn weight(&self, cur: &Self::Node, next: &Self::Node) -> usize;
+    fn moves(&self, cur: &Self::Node) -> Vec<Self::Node>;
+    fn is_done(&self, node: &Self::Node) -> bool;
+}
+
+pub fn dijkstra<N: Hash + Ord + PartialOrd + Clone, G: Weighted<Node = N>>(
+    start: &N,
     graph: &G,
-) -> Option<usize> {
-    let mut heap = BinaryHeap::new();
-    let mut dist: HashMap<S, usize> = HashMap::new();
-    let mut index: HashSet<S> = HashSet::new();
+) -> Option<HashMap<N, usize>> {
+    let mut heap: BinaryHeap<MinHeapState<N>> = BinaryHeap::new();
+    let mut dist: HashMap<N, usize> = HashMap::new();
+    let mut index: HashSet<N> = HashSet::new();
 
     heap.push(MinHeapState {
         node: start.clone(),
@@ -96,8 +98,8 @@ pub fn dijkstra<S: Searcher<G> + Weighted<G> + Ord + PartialOrd, G: Graph>(
 
     while let Some(MinHeapState { node, cost }) = heap.pop() {
         // Reached our goal.
-        if node.is_done(graph) {
-            return Some(dist[&node]);
+        if graph.is_done(&node) {
+            return Some(dist);
         }
 
         // Already have a better path to node.
@@ -105,8 +107,8 @@ pub fn dijkstra<S: Searcher<G> + Weighted<G> + Ord + PartialOrd, G: Graph>(
             continue;
         }
 
-        for next_move in node.moves(graph) {
-            let next_cost = cost + node.weight(&next_move, graph);
+        for next_move in graph.moves(&node) {
+            let next_cost = cost + graph.weight(&node, &next_move);
             // Build the queue as we go instead of putting all nodes in at the start.
             if index.insert(next_move.clone()) {
                 dist.insert(next_move.clone(), usize::MAX);
@@ -149,7 +151,7 @@ mod tests {
     fn test_dijkstra() {
         // Testing the example from https://doc.rust-lang.org/stable/std/collections/binary_heap/index.html
         let start = 3;
-        let graph = Layout {
+        let mut graph = Layout {
             nodes: vec![
                 // Node 0
                 vec![(2, 10), (1, 1)],
@@ -162,48 +164,41 @@ mod tests {
                 // Node 4
                 vec![],
             ],
+            target: 0,
         };
-        assert_eq!(Some(7), dijkstra(&start, &graph));
+        assert_eq!(
+            Some(7_usize),
+            dijkstra(&start, &graph).map(|g| g[&graph.target])
+        );
+        graph.target = 4;
+        let start = 0;
+        assert_eq!(
+            Some(5_usize),
+            dijkstra(&start, &graph).map(|g| g[&graph.target])
+        );
     }
 
     struct Layout {
         nodes: Vec<Vec<(usize, usize)>>,
+        target: usize,
     }
 
-    impl Graph for Layout {
-        fn value(&self, _row: usize, _col: usize) -> usize {
-            todo!()
-        }
-
-        fn height(&self) -> usize {
-            todo!()
-        }
-
-        fn width(&self) -> usize {
-            todo!()
-        }
-    }
-
-    impl Searcher<Layout> for usize {
-        fn moves(&self, graph: &Layout) -> Vec<Self>
-        where
-            Self: Sized,
-        {
-            graph.nodes[*self].iter().map(|v| v.0).collect()
-        }
-
-        fn is_done(&self, _graph: &Layout) -> bool {
-            *self == 0
-        }
-    }
-
-    impl Weighted<Layout> for usize {
-        fn weight(&self, next: &Self, graph: &Layout) -> usize {
-            graph.nodes[*self]
+    impl Weighted for Layout {
+        type Node = usize;
+        fn weight(&self, cur: &usize, next: &usize) -> usize {
+            self.nodes[*cur]
                 .iter()
                 .filter_map(|v| if v.0 == *next { Some(v.1) } else { None })
                 .next()
                 .unwrap()
+        }
+
+        fn moves(&self, cur: &usize) -> Vec<usize> {
+            self.nodes[*cur].iter().map(|v| v.0).collect()
+        }
+
+        fn is_done(&self, node: &usize) -> bool {
+            *node == self.target
         }
     }
 }

@@ -118,6 +118,13 @@ impl<T: Num + Copy> std::ops::Add for Vec2D<T> {
         Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
+impl<T: Num + Copy> std::ops::Add for &Vec2D<T> {
+    type Output = Vec2D<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Vec2D(self.0 + rhs.0, self.1 + rhs.1)
+    }
+}
 impl<T: Num + Copy> std::ops::Sub for Vec2D<T> {
     type Output = Vec2D<T>;
 

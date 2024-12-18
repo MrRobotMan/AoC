@@ -142,10 +142,6 @@ pub struct Garden {
 }
 
 impl Graph for Garden {
-    fn value(&self, _row: usize, _col: usize) -> usize {
-        0
-    }
-
     fn height(&self) -> usize {
         self.height as usize
     }
