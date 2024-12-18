@@ -7,9 +7,7 @@ use aoc::{
     search::{dijkstra, Weighted},
     Vec2D,
 };
-
-#[cfg(test)]
-use std::collections::HashMap;
+use pathfinding::prelude::astar_bag;
 
 #[derive(Default)]
 pub struct AocDay {
@@ -40,7 +38,7 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(self.maze.all_paths())
     }
 }
 
@@ -49,96 +47,51 @@ struct Maze {
     nodes: HashSet<Vec2D<i64>>,
     start: Vec2D<i64>,
     end: Vec2D<i64>,
-    rows: usize,
-    cols: usize,
 }
 
 impl Maze {
     fn score(&self) -> usize {
         match dijkstra(&(self.start, Vec2D(0, 1)), self) {
             None => 0,
-            Some(graph) => {
-                #[cfg(test)]
-                self.show(&graph);
-                graph
-                    .iter()
-                    .filter_map(|(n, v)| if n.0 == self.end { Some(*v) } else { None })
-                    .next()
-                    .unwrap_or(0)
-            }
-        }
-    }
-
-    #[cfg(test)]
-    fn show(&self, graph: &HashMap<(Vec2D<i64>, Vec2D<i64>), usize>) {
-        let path = self.path(graph);
-        for row in 0..self.rows {
-            for col in 0..self.cols {
-                let point = Vec2D(row as i64, col as i64);
-                if point == self.start {
-                    print!("S");
-                } else if point == self.end {
-                    print!("E");
-                } else if path.contains_key(&point) {
-                    print!("{}", path[&point])
-                } else {
-                    print!(
-                        "{}",
-                        match self.nodes.get(&point) {
-                            None => '#',
-                            Some(_) => '.',
-                        }
-                    )
-                }
-            }
-            println!();
-        }
-        println!("{}", path.len());
-    }
-
-    #[cfg(test)]
-    fn path(&self, graph: &HashMap<(Vec2D<i64>, Vec2D<i64>), usize>) -> HashMap<Vec2D<i64>, char> {
-        let mut visited = HashMap::new();
-        let mut cur = self.end;
-        let end = graph
-            .keys()
-            .find(|n| n.0 == self.end)
-            .map(|v| (v.0, dir_to_char(v.1)))
-            .unwrap();
-        visited.insert(end.0, end.1);
-        while cur != self.start {
-            let found = CARDINALS
+            Some(graph) => graph
                 .iter()
-                .map(|d| {
-                    graph
-                        .iter()
-                        .filter(|(n, _)| n.0 == cur - *d)
-                        .min_by_key(|v| v.1)
-                        .unwrap_or((&(Vec2D(0, 0), Vec2D(1, 0)), &usize::MAX))
-                })
-                .min_by_key(|v| v.1)
-                .unwrap()
-                .0;
-            cur = found.0;
-            visited.insert(found.0, dir_to_char(found.1));
+                .filter_map(|(n, v)| if n.0 == self.end { Some(*v) } else { None })
+                .next()
+                .unwrap_or(0),
         }
-        visited
+    }
+
+    fn all_paths(&self) -> usize {
+        let Some((paths, _)) = astar_bag(
+            &(self.start, Vec2D(0, 1)),
+            |node| self.weighted_moves(node),
+            |node| node.0.manhatten(&self.end) as usize,
+            |node| node.0 == self.end,
+        ) else {
+            panic!("No Paths!")
+        };
+        let found = paths
+            .flat_map(|p| p.iter().map(|n| n.0).collect::<HashSet<_>>())
+            .collect::<HashSet<_>>();
+        found.len()
+    }
+
+    fn weighted_moves(&self, cur: &Node) -> Vec<(Node, usize)> {
+        CARDINALS
+            .iter()
+            .filter_map(|dir| {
+                self.nodes
+                    .get(&(cur.0 + *dir))
+                    .map(|n| ((*n, *dir), self.weight(cur, &(*n, *dir))))
+            })
+            .collect()
     }
 }
 
-#[cfg(test)]
-fn dir_to_char(dir: Vec2D<i64>) -> char {
-    match dir {
-        Vec2D(-1, 0) => '^',
-        Vec2D(0, 1) => '>',
-        Vec2D(1, 0) => 'v',
-        Vec2D(0, -1) => '<',
-        _ => unreachable!(),
-    }
-}
+type Node = (Vec2D<i64>, Vec2D<i64>);
 
 impl Weighted for Maze {
-    type Node = (Vec2D<i64>, Vec2D<i64>);
+    type Node = Node;
     fn weight(&self, cur: &Self::Node, next: &Self::Node) -> usize {
         match cur.1 - next.1 {
             Vec2D(-1, -1) | Vec2D(1, -1) | Vec2D(-1, 1) | Vec2D(1, 1) => 1001,
@@ -180,8 +133,6 @@ impl FromStr for Maze {
                 }
                 _ => (),
             }
-            maze.rows = maze.rows.max(r + 1);
-            maze.cols = maze.cols.max(c + 1);
         }
         Ok(maze)
     }
