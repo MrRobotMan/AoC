@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    str::FromStr,
-};
+use std::{collections::HashSet, str::FromStr};
 
 use aoc::{
     measure::CARDINALS,
@@ -10,6 +7,9 @@ use aoc::{
     search::{dijkstra, Weighted},
     Vec2D,
 };
+
+#[cfg(test)]
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct AocDay {
@@ -58,7 +58,8 @@ impl Maze {
         match dijkstra(&(self.start, Vec2D(0, 1)), self) {
             None => 0,
             Some(graph) => {
-                // self.show(&graph);
+                #[cfg(test)]
+                self.show(&graph);
                 graph
                     .iter()
                     .filter_map(|(n, v)| if n.0 == self.end { Some(*v) } else { None })
@@ -68,6 +69,7 @@ impl Maze {
         }
     }
 
+    #[cfg(test)]
     fn show(&self, graph: &HashMap<(Vec2D<i64>, Vec2D<i64>), usize>) {
         let path = self.path(graph);
         for row in 0..self.rows {
@@ -94,6 +96,7 @@ impl Maze {
         println!("{}", path.len());
     }
 
+    #[cfg(test)]
     fn path(&self, graph: &HashMap<(Vec2D<i64>, Vec2D<i64>), usize>) -> HashMap<Vec2D<i64>, char> {
         let mut visited = HashMap::new();
         let mut cur = self.end;
@@ -123,6 +126,7 @@ impl Maze {
     }
 }
 
+#[cfg(test)]
 fn dir_to_char(dir: Vec2D<i64>) -> char {
     match dir {
         Vec2D(-1, 0) => '^',
