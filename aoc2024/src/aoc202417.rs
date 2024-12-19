@@ -54,7 +54,7 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(self.computer.quine())
     }
 }
 
@@ -65,6 +65,7 @@ struct Computer {
     register_c: usize,
     instruction_pointer: usize,
     program: Vec<usize>,
+    initial: [usize; 3],
 }
 
 impl Computer {
@@ -74,6 +75,7 @@ impl Computer {
             register_b,
             register_c,
             program,
+            initial: [register_a, register_b, register_c],
             ..Default::default()
         }
     }
@@ -81,24 +83,25 @@ impl Computer {
     fn run(&mut self) -> Vec<usize> {
         let mut res = vec![];
         while self.instruction_pointer < self.program.len() {
-            let operand = self.program[self.instruction_pointer + 1];
-            match self.program[self.instruction_pointer] {
-                0 => self.register_a /= 1 << self.combo(operand),
-                1 => self.register_b ^= operand,
-                2 => self.register_b = self.combo(operand) % 8,
+            let opcode = self.program[self.instruction_pointer];
+            let literal = self.program[self.instruction_pointer + 1];
+            let combo = self.combo(literal);
+            self.instruction_pointer += 2;
+            match opcode {
+                0 => self.register_a >>= combo,
+                1 => self.register_b ^= literal,
+                2 => self.register_b = combo % 8,
                 3 => {
                     if self.register_a != 0 {
-                        self.instruction_pointer = operand;
-                        continue;
+                        self.instruction_pointer = literal;
                     }
                 }
                 4 => self.register_b ^= self.register_c,
-                5 => res.push(self.combo(operand) % 8),
-                6 => self.register_b = self.register_a / (1 << self.combo(operand)),
-                7 => self.register_c = self.register_a / (1 << self.combo(operand)),
+                5 => res.push(combo % 8),
+                6 => self.register_b = self.register_a >> combo,
+                7 => self.register_c = self.register_a >> combo,
                 value => unreachable!("Bad opcode {value}"),
             }
-            self.instruction_pointer += 2;
         }
         res
     }
@@ -108,9 +111,35 @@ impl Computer {
             4 => self.register_a,
             5 => self.register_b,
             6 => self.register_c,
-            7 => panic!("Invalid combo operand 7"),
             v => v,
         }
+    }
+
+    fn initialize(&mut self) {
+        [self.register_a, self.register_b, self.register_c] = self.initial;
+        self.instruction_pointer = 0;
+    }
+
+    fn quine(&mut self) -> usize {
+        // Prog does stuff 3 bits at a time. Calculate from the last to first.
+        let len = self.program.len();
+        let mut attempted = vec![0];
+        for pos in 0..len {
+            let mut temp = vec![];
+            for attempt in attempted {
+                for idx in 0..8 {
+                    self.initialize();
+                    let attempt = attempt << 3 | idx;
+                    self.register_a = attempt;
+                    let res = self.run();
+                    if res == self.program[len - 1 - pos..] {
+                        temp.push(attempt);
+                    }
+                }
+            }
+            attempted = temp;
+        }
+        *attempted.iter().min().unwrap()
     }
 }
 
@@ -168,5 +197,11 @@ mod test {
         let expected = vec![4, 6, 3, 5, 6, 3, 5, 2, 1, 0];
         let actual = computer.run();
         assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_example2() {
+        let mut computer = Computer::new(2024, 0, 0, vec![0, 3, 5, 4, 3, 0]);
+        assert_eq!(computer.quine(), 117440)
     }
 }
