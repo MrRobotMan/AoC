@@ -20,11 +20,7 @@ impl AocDay {
             ..Default::default()
         }
     }
-    fn successors(&self, node: &Vec2D<i64>) -> Vec<Vec2D<i64>> {
-        let byte_count = match self.size {
-            Vec2D(6, 6) => 12,
-            _ => 1024,
-        };
+    fn successors(&self, node: &Vec2D<i64>, byte_count: usize) -> Vec<Vec2D<i64>> {
         CARDINALS
             .iter()
             .filter_map(|dir| {
@@ -58,10 +54,14 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
+        let byte_count = match self.size {
+            Vec2D(6, 6) => 12,
+            _ => 1024,
+        };
         output(
             bfs(
                 &Vec2D(0, 0),
-                |node| self.successors(node),
+                |node| self.successors(node, byte_count),
                 |node| *node == self.size,
             )
             .unwrap()
@@ -71,7 +71,18 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut idx = 0;
+        while bfs(
+            &Vec2D(0, 0),
+            |node| self.successors(node, idx),
+            |node| *node == self.size,
+        )
+        .is_some()
+        {
+            idx += 1;
+        }
+        let block = self.grid[idx - 1];
+        output(format!("{},{}", block.0, block.1))
     }
 }
 
@@ -112,8 +123,7 @@ mod test {
             ..Default::default()
         };
         day.parse();
-        let expected = "22";
-        let actual = day.part1();
-        assert_eq!(expected, actual);
+        assert_eq!("22", day.part1());
+        assert_eq!("6,1", day.part2());
     }
 }
