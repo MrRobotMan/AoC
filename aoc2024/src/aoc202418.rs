@@ -71,17 +71,27 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        let mut idx = 0;
-        while bfs(
-            &Vec2D(0, 0),
-            |node| self.successors(node, idx),
-            |node| *node == self.size,
-        )
-        .is_some()
-        {
-            idx += 1;
+        let mut min = match self.size.0 {
+            6 => 12,
+            _ => 1024,
+        };
+        let mut max = self.grid.len();
+
+        while max > min {
+            let mid = (max + min) / 2;
+            if bfs(
+                &Vec2D(0, 0),
+                |node| self.successors(node, mid),
+                |node| *node == self.size,
+            )
+            .is_some()
+            {
+                min = mid + 1;
+            } else {
+                max = mid;
+            }
         }
-        let block = self.grid[idx - 1];
+        let block = self.grid[max - 1];
         output(format!("{},{}", block.0, block.1))
     }
 }
