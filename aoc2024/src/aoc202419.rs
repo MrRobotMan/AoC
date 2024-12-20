@@ -30,7 +30,6 @@ impl Runner for AocDay {
         let lines = read_lines(&self.input);
         self.towels = lines[0].split(", ").map(|s| s.to_string()).collect();
         self.patterns = lines[1..].to_vec();
-        self.towels.sort_by_key(|p| std::cmp::Reverse(p.len()));
     }
 
     fn part1(&mut self) -> String {
@@ -46,7 +45,15 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(
+            self.patterns
+                .iter()
+                .map(|p| {
+                    let mut cache = Cache::default();
+                    cache.can_design(p, &self.towels)
+                })
+                .sum::<usize>(),
+        )
     }
 }
 
@@ -114,7 +121,7 @@ brgr
 bbrgwb",
         );
         day.parse();
-        println!("{:?}", day.towels);
         assert_eq!("6", day.part1());
+        assert_eq!("16", day.part2());
     }
 }
