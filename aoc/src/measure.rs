@@ -93,6 +93,12 @@ impl<T: Num + SaturatingSub + Signed> Vec2D<T> {
     }
 }
 
+impl From<(usize, usize)> for Vec2D<i64> {
+    fn from(value: (usize, usize)) -> Self {
+        Self(value.0 as i64, value.1 as i64)
+    }
+}
+
 impl TryFrom<char> for Vec2D<i64> {
     type Error = String;
 
