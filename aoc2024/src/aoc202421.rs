@@ -33,13 +33,11 @@ impl AocDay {
     }
 
     fn presses(&self, code: &str, robots: usize) -> usize {
-        let all_arrows =
-            get_num_presses('A', &code.chars().collect::<Vec<_>>(), &self.num_pad_moves);
-        let res = all_arrows
+        get_num_presses('A', &code.chars().collect::<Vec<_>>(), &self.num_pad_moves)
             .iter()
             .map(|arrows| get_arrow_presses('A', arrows, robots - 1))
-            .collect::<Vec<_>>();
-        *res.iter().min().unwrap()
+            .min()
+            .unwrap()
     }
 }
 
