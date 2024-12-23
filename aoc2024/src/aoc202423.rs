@@ -8,7 +8,7 @@ use aoc::{
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    connections: HashMap<String, Vec<String>>,
+    connections: HashMap<String, HashSet<String>>,
 }
 
 impl AocDay {
@@ -60,12 +60,16 @@ impl Runner for AocDay {
         for pair in pairs {
             self.connections
                 .entry(pair.0.clone())
-                .and_modify(|vec| vec.push(pair.1.clone()))
-                .or_insert(vec![pair.1.clone()]);
+                .and_modify(|set| {
+                    set.insert(pair.1.clone());
+                })
+                .or_insert(HashSet::from([pair.1.clone()]));
             self.connections
                 .entry(pair.1)
-                .and_modify(|vec| vec.push(pair.0.clone()))
-                .or_insert(vec![pair.0]);
+                .and_modify(|set| {
+                    set.insert(pair.0.clone());
+                })
+                .or_insert(HashSet::from([pair.0]));
         }
     }
 
@@ -74,8 +78,45 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(
+            bron_kerbosch(
+                &self.connections,
+                HashSet::new(),
+                self.connections.keys().cloned().collect(),
+                HashSet::new(),
+            )
+            .as_slice()
+            .join(","),
+        )
     }
+}
+
+fn bron_kerbosch(
+    graph: &HashMap<String, HashSet<String>>,
+    r: HashSet<String>,
+    mut p: HashSet<String>,
+    mut x: HashSet<String>,
+) -> Vec<String> {
+    if p.is_empty() && x.is_empty() {
+        return r.iter().cloned().collect();
+    }
+    let u = p.union(&x).next().unwrap();
+    let mut res = vec![];
+    for vertex in p.clone().difference(&graph[u]) {
+        let new = bron_kerbosch(
+            graph,
+            r.union(&HashSet::from([vertex.clone()])).cloned().collect(),
+            p.intersection(&graph[vertex]).cloned().collect(),
+            x.intersection(&graph[vertex]).cloned().collect(),
+        );
+        p.remove(vertex);
+        x.insert(vertex.clone());
+        if res.len() < new.len() {
+            res = new;
+        }
+    }
+    res.sort();
+    res
 }
 
 #[cfg(test)]
@@ -130,6 +171,20 @@ td-yn";
         day.parse();
         let expected = 7;
         let actual = day.find_triples(Some('t')).len();
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_part2() {
+        let mut day = AocDay::new(CONNECTIONS);
+        day.parse();
+        let expected = vec!["co", "de", "ka", "ta"];
+        let actual = bron_kerbosch(
+            &day.connections,
+            HashSet::new(),
+            day.connections.keys().cloned().collect(),
+            HashSet::new(),
+        );
         assert_eq!(expected, actual);
     }
 }
