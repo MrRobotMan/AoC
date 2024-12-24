@@ -88,6 +88,7 @@ impl AocDay {
             wire_map.entry(in1).or_insert(vec![]).push((op, out));
             wire_map.entry(in2).or_insert(vec![]).push((op, out));
         }
+        let last_bit = format!("z{}", self.z_values.len() - 1);
         for (in1, in2, out, op) in &self.gates {
             let chain = wire_map.get(out);
             let contains_xor = chain_contains_op(&chain, Gate::Xor);
@@ -99,7 +100,7 @@ impl AocDay {
             let is_input_bit = (in1.starts_with('x') && in2.starts_with('y'))
                 || (in1.starts_with('y') && in2.starts_with('x'));
             let is_result_bit = out.starts_with('z');
-            let last_bit = *out == format!("z{}", self.z_values.len() - 1);
+            let is_last_bit = *out == last_bit;
             let is_valid = match op {
                 Gate::And => {
                     // Half adder carry bit
@@ -110,15 +111,15 @@ impl AocDay {
                     // Carries from full adders.
                     // Outputs last bit
                     // Carry bit is (prev carry AND inp1 XOR inp2) OR (inp1 AND inp2)
-                    last_bit || (contains_and && contains_xor)
+                    is_last_bit || (contains_and && contains_xor)
                 }
                 Gate::Xor => {
                     // Half adder should output the least significant bit.
                     // If a full adder outputs a bit the inputs should be from other ops.
-                    // x and y inputs must be xor'd again.
+                    // If a full adder doesn't output a bit then it should take inputs.
                     (is_half_adder && out == "z00")
                         || (!is_input_bit && is_result_bit)
-                        || (is_input_bit && contains_xor)
+                        || (is_input_bit && !is_result_bit)
                 }
             };
             if !is_valid {
