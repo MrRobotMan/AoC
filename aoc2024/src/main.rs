@@ -26,6 +26,7 @@ mod aoc202421;
 mod aoc202422;
 mod aoc202423;
 mod aoc202424;
+mod aoc202425;
 
 fn main() {
     let mut day01 = aoc202401::AocDay::new("aoc2024/inputs/day01.txt");
@@ -52,11 +53,12 @@ fn main() {
     let mut day22 = aoc202422::AocDay::new("aoc2024/inputs/day22.txt");
     let mut day23 = aoc202423::AocDay::new("aoc2024/inputs/day23.txt");
     let mut day24 = aoc202424::AocDay::new("aoc2024/inputs/day24.txt");
+    let mut day25 = aoc202425::AocDay::new("aoc2024/inputs/day25.txt");
     let mut days: Vec<&mut dyn Runner> = vec![
         &mut day01, &mut day02, &mut day03, &mut day04, &mut day05, &mut day06, &mut day07, 
         &mut day08, &mut day09, &mut day10, &mut day11, &mut day12, &mut day13, &mut day14, 
         &mut day15, &mut day16, &mut day17, &mut day18, &mut day19, &mut day20, &mut day21, 
-        &mut day22, &mut day23, &mut day24, 
+        &mut day22, &mut day23, &mut day24, &mut day25, 
     ];
     let len = days.len() - 1;
     match get_args() {
