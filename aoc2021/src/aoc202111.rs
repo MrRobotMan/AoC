@@ -82,21 +82,6 @@ impl AocDay {
     }
 }
 
-impl std::fmt::Display for AocDay {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for row in 0..self.grid[0] {
-            for col in 0..self.grid[1] {
-                match self.octopodes[row * self.grid[1] + col] {
-                    0 => write!(f, "_  ")?,
-                    val => write!(f, "{val:<3}")?,
-                }
-            }
-            writeln!(f)?;
-        }
-        Ok(())
-    }
-}
-
 impl Runner for AocDay {
     fn name(&self) -> (usize, usize) {
         (2021, 11)
@@ -114,7 +99,11 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut steps = 100;
+        while self.step() != self.grid[0] * self.grid[1] {
+            steps += 1;
+        }
+        output(steps + 1)
     }
 }
 
@@ -193,5 +182,10 @@ mod test {
         let expected = 1656;
         let actual = (0..100).map(|_| day.step()).sum::<usize>();
         assert_eq!(expected, actual);
+        let mut steps = 100;
+        while day.step() != day.grid[0] * day.grid[1] {
+            steps += 1;
+        }
+        assert_eq!(steps + 1, 195);
     }
 }
