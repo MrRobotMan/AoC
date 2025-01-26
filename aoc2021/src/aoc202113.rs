@@ -45,6 +45,25 @@ impl AocDay {
                 self.dots.insert(new);
             }
         }
+        self.size = match direction {
+            Direction::X(col) => (col, self.size.1),
+            Direction::Y(row) => (self.size.0, row),
+        }
+    }
+
+    fn show(&self) -> String {
+        let mut res = String::new();
+        for row in 0..self.size.1 {
+            res.push('\n');
+            for col in 0..self.size.0 {
+                if self.dots.contains(&Vec2D(col, row)) {
+                    res.push('#');
+                } else {
+                    res.push(' ');
+                }
+            }
+        }
+        res
     }
 }
 
@@ -84,7 +103,9 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let folds = self.folds.iter().skip(1).copied().collect::<Vec<_>>();
+        folds.into_iter().for_each(|fold| self.fold(fold));
+        output(self.show())
     }
 }
 
