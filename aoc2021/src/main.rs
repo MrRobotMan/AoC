@@ -14,6 +14,7 @@ mod aoc202109;
 mod aoc202110;
 mod aoc202111;
 mod aoc202112;
+mod aoc202113;
 
 #[cfg(test)]
 mod tests;
@@ -31,9 +32,10 @@ fn main() {
     let mut day10 = aoc202110::AocDay::new("aoc2021/inputs/day10.txt");
     let mut day11 = aoc202111::AocDay::new("aoc2021/inputs/day11.txt");
     let mut day12 = aoc202112::AocDay::new("aoc2021/inputs/day12.txt");
+    let mut day13 = aoc202113::AocDay::new("aoc2021/inputs/day13.txt");
     let mut days: Vec<&mut dyn Runner> = vec![
         &mut day01, &mut day02, &mut day03, &mut day04, &mut day05, &mut day06, &mut day07, 
-        &mut day08, &mut day09, &mut day10, &mut day11, &mut day12, 
+        &mut day08, &mut day09, &mut day10, &mut day11, &mut day12, &mut day13, 
     ];
     let len = days.len() - 1;
     match get_args() {
