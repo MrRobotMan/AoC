@@ -80,15 +80,14 @@ impl Cave {
                 for j in 0..scale {
                     let new_loc = *loc + Vec2D((i as i64) * (x + 1), (j as i64) * (y + 1));
                     let offset = if j == 0 {
-                        Vec2D(x + 1, 0)
+                        Vec2D(x + 1, 0) // Col 0, grab from the row above
                     } else {
-                        Vec2D(0, y + 1)
+                        Vec2D(0, y + 1) // Grab from the previous col
                     };
-                    let old_cost = match bigger.map.get(&(new_loc - offset)) {
-                        Some(v) => *v + 1,
+                    let new_cost = match bigger.map.get(&(new_loc - offset)) {
+                        Some(v) => ((*v + 1) % 10).max(1),
                         None => self.map[loc],
                     };
-                    let new_cost = ((old_cost) % 10).max(1);
                     bigger.map.insert(new_loc, new_cost);
                 }
             }
