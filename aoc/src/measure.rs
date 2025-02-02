@@ -87,6 +87,17 @@ impl Dir {
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Vec2D<T: Num>(pub T, pub T);
 
+impl<T: Num + Copy> Vec2D<T> {
+    pub fn scale(&mut self, factor: T) -> Self
+    where
+        T: std::ops::MulAssign,
+    {
+        self.0 *= factor;
+        self.1 *= factor;
+        *self
+    }
+}
+
 impl<T: Num + SaturatingSub + Signed> Vec2D<T> {
     pub fn manhatten(&self, other: &Self) -> T {
         abs(self.0.saturating_sub(&other.0)) + abs(self.1.saturating_sub(&other.1))
@@ -130,6 +141,14 @@ impl<T: Num + Copy> std::ops::Add for Vec2D<T> {
         Self(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
+
+impl<T: Num + Copy + std::ops::AddAssign> std::ops::AddAssign for Vec2D<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+    }
+}
+
 impl<T: Num + Copy> std::ops::Add for &Vec2D<T> {
     type Output = Vec2D<T>;
 
@@ -137,18 +156,12 @@ impl<T: Num + Copy> std::ops::Add for &Vec2D<T> {
         Vec2D(self.0 + rhs.0, self.1 + rhs.1)
     }
 }
+
 impl<T: Num + Copy> std::ops::Sub for Vec2D<T> {
     type Output = Vec2D<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self(self.0 - rhs.0, self.1 - rhs.1)
-    }
-}
-
-impl<T: Num + Copy + std::ops::AddAssign> std::ops::AddAssign for Vec2D<T> {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
-        self.1 += rhs.1;
     }
 }
 

@@ -35,11 +35,11 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(self.cave.expand(5).find_path_cost())
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 struct Cave {
     map: HashMap<Vec2D<i64>, usize>,
     size: Vec2D<i64>,
@@ -69,6 +69,31 @@ impl Cave {
 
     fn success(&self, node: &Vec2D<i64>) -> bool {
         *node == self.size
+    }
+
+    fn expand(&self, scale: usize) -> Self {
+        let mut bigger = self.clone();
+        bigger.size = bigger.size.scale(scale as i64) + Vec2D(scale as i64 - 1, scale as i64 - 1);
+        let Vec2D(x, y) = self.size;
+        for loc in self.map.keys() {
+            for i in 0..scale {
+                for j in 0..scale {
+                    let new_loc = *loc + Vec2D((i as i64) * (x + 1), (j as i64) * (y + 1));
+                    let offset = if j == 0 {
+                        Vec2D(x + 1, 0)
+                    } else {
+                        Vec2D(0, y + 1)
+                    };
+                    let old_cost = match bigger.map.get(&(new_loc - offset)) {
+                        Some(v) => *v + 1,
+                        None => self.map[loc],
+                    };
+                    let new_cost = ((old_cost) % 10).max(1);
+                    bigger.map.insert(new_loc, new_cost);
+                }
+            }
+        }
+        bigger
     }
 }
 
@@ -109,5 +134,7 @@ mod test {
         let expected = 40;
         let actual = cave.find_path_cost();
         assert_eq!(expected, actual);
+        let bigger = cave.expand(5);
+        assert_eq!(bigger.find_path_cost(), 315);
     }
 }
