@@ -102,7 +102,7 @@ impl Board {
             }
         }
         for col in 0..self.marked[0].len() {
-            if self.marked.iter().map(|r| r[col]).all(|v| v) {
+            if self.marked.iter().all(|r| r[col]) {
                 return true;
             }
         }
