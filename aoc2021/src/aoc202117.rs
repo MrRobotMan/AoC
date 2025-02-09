@@ -9,6 +9,7 @@ use aoc::{
 pub struct AocDay {
     pub(crate) input: String,
     target: ((i64, i64), (i64, i64)),
+    times: HashMap<i64, [HashSet<i64>; 2]>,
 }
 
 impl AocDay {
@@ -38,26 +39,26 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let mut times: HashMap<i64, [HashSet<i64>; 2]> = HashMap::new();
         let y_max = (self.target.1 .0).abs();
-        for vel in 0..=y_max {
+        for vel in -y_max..=y_max {
             for time in times_in_target(vel, -1, self.target.1, vert_pos_at_time, |d, _| {
                 d >= self.target.1 .0
             }) {
-                let time = times.entry(time).or_default();
+                let time = self.times.entry(time).or_default();
                 time[1].insert(vel);
             }
         }
-        let t_max = *times.keys().max().unwrap();
+        let t_max = *self.times.keys().max().unwrap();
         for vel in min_vel(self.target.0 .0)..=self.target.0 .1 {
             for time in times_in_target(vel, -1, self.target.0, horiz_pos_at_time, |d, t| {
                 d <= self.target.0 .1 && t <= t_max
             }) {
-                let time = times.entry(time).or_default();
+                let time = self.times.entry(time).or_default();
                 time[0].insert(vel);
             }
         }
-        let max_y = times
+        let max_y = self
+            .times
             .values()
             .filter_map(|v| {
                 if v.iter().all(|x| !x.is_empty()) {
@@ -73,8 +74,27 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let times = self
+            .times
+            .values()
+            .filter_map(|v| {
+                if v.iter().all(|x| !x.is_empty()) {
+                    Some(combine(v))
+                } else {
+                    None
+                }
+            })
+            .flatten()
+            .collect::<HashSet<_>>();
+        output(times.len())
     }
+}
+
+fn combine<T: Copy>(values: &[HashSet<T>; 2]) -> Vec<(T, T)> {
+    values[0]
+        .iter()
+        .flat_map(|v1| values[1].iter().map(|v2| (*v1, *v2)))
+        .collect()
 }
 
 fn times_in_target(
@@ -100,15 +120,19 @@ fn times_in_target(
 }
 
 fn vert_pos_at_time(time: i64, vel: i64, accel: i64) -> i64 {
-    if time <= vel {
-        horiz_pos_at_time(time, vel, accel)
-    } else if time <= 2 * vel + 1 {
-        // Ex v = 3, t4 = t3, t5 = t2, t6 = t1, t7 = t0
-        // Delta       1         3        5        7
-        // 2 v + 1 -t  3      7 - 5 = 2   7-6=1
-        horiz_pos_at_time(2 * vel + 1 - time, vel, accel)
+    if vel > 0 {
+        if time <= vel {
+            horiz_pos_at_time(time, vel, accel)
+        } else if time <= 2 * vel + 1 {
+            // Ex v = 3, t4 = t3, t5 = t2, t6 = t1, t7 = t0
+            // Delta       1         3        5        7
+            // 2 v + 1 -t  3      7 - 5 = 2   7-6=1
+            horiz_pos_at_time(2 * vel + 1 - time, vel, accel)
+        } else {
+            triangluar(vel) - triangluar(time - vel - 1)
+        }
     } else {
-        triangluar(vel) - triangluar(time - vel - 1)
+        triangluar(vel.abs() - 1) - triangluar(vel.abs() - 1 + time)
     }
 }
 
@@ -172,11 +196,21 @@ mod test {
     }
 
     #[test]
+    fn test_y_distance_travelled3() {
+        let expected = -10;
+        let actual = vert_pos_at_time(1, -10, -1);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_example1() {
         let mut day = AocDay::new("target area: x=20..30, y=-10..-5");
         day.parse();
         let expected = 45;
         let actual = day.part1().parse().unwrap();
+        assert_eq!(expected, actual);
+        let expected = 112;
+        let actual = day.part2().parse().unwrap();
         assert_eq!(expected, actual);
     }
 }
