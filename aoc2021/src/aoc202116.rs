@@ -91,7 +91,7 @@ impl Packet {
     fn length(&self) -> usize {
         match self.op_type {
             OpType::Literal(l) => l,
-            OpType::Length(_) => self.sub_packets.iter().fold(22, |acc, p| acc + p.length()),
+            OpType::Length(l) => 22 + l,
             OpType::Count(_) => self.sub_packets.iter().fold(18, |acc, p| acc + p.length()),
         }
     }
