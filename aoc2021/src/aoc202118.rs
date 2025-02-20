@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::Deref, str::Chars};
+use std::{borrow::BorrowMut, fmt::Display, ops::Deref, str::Chars};
 
 use aoc::{
     read_lines,
@@ -106,51 +106,48 @@ impl Number {
 
     fn reduce(&mut self) {
         loop {
-            let reduced = match self.explode(0) {
-                (true, val, _, _) => {
-                    *self = val;
-                    true
-                }
-                (false, _, _, _) => self.split(),
-            };
-            if !reduced {
+            if !(self.explode(0).0 || self.split()) {
                 break;
             }
         }
     }
 
-    fn explode(&self, depth: u8) -> (bool, Self, Option<u8>, Option<u8>) {
-        match (depth, self) {
-            (4, Self::Pair(pair)) => {
-                if let [Self::Value(left), Self::Value(right)] = pair.as_ref() {
-                    (true, Self::Value(0), Some(*left), Some(*right))
-                } else {
-                    unreachable!("Exploding pairs will always be values. Got {pair:?}")
-                }
-            }
-            (_, Self::Pair(pair)) => {
-                let [left, right] = pair.as_ref();
-                match left.explode(depth + 1) {
-                    (true, v, l, mut r) => {
-                        let right = match r.take() {
-                            Some(v) => right.add_to(v, Side::Left),
-                            None => right.clone(),
-                        };
-                        (true, Number::Pair(Box::new([v, right])), l, r)
+    fn explode(&mut self, depth: u8) -> (bool, Option<u8>, Option<u8>) {
+        match depth {
+            4 => match self.clone() {
+                Self::Value(_) => (false, None, None),
+                Self::Pair(pair) => {
+                    if let [Self::Value(left), Self::Value(right)] = pair.as_ref() {
+                        *self = Self::Value(0);
+                        (true, Some(*left), Some(*right))
+                    } else {
+                        unreachable!("Exploding pairs will always be values. Got {pair:?}")
                     }
-                    (false, _, _, _) => match right.explode(depth + 1) {
-                        (true, v, mut l, r) => {
-                            let left = match l.take() {
-                                Some(v) => left.add_to(v, Side::Right),
-                                None => left.clone(),
-                            };
-                            (true, Number::Pair(Box::new([left, v])), l, r)
-                        }
-                        (false, _, _, _) => (false, self.clone(), None, None),
-                    },
                 }
-            }
-            (_, Self::Value(_)) => (false, self.clone(), None, None),
+            },
+            _ => match self {
+                Self::Value(_) => (false, None, None),
+                Self::Pair(pair) => {
+                    let [left, right] = pair.borrow_mut();
+                    match left.explode(depth + 1) {
+                        (true, l, mut r) => {
+                            if let Some(v) = r.take() {
+                                *right = right.add_to(v, Side::Left);
+                            }
+                            (true, l, r)
+                        }
+                        (false, _, _) => match right.explode(depth + 1) {
+                            (true, mut l, r) => {
+                                if let Some(v) = l.take() {
+                                    *left = left.add_to(v, Side::Right);
+                                }
+                                (true, l, r)
+                            }
+                            (false, _, _) => (false, None, None),
+                        },
+                    }
+                }
+            },
         }
     }
 
@@ -229,41 +226,41 @@ mod test {
 
     #[test]
     fn test_simple_explode() {
-        let number = Number::new("[[6,[5,[4,[3,2]]]],1]");
+        let mut actual = Number::new("[[6,[5,[4,[3,2]]]],1]");
         let expected = Number::new("[[6,[5,[7,0]]],3]");
-        let actual = number.explode(0).1;
+        actual.explode(0);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_simple_no_left() {
-        let number = Number::new("[[[[[9,8],1],2],3],4]");
+        let mut actual = Number::new("[[[[[9,8],1],2],3],4]");
         let expected = Number::new("[[[[0,9],2],3],4]");
-        let actual = number.explode(0).1;
+        actual.explode(0);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_simple_no_right() {
-        let number = Number::new("[1,[2,[3,[4,[5,6]]]]]");
+        let mut actual = Number::new("[1,[2,[3,[4,[5,6]]]]]");
         let expected = Number::new("[1,[2,[3,[9,0]]]]");
-        let actual = number.explode(0).1;
+        actual.explode(0);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_explode() {
         let expected = Number::new("[[[[0,7],4],[7,[[8,4],9]]],[1,1]]");
-        let number = Number::new("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
-        let actual = number.explode(0).1;
+        let mut actual = Number::new("[[[[[4,3],4],4],[7,[[8,4],9]]],[1,1]]");
+        actual.explode(0);
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_explode2() {
         let expected = Number::new("[[[[0,7],4],[[7,8],[6,0]]],[8,1]]");
-        let number = Number::new("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]");
-        let actual = number.explode(0).1;
+        let mut actual = Number::new("[[[[0,7],4],[[7,8],[0,[6,7]]]],[1,1]]");
+        actual.explode(0);
         assert_eq!(expected, actual);
     }
 
