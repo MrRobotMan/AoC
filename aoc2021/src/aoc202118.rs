@@ -40,7 +40,22 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(
+            self.numbers
+                .iter()
+                .enumerate()
+                .flat_map(|(i, n)| {
+                    self.numbers.iter().enumerate().filter_map(move |(i2, n2)| {
+                        if i != i2 {
+                            Some((n.clone() + n2).magnitude())
+                        } else {
+                            None
+                        }
+                    })
+                })
+                .max()
+                .unwrap(),
+        )
     }
 }
 
