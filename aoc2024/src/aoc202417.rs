@@ -129,7 +129,7 @@ impl Computer {
             for attempt in attempted {
                 for idx in 0..8 {
                     self.initialize();
-                    let attempt = attempt << 3 | idx;
+                    let attempt = (attempt << 3) | idx;
                     self.register_a = attempt;
                     let res = self.run();
                     if res == self.program[len - 1 - pos..] {
