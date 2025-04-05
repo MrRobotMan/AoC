@@ -38,6 +38,7 @@ const ROTATIONS: [[[i64; 3]; 3]; 24] = [
 pub struct AocDay {
     pub(crate) input: String,
     scanners: Vec<Scanner>,
+    locations: Vec<[i64; 3]>,
 }
 
 impl AocDay {
@@ -59,6 +60,7 @@ impl Runner for AocDay {
             .iter()
             .map(|record| record.into())
             .collect();
+        self.locations.push([0, 0, 0]);
     }
 
     fn part1(&mut self) -> String {
@@ -70,16 +72,29 @@ impl Runner for AocDay {
             .cloned()
             .collect::<VecDeque<_>>();
         while let Some(scanner) = queue.pop_front() {
-            if !target.overlap(&scanner, 12) {
-                queue.push_back(scanner);
+            match target.overlap(&scanner, 12) {
+                None => queue.push_back(scanner),
+                Some(t) => self.locations.push(t),
             };
         }
         output(target.beacons.len())
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut distance = 0;
+        for (n, left) in self.locations.iter().enumerate() {
+            for right in self.locations.iter().skip(n) {
+                distance = distance.max(manhattan(left, right));
+            }
+        }
+        output(distance)
     }
+}
+
+fn manhattan(lhs: &[i64], rhs: &[i64]) -> i64 {
+    lhs.iter()
+        .zip(rhs)
+        .fold(0, |res, (l, r)| res + (l - r).abs())
 }
 
 trait Dot<T> {
@@ -126,21 +141,22 @@ impl Scanner {
         }
     }
 
-    fn overlap(&mut self, other: &Self, target: usize) -> bool {
+    fn overlap(&mut self, other: &Self, target: usize) -> Option<[i64; 3]> {
         for rotation in other.clone() {
             for node in &rotation.beacons {
                 for loc in &self.beacons {
-                    let transformed = rotation.translate(loc.delta(node));
+                    let trans = loc.delta(node);
+                    let transformed = rotation.translate(trans);
                     if self.does_overlap(&transformed, target) {
                         for beacon in &transformed.beacons {
                             self.beacons.insert(*beacon);
                         }
-                        return true;
+                        return Some(trans);
                     }
                 }
             }
         }
-        false
+        None
     }
 
     fn does_overlap(&self, other: &Self, target: usize) -> bool {
@@ -410,13 +426,33 @@ mod test {
             ]),
         ]);
         let expected = 79;
+        let mut locations = vec![[0, 0, 0]];
         let mut target = scanners.pop_front().unwrap();
         while let Some(scanner) = scanners.pop_front() {
-            if !target.overlap(&scanner, 12) {
-                scanners.push_back(scanner);
+            match target.overlap(&scanner, 12) {
+                None => scanners.push_back(scanner),
+                Some(t) => locations.push(t),
             };
         }
         let actual = target.beacons.len();
+        locations.sort();
         assert_eq!(expected, actual);
+        assert_eq!(
+            locations,
+            vec![
+                [-92, -2380, -20],
+                [-20, -1133, 1061],
+                [0, 0, 0],
+                [68, -1246, -43],
+                [1105, -1205, 1229]
+            ]
+        );
+        let mut distance = 0;
+        for (n, left) in locations.iter().enumerate() {
+            for right in locations.iter().skip(n) {
+                distance = distance.max(manhattan(left, right));
+            }
+        }
+        assert_eq!(distance, 3621);
     }
 }
