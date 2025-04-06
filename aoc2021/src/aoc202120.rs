@@ -55,11 +55,20 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut infinte = vec![0];
+        if self.algorithm[0] == 1 {
+            infinte.push(1)
+        }
+        let mut infinity = infinte.iter().cycle();
+        let mut image = self.image.clone();
+        for _ in 0..50 {
+            image = image.enchance(&self.algorithm, *infinity.next().unwrap());
+        }
+        output(image.image.len())
     }
 }
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
 struct Image {
     image: HashSet<(i32, i32)>,
     bounds: [i32; 4], // min row, max row, min col, max col
