@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::HashMap;
 
 use aoc::{
     read_lines,
@@ -38,7 +38,8 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let mut players = self.players;
+        output(play_dirac(&mut players).iter().max().unwrap())
     }
 }
 
@@ -54,27 +55,31 @@ fn play(players: &mut [(usize, usize); 2], max_score: usize) -> usize {
 fn play_dirac(players: &mut [(usize, usize); 2]) -> [usize; 2] {
     let mut player = 0;
     let mut complete = [0, 0];
-    let mut active = HashSet::new();
-    active.insert(*players);
-    // while !active.is_empty() {
-    for _ in 0..3 {
-        let mut temp = HashSet::new();
-        for state in active {
-            for (end, score) in DIRAC_ROLLS[state[player].0 - 1] {
+    let mut active = HashMap::new();
+    active.insert(*players, 1);
+    while !active.is_empty() {
+        // for _ in 0..3 {
+        let mut temp = HashMap::new();
+        for (state, cnt) in active {
+            let rolls = [
+                3, 4, 5, 4, 5, 6, 5, 6, 7, 4, 5, 6, 5, 6, 7, 6, 7, 8, 5, 6, 7, 6, 7, 8, 7, 8, 9,
+            ];
+            for roll in rolls {
                 let mut s = state;
-                let (pos, init_score) = &mut s[player];
-                *init_score += score;
-                *pos = end;
-                if *init_score >= 21 {
-                    complete[player] += 1;
+                let (pos, score) = &mut s[player];
+                *pos = pos.increment(roll, 10);
+                *score += *pos;
+                if *score >= 21 {
+                    complete[player] += cnt;
                 } else {
-                    temp.insert(s);
+                    let ent = temp.entry(s).or_default();
+                    *ent += cnt;
                 }
             }
         }
         player = player.increment(1, 1);
         active = temp;
-        println!("{active:?}\n");
+        // println!("{active:?}\n");
     }
     complete
 }
@@ -90,71 +95,10 @@ fn roll_die(pos: &mut usize) -> usize {
     let mut value = 0;
     for _ in 1..=3 {
         *pos = pos.increment(1, 100);
-        // *pos += 1;
-        // if *pos > 100 {
-        //     *pos %= 100;
-        // }
         value += *pos % 10;
     }
     value % 10
 }
-// From starting position 0..10 the possible outcomes for 3 rolls;
-// Ex: from pos 1 roll 1,1,1 earning 9 points and ending on spot 4
-//                     1,1,2 earning 10 points and ending on spot 5
-// Ex: from pos 5 roll 3,1,2 earning 18 (8 + 9 + 1) points and ending on spot 1
-#[rustfmt::skip]
-const DIRAC_ROLLS: [[(usize, usize); 27]; 10] = [
-    [
-        (4, 9), (5, 10), (6, 11), (5, 11), (6, 12), (7, 13), (6, 13), (7, 14), (8, 15),
-        (5, 12), (6, 13), (7, 14), (6, 14), (7, 15), (8, 16), (7, 16), (8, 17), (9, 18),
-        (6, 15), (7, 16), (8, 17), (7, 17), (8, 18), (9, 19), (8, 19), (9, 20), (10, 21),
-    ],
-    [
-        (5, 12), (6, 13), (7, 14), (6, 14), (7, 15), (8, 16), (7, 16), (8, 17), (9, 18),
-        (6, 15), (7, 16), (8, 17), (7, 17), (8, 18), (9, 19), (8, 19), (9, 20), (10, 21),
-        (7, 18), (8, 19), (9, 20), (8, 20), (9, 21), (10, 22), (9, 22), (10, 23), (1, 14),
-    ],
-    [
-        (6, 15), (7, 16), (8, 17), (7, 17), (8, 18), (9, 19), (8, 19), (9, 20), (10, 21),
-        (7, 18), (8, 19), (9, 20), (8, 20), (9, 21), (10, 22), (9, 22), (10, 23), (1, 14),
-        (8, 21), (9, 22), (10, 23), (9, 23), (10, 24), (1, 15), (10, 25), (1, 16), (2, 17),
-    ],
-    [
-        (7, 18), (8, 19), (9, 20), (8, 20), (9, 21), (10, 22), (9, 22), (10, 23), (1, 14),
-        (8, 21), (9, 22), (10, 23), (9, 23), (10, 24), (1, 15), (10, 25), (1, 16), (2, 17),
-        (9, 24), (10, 25), (1, 16), (10, 26), (1, 17), (2, 18), (1, 18), (2, 19), (3, 20),
-    ],
-    [
-        (8, 21), (9, 22), (10, 23), (9, 23), (10, 24), (1, 15), (10, 25), (1, 16), (2, 17),
-        (9, 24), (10, 25), (1, 16), (10, 26), (1, 17), (2, 18), (1, 18), (2, 19), (3, 20),
-        (10, 27), (1, 18), (2, 19), (1, 19), (2, 20), (3, 21), (2, 11), (3, 12), (4, 13),
-    ],
-    [
-        (9, 24), (10, 25), (1, 16), (10, 26), (1, 17), (2, 18), (1, 18), (2, 19), (3, 20),
-        (10, 27), (1, 18), (2, 19), (1, 19), (2, 20), (3, 21), (2, 11), (3, 12), (4, 13),
-        (1, 20), (2, 21), (3, 22), (2, 12), (3, 13), (4, 14), (3, 14), (4, 15), (5, 16),
-    ],
-    [
-        (10, 27), (1, 18), (2, 19), (1, 19), (2, 20), (3, 21), (2, 11), (3, 12), (4, 13),
-        (1, 20), (2, 21), (3, 22), (2, 12), (3, 13), (4, 14), (3, 14), (4, 15), (5, 16),
-        (2, 13), (3, 14), (4, 15), (3, 15), (4, 16), (5, 17), (4, 17), (5, 18), (6, 19),
-    ],
-    [
-        (1, 20), (2, 21), (3, 22), (2, 12), (3, 13), (4, 14), (3, 14), (4, 15), (5, 16),
-        (2, 13), (3, 14), (4, 15), (3, 15), (4, 16), (5, 17), (4, 17), (5, 18), (6, 19),
-        (3, 6), (4, 7), (5, 8), (4, 8), (5, 9), (6, 10), (5, 10), (6, 11), (7, 12),
-    ],
-    [
-        (2, 13), (3, 14), (4, 15), (3, 15), (4, 16), (5, 17), (4, 17), (5, 18), (6, 19),
-        (3, 6), (4, 7), (5, 8), (4, 8), (5, 9), (6, 10), (5, 10), (6, 11), (7, 12),
-        (4, 9), (5, 10), (6, 11), (5, 11), (6, 12), (7, 13), (6, 13), (7, 14), (8, 15),
-    ],
-    [
-        (3, 6), (4, 7), (5, 8), (4, 8), (5, 9), (6, 10), (5, 10), (6, 11), (7, 12),
-        (4, 9), (5, 10), (6, 11), (5, 11), (6, 12), (7, 13), (6, 13), (7, 14), (8, 15),
-        (5, 12), (6, 13), (7, 14), (6, 14), (7, 15), (8, 16), (7, 16), (8, 17), (9, 18),
-    ],
-];
 
 trait Increment {
     fn increment(self, inc: Self, lim: Self) -> Self;
@@ -206,7 +150,7 @@ mod test {
     #[test]
     fn test_roll_dirac() {
         let mut players = [(4, 0), (8, 0)];
-        let expected = [444356092776315, 34196039018080808];
+        let expected = [444356092776315, 341960390180808];
         let actual = play_dirac(&mut players);
         assert_eq!(expected, actual);
     }
