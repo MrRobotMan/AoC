@@ -47,7 +47,7 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        output((self.mainloop.len() + 1) / 2)
+        output(self.mainloop.len().div_ceil(2))
     }
 
     fn part2(&mut self) -> String {

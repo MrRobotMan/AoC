@@ -168,5 +168,5 @@ fn get_number_at_end<T: FromStr>(string: &str) -> T
 where
     <T as FromStr>::Err: Debug,
 {
-    string.split(' ').last().unwrap().parse::<T>().unwrap()
+    string.split(' ').next_back().unwrap().parse::<T>().unwrap()
 }
