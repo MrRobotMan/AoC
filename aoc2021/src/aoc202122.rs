@@ -1,4 +1,4 @@
-use std::{collections::HashSet, str::FromStr};
+use std::str::FromStr;
 
 use aoc::{
     read_lines,
@@ -8,7 +8,7 @@ use aoc::{
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    steps: Vec<Step>,
+    cuboids: Vec<Cuboid>,
 }
 
 impl AocDay {
@@ -26,216 +26,132 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        self.steps = read_lines(&self.input)
+        self.cuboids = read_lines(&self.input)
             .iter()
             .map(|line| line.parse().unwrap())
             .collect();
     }
 
     fn part1(&mut self) -> String {
-        let search_volume = Cuboid::new([-50, 50], [-50, 50], [-50, 50]);
-        let mut voxels: HashSet<[i64; 3]> = HashSet::new();
-        for inst in &self.steps {
-            let cuboid: Cuboid = inst.into();
-            if !cuboid.within(&search_volume) {
-                continue;
-            }
-            match inst.setting {
-                Setting::On => {
-                    for x in cuboid.x_range[0]..=cuboid.x_range[1] {
-                        for y in cuboid.y_range[0]..=cuboid.y_range[1] {
-                            for z in cuboid.z_range[0]..=cuboid.z_range[1] {
-                                voxels.insert([x, y, z]);
-                            }
-                        }
-                    }
-                }
-                Setting::Off => {
-                    for x in cuboid.x_range[0]..=cuboid.x_range[1] {
-                        for y in cuboid.y_range[0]..=cuboid.y_range[1] {
-                            for z in cuboid.z_range[0]..=cuboid.z_range[1] {
-                                voxels.remove(&[x, y, z]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        output(voxels.len())
+        output(get_vol(
+            &self.cuboids,
+            Some(Cuboid {
+                status: Status::On,
+                x: [-50, 50],
+                y: [-50, 50],
+                z: [-50, 50],
+            }),
+        ))
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        output(get_vol(&self.cuboids, None))
     }
+}
+
+fn get_vol(cuboids: &[Cuboid], limits: Option<Cuboid>) -> i64 {
+    let mut voxels = vec![];
+    for cuboid in cuboids {
+        if let Some(limit) = limits {
+            if !cuboid.within(&limit) {
+                continue;
+            }
+        }
+        let mut to_add = if cuboid.status == Status::On {
+            vec![*cuboid]
+        } else {
+            vec![]
+        };
+        for voxel in &voxels {
+            if let Some(core) = cuboid.intersection(voxel) {
+                to_add.push(core);
+            }
+        }
+        voxels.extend(to_add);
+    }
+    voxels.iter().fold(0, |acc, c| acc + c.volume())
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 struct Cuboid {
-    x_range: [i64; 2],
-    y_range: [i64; 2],
-    z_range: [i64; 2],
-}
-
-impl Cuboid {
-    fn new(x_range: [i64; 2], y_range: [i64; 2], z_range: [i64; 2]) -> Self {
-        Self {
-            x_range,
-            y_range,
-            z_range,
-        }
-    }
-
-    fn volume(&self) -> i64 {
-        (self.x_range[1] - self.x_range[0] + 1)
-            * (self.y_range[1] - self.y_range[0] + 1)
-            * (self.z_range[1] - self.z_range[0] + 1)
-    }
-
-    fn merge(&self, other: &Cuboid) -> Option<Cuboid> {
-        if self.within(other) {
-            return Some(*other);
-        }
-        if other.within(self) {
-            return Some(*self);
-        }
-        match (
-            self.x_range == other.x_range,
-            self.y_range == other.y_range,
-            self.z_range == other.z_range,
-        ) {
-            (true, true, true) => Some(*self),
-            (true, true, false) => Some(Cuboid::new(
-                self.x_range,
-                self.y_range,
-                [
-                    self.z_range[0].min(other.z_range[0]),
-                    self.z_range[1].max(other.z_range[1]),
-                ],
-            )),
-            (true, false, true) => Some(Cuboid::new(
-                self.x_range,
-                [
-                    self.y_range[0].min(other.y_range[0]),
-                    self.y_range[1].max(other.y_range[1]),
-                ],
-                self.z_range,
-            )),
-            (false, true, true) => Some(Cuboid::new(
-                [
-                    self.x_range[0].min(other.x_range[0]),
-                    self.x_range[1].max(other.x_range[1]),
-                ],
-                self.y_range,
-                self.z_range,
-            )),
-            (false, false, true) => todo!(),
-            _ => None,
-        }
-    }
-
-    fn within(&self, other: &Cuboid) -> bool {
-        let x_range = other.x_range[0]..=other.x_range[1];
-        let y_range = other.y_range[0]..=other.y_range[1];
-        let z_range = other.z_range[0]..=other.z_range[1];
-        x_range.contains(&self.x_range[0])
-            && x_range.contains(&self.x_range[1])
-            && y_range.contains(&self.y_range[0])
-            && y_range.contains(&self.y_range[1])
-            && z_range.contains(&self.z_range[0])
-            && z_range.contains(&self.z_range[1])
-    }
-
-    fn split(&self, other: &Cuboid) -> Option<Vec<Cuboid>> {
-        let mut cur = *self;
-        let mut res = vec![];
-        if other.x_range[0] > self.x_range[0] && other.x_range[0] <= self.x_range[1] {
-            res.push(Self::new(
-                [cur.x_range[0], other.x_range[0] - 1],
-                cur.y_range,
-                cur.z_range,
-            ));
-            cur.x_range[0] = other.x_range[0];
-        }
-        if other.x_range[1] < self.x_range[1] && other.x_range[1] >= self.x_range[0] {
-            res.push(Self::new(
-                [other.x_range[1] + 1, cur.x_range[1]],
-                cur.y_range,
-                cur.z_range,
-            ));
-            cur.x_range[1] = other.x_range[1];
-        }
-        if other.y_range[0] > self.y_range[0] && other.y_range[0] <= self.y_range[1] {
-            res.push(Self::new(
-                cur.x_range,
-                [cur.y_range[0], other.y_range[0] - 1],
-                cur.z_range,
-            ));
-            cur.y_range[0] = other.y_range[0];
-        }
-        if other.y_range[1] < self.y_range[1] && other.y_range[1] >= self.y_range[0] {
-            res.push(Self::new(
-                cur.x_range,
-                [other.y_range[1] + 1, cur.y_range[1]],
-                cur.z_range,
-            ));
-            cur.y_range[1] = other.y_range[1];
-        }
-        if other.z_range[0] > self.z_range[0] && other.z_range[0] <= self.z_range[1] {
-            res.push(Self::new(
-                cur.x_range,
-                cur.y_range,
-                [cur.z_range[0], other.z_range[0] - 1],
-            ));
-            cur.z_range[0] = other.z_range[0];
-        }
-        if other.z_range[1] < self.z_range[1] && other.z_range[1] >= self.z_range[0] {
-            res.push(Self::new(
-                cur.x_range,
-                cur.y_range,
-                [other.z_range[1] + 1, cur.z_range[1]],
-            ));
-            cur.z_range[1] = other.z_range[1];
-        }
-        if res.is_empty() {
-            None
-        } else {
-            Some(res)
-        }
-    }
-}
-
-impl From<&Step> for Cuboid {
-    fn from(inst: &Step) -> Self {
-        Self {
-            x_range: inst.x,
-            y_range: inst.y,
-            z_range: inst.z,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-struct Step {
-    setting: Setting,
+    status: Status,
     x: [i64; 2],
     y: [i64; 2],
     z: [i64; 2],
 }
 
+impl Cuboid {
+    fn volume(&self) -> i64 {
+        // Negative when off
+        self.status.value()
+            * (self.x[1] - self.x[0] + 1)
+            * (self.y[1] - self.y[0] + 1)
+            * (self.z[1] - self.z[0] + 1)
+    }
+
+    fn within(&self, other: &Self) -> bool {
+        let x = other.x[0]..=other.x[1];
+        let y = other.y[0]..=other.y[1];
+        let z = other.z[0]..=other.z[1];
+        x.contains(&self.x[0])
+            && x.contains(&self.x[1])
+            && y.contains(&self.y[0])
+            && y.contains(&self.y[1])
+            && z.contains(&self.z[0])
+            && z.contains(&self.z[1])
+    }
+
+    fn intersection(&self, other: &Self) -> Option<Self> {
+        // Check that overlap actually occurs.
+        if self.x[0] > other.x[1]
+            || self.x[1] < other.x[0]
+            || self.y[0] > other.y[1]
+            || self.y[1] < other.y[0]
+            || self.z[0] > other.z[1]
+            || self.z[1] < other.z[0]
+        {
+            return None;
+        }
+        let values = |a: [i64; 2], b: [i64; 2]| [a[0].max(b[0]), a[1].min(b[1])];
+        Some(Self {
+            status: other.status.flip(),
+            x: values(self.x, other.x),
+            y: values(self.y, other.y),
+            z: values(self.z, other.z),
+        })
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum Setting {
+enum Status {
     On,
     Off,
 }
 
-impl FromStr for Step {
+impl Status {
+    fn flip(&self) -> Self {
+        match self {
+            Status::On => Status::Off,
+            Status::Off => Status::On,
+        }
+    }
+
+    fn value(&self) -> i64 {
+        match self {
+            Status::On => 1,
+            Status::Off => -1,
+        }
+    }
+}
+
+impl FromStr for Cuboid {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (setting, rest) = s.split_once(' ').unwrap();
         let setting = match setting.trim() {
-            "on" => Setting::On,
-            "off" => Setting::Off,
+            "on" => Status::On,
+            "off" => Status::Off,
             _ => unreachable!(),
         };
         let mut coords = rest.split(',').map(|c| {
@@ -243,7 +159,7 @@ impl FromStr for Step {
             [left.parse().unwrap(), right.parse().unwrap()]
         });
         Ok(Self {
-            setting,
+            status: setting,
             x: coords.next().unwrap(),
             y: coords.next().unwrap(),
             z: coords.next().unwrap(),
@@ -257,8 +173,8 @@ mod test {
 
     #[test]
     fn test_parse() {
-        let expected = Step {
-            setting: Setting::On,
+        let expected = Cuboid {
+            status: Status::On,
             x: [10, 12],
             y: [-10, 12],
             z: [10, 12],
@@ -269,50 +185,115 @@ mod test {
 
     #[test]
     fn test_cuboid_contains() {
-        let c1 = Cuboid::new([10, 12], [10, 12], [10, 12]);
-        let c2 = Cuboid::new([11, 12], [11, 12], [11, 12]);
+        let c1 = Cuboid {
+            status: Status::On,
+            x: [10, 12],
+            y: [10, 12],
+            z: [10, 12],
+        };
+        let c2 = Cuboid {
+            status: Status::On,
+            x: [11, 12],
+            y: [11, 12],
+            z: [11, 12],
+        };
         assert!(c2.within(&c1))
     }
 
     #[test]
-    fn test_split() {
-        let c1 = Cuboid::new([0, 10], [0, 10], [0, 10]);
-        let c2 = Cuboid::new([3, 6], [3, 6], [3, 6]);
-        let expected = Some(vec![
-            Cuboid::new([0, 2], [0, 10], [0, 10]),
-            Cuboid::new([7, 10], [0, 10], [0, 10]),
-            Cuboid::new([3, 6], [0, 2], [0, 10]),
-            Cuboid::new([3, 6], [7, 10], [0, 10]),
-            Cuboid::new([3, 6], [3, 6], [0, 2]),
-            Cuboid::new([3, 6], [3, 6], [7, 10]),
-        ]);
-        let actual = c1.split(&c2);
+    fn test_int() {
+        let c1 = Cuboid {
+            status: Status::On,
+            x: [0, 10],
+            y: [0, 10],
+            z: [0, 10],
+        };
+        let c2 = Cuboid {
+            status: Status::On,
+            x: [3, 6],
+            y: [3, 6],
+            z: [3, 6],
+        };
+        let expected = Some(Cuboid {
+            status: Status::Off,
+            x: [3, 6],
+            y: [3, 6],
+            z: [3, 6],
+        });
+        let actual = c1.intersection(&c2);
         assert_eq!(expected, actual);
     }
 
     #[test]
-    fn test_no_split() {
+    fn test_int_corner() {
+        let c1 = Cuboid {
+            status: Status::On,
+            x: [0, 10],
+            y: [0, 10],
+            z: [0, 10],
+        };
+        let c2 = Cuboid {
+            status: Status::Off,
+            x: [-3, 1],
+            y: [-3, 1],
+            z: [-3, 1],
+        };
+        let expected = Some(Cuboid {
+            status: Status::On,
+            x: [0, 1],
+            y: [0, 1],
+            z: [0, 1],
+        });
+        let actual = c1.intersection(&c2);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_no_int() {
         let expected = None;
-        let actual = Cuboid::new([0, 6], [5, 20], [100, 140]).split(&Cuboid::new(
-            [-5, -1],
-            [1, 3],
-            [50, 50],
-        ));
+        let actual = Cuboid {
+            status: Status::On,
+            x: [0, 6],
+            y: [5, 20],
+            z: [100, 140],
+        }
+        .intersection(&Cuboid {
+            status: Status::On,
+            x: [-5, -1],
+            y: [1, 3],
+            z: [50, 50],
+        });
         assert_eq!(expected, actual);
     }
 
     #[test]
-    fn test_merge() {
-        let expected = Some(Cuboid::new([0, 5], [11, 20], [10, 30]));
-        let actual =
-            Cuboid::new([0, 5], [11, 20], [10, 20]).merge(&Cuboid::new([0, 5], [11, 20], [15, 30]));
+    fn test_no_int2() {
+        let expected = None;
+        let actual = Cuboid {
+            status: Status::On,
+            x: [13, 13],
+            y: [11, 13],
+            z: [11, 13],
+        }
+        .intersection(&Cuboid {
+            status: Status::On,
+            x: [9, 11],
+            y: [9, 11],
+            z: [9, 11],
+        });
         assert_eq!(expected, actual);
     }
 
     #[test]
     fn test_vol() {
         let expected = 27;
-        let actual = Cuboid::new([3, 5], [10, 12], [-7, -5]).volume();
+        let actual = Cuboid {
+            status: Status::On,
+            x: [3, 5],
+            y: [10, 12],
+            z: [-7, -5],
+        }
+        .volume();
         assert_eq!(expected, actual);
     }
 
