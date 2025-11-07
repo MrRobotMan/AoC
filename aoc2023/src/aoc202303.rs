@@ -61,8 +61,8 @@ impl AocDay {
         let mut gears: HashMap<(usize, usize), Vec<u32>> = HashMap::new();
         for (loc, value) in &self.part_numbers {
             for l in offsets(loc, value.len()) {
-                if let Some(c) = self.symbols.get(&l) {
-                    if c == &'*' {
+                if let Some(c) = self.symbols.get(&l)
+                    && c == &'*' {
                         let val = value.parse::<u32>().unwrap();
                         if let Some(entry) = gears.get_mut(&l) {
                             entry.push(val);
@@ -70,7 +70,6 @@ impl AocDay {
                             gears.insert(l, vec![val]);
                         }
                     }
-                }
             }
         }
         gears

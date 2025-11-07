@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use aoc::{
     read_lines,
-    runner::{output, Runner},
+    runner::{Runner, output},
 };
 
 #[derive(Default)]
@@ -170,7 +170,7 @@ impl Runner for AocDay {
 }
 
 fn chain_contains_op(chain: &Option<&Vec<(&Gate, &String)>>, gate: Gate) -> bool {
-    chain.is_some_and(|v| v.iter().any(|(&g, _)| g == gate))
+    chain.is_some_and(|v| v.iter().any(|(g, _)| **g == gate))
 }
 
 fn value(wires: &[bool]) -> usize {

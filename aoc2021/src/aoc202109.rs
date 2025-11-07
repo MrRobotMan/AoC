@@ -114,19 +114,17 @@ impl AocDay {
 
     fn get_neighbors(&self, point: &(usize, usize)) -> Vec<(usize, usize)> {
         let mut res = vec![];
-        if let Some(left) = point.1.checked_sub(1) {
-            if self.vents.contains_key(&(point.0, left)) {
+        if let Some(left) = point.1.checked_sub(1)
+            && self.vents.contains_key(&(point.0, left)) {
                 res.push((point.0, left));
-            }
-        };
+            };
         if self.vents.contains_key(&(point.0, point.1 + 1)) {
             res.push((point.0, point.1 + 1));
         }
-        if let Some(up) = point.0.checked_sub(1) {
-            if self.vents.contains_key(&(up, point.1)) {
+        if let Some(up) = point.0.checked_sub(1)
+            && self.vents.contains_key(&(up, point.1)) {
                 res.push((up, point.1));
-            }
-        };
+            };
         if self.vents.contains_key(&(point.0 + 1, point.1)) {
             res.push((point.0 + 1, point.1));
         }

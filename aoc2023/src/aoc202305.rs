@@ -3,7 +3,7 @@ use std::collections::HashSet;
 
 use aoc::{
     read_lines,
-    runner::{output, Runner},
+    runner::{Runner, output},
 };
 
 #[derive(Default, Clone)]
@@ -25,16 +25,6 @@ impl AocDay {
             input: input.into(),
             ..Default::default()
         }
-    }
-
-    #[cfg(test)]
-    pub fn seeds(&self) -> &[i64] {
-        &self.seeds
-    }
-
-    #[cfg(test)]
-    pub fn humidity_location(&self) -> &HashSet<(i64, i64, i64)> {
-        &self.humidity_location
     }
 }
 

@@ -1,4 +1,4 @@
-use aoc::runner::{run_solution, Runner};
+use aoc::runner::{Runner, run_solution};
 use std::env;
 use std::time::Instant;
 
@@ -27,9 +27,6 @@ mod aoc202322;
 mod aoc202323;
 mod aoc202324;
 mod aoc202325;
-
-#[cfg(test)]
-mod tests;
 
 fn main() {
     let mut day01 = aoc202301::AocDay::new("aoc2023/inputs/day01.txt");

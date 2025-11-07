@@ -1,4 +1,4 @@
-use aoc::runner::{output, Runner};
+use aoc::runner::{Runner, output};
 
 #[derive(Default)]
 pub struct AocDay {
@@ -43,4 +43,3 @@ mod test {
         assert_eq!(expected, actual);
     }
 }
-        

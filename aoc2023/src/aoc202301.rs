@@ -86,16 +86,14 @@ pub fn convert(calibration: &str, search_space: &HashMap<&str, u64>) -> u64 {
     let mut first = (calibration.len(), 0);
     let mut last = (0, 0);
     for (key, num) in search_space.iter() {
-        if let Some(start) = calibration.find(key) {
-            if start < first.0 {
+        if let Some(start) = calibration.find(key)
+            && start < first.0 {
                 first = (start, *num);
-            }
-        };
-        if let Some(end) = calibration.rfind(key) {
-            if end >= last.0 {
+            };
+        if let Some(end) = calibration.rfind(key)
+            && end >= last.0 {
                 last = (end, *num);
-            }
-        };
+            };
     }
     first.1 * 10 + last.1
 }

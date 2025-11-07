@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use aoc::{
     read_lines,
-    runner::{output, Runner},
+    runner::{Runner, output},
 };
 
 #[derive(Default)]
@@ -81,15 +81,15 @@ impl AocDay {
         for (idx, value) in pages.iter().enumerate() {
             let before = &pages[..idx];
             let after = &pages[idx + 1..];
-            if let Some(req) = self.must_precede.get(value) {
-                if after.iter().any(|v| req.contains(v)) {
-                    return false;
-                }
+            if let Some(req) = self.must_precede.get(value)
+                && after.iter().any(|v| req.contains(v))
+            {
+                return false;
             }
-            if let Some(req) = self.must_follow.get(value) {
-                if before.iter().any(|v| req.contains(v)) {
-                    return false;
-                }
+            if let Some(req) = self.must_follow.get(value)
+                && before.iter().any(|v| req.contains(v))
+            {
+                return false;
             }
         }
         true

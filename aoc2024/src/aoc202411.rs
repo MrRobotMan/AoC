@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use aoc::{
     read_lines,
-    runner::{output, Runner},
+    runner::{Runner, output},
 };
 
 #[derive(Default)]
@@ -72,7 +72,7 @@ fn split(stone: u64) -> Vec<u64> {
         return vec![1];
     }
     let len = stone.ilog10() + 1;
-    if len % 2 == 0 {
+    if len.is_multiple_of(2) {
         let split = 10_u64.pow(len / 2);
         vec![stone / split, stone % split]
     } else {

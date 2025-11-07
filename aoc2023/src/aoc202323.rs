@@ -69,8 +69,8 @@ impl Runner for AocDay {
                 pair[0],
                 |node| self.moves(node, true),
                 |node| node == pair[1],
-            ) {
-                if HashSet::from_iter(path[1..path.len() - 1].iter().copied())
+            )
+                && HashSet::from_iter(path[1..path.len() - 1].iter().copied())
                     .intersection(&self.poi)
                     .count()
                     == 0
@@ -82,8 +82,7 @@ impl Runner for AocDay {
                             v.insert(*pair[1], path.len() - 1);
                         })
                         .or_insert(HashMap::from([(*pair[1], path.len() - 1)]));
-                }
-            };
+                };
         }
         output(self.bad_bfs(&paths))
     }

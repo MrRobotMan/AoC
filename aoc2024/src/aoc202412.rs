@@ -1,9 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use aoc::{
-    read_grid,
-    runner::{output, Runner},
-    Vec2D, CARDINALS,
+    CARDINALS, Vec2D, read_grid,
+    runner::{Runner, output},
 };
 
 #[derive(Default)]
@@ -136,11 +135,12 @@ fn find_region(
     while let Some(loc) = queue.pop() {
         for dir in CARDINALS {
             let loc = loc + dir;
-            if let Some(chr) = farm.get(&loc) {
-                if chr.0 == ch && visited.insert(loc) {
-                    queue.push(loc);
-                    found.insert(loc);
-                }
+            if let Some(chr) = farm.get(&loc)
+                && chr.0 == ch
+                && visited.insert(loc)
+            {
+                queue.push(loc);
+                found.insert(loc);
             }
         }
     }

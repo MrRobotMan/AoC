@@ -1,9 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
 use aoc::{
-    read_grid_numbers,
-    runner::{output, Runner},
-    Vec2D, CARDINALS,
+    CARDINALS, Vec2D, read_grid_numbers,
+    runner::{Runner, output},
 };
 
 #[derive(Default)]
@@ -33,10 +32,10 @@ impl AocDay {
                 }
                 for dir in CARDINALS {
                     let point = loc + dir;
-                    if let Some(v) = self.map.get(&point) {
-                        if elev + 1 == *v {
-                            queue.push((point, *v));
-                        }
+                    if let Some(v) = self.map.get(&point)
+                        && elev + 1 == *v
+                    {
+                        queue.push((point, *v));
                     }
                 }
             }

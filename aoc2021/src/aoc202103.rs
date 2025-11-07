@@ -60,13 +60,13 @@ impl Runner for AocDay {
 
 fn bit_totals(bits: &[&BinaryNumber]) -> Vec<usize> {
     let length = bits[0].values.len();
-    let result = bits.iter().fold(vec![0; length], |mut acc, x| {
+    
+    bits.iter().fold(vec![0; length], |mut acc, x| {
         for (idx, val) in x.values.iter().enumerate() {
             acc[idx] += *val as usize;
         }
         acc
-    });
-    result
+    })
 }
 
 fn filter<'a>(

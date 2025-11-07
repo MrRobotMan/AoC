@@ -91,11 +91,10 @@ impl Pattern {
                 if score != base_score {
                     return score;
                 }
-                if base_score >= 100 {
-                    if let Some(score) = option.mirror_idx(Orientation::Cols, Some(base_score)) {
+                if base_score >= 100
+                    && let Some(score) = option.mirror_idx(Orientation::Cols, Some(base_score)) {
                         return score;
                     }
-                }
             }
         }
         panic!("No new score for\n{self}");

@@ -52,11 +52,10 @@ impl Runner for AocDay {
 fn get_vol(cuboids: &[Cuboid], limits: Option<Cuboid>) -> i64 {
     let mut voxels = vec![];
     for cuboid in cuboids {
-        if let Some(limit) = limits {
-            if !cuboid.within(&limit) {
+        if let Some(limit) = limits
+            && !cuboid.within(&limit) {
                 continue;
             }
-        }
         let mut to_add = if cuboid.status == Status::On {
             vec![*cuboid]
         } else {
