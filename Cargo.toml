@@ -2,7 +2,7 @@
 
 resolver = "3"
 
-members = ["aoc","aoc2021", "aoc2022", "aoc2023", "aoc2024"]
+members = ["aoc","aoc2021", "aoc2022", "aoc2023", "aoc2024", "aoc2025"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
