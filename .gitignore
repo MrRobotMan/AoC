@@ -7,4 +7,4 @@ inputs/
 *.pdb
 Cargo.lock
 tests.rs
-bin/
+/bin/
