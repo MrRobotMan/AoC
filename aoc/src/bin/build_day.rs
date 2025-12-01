@@ -226,8 +226,7 @@ fn create_day(year: i32, day: u32) -> io::Result<String> {
         let _ = create_dir(dir);
     }
     let template = format!(
-        r#" use aoc;
-
+        r#" 
 fn main() {{
     println!("---- {year}: {day:02} ----");
     let input = "";
