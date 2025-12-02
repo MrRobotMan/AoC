@@ -9,3 +9,6 @@ puzlib = { git = "https://github.com/MrRobotMan/puzlib", version = "0.1.0" }
 
 [[bin]]
 name = "aoc202501"
+
+[[bin]]
+name = "aoc202502"
