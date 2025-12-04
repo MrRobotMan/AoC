@@ -226,7 +226,7 @@ fn create_day(year: i32, day: u32) -> io::Result<String> {
         let _ = create_dir(dir);
     }
     let template = format!(
-        r#"use puzlib;
+        r#"
 fn main() {{
     println!("---- {year}: {day:02} ----");
     let input = puzlib::read_lines("aoc{year}/inputs/day{day:02}.txt");
@@ -236,8 +236,8 @@ fn main() {{
     println!("Part 2: {{}}", part2(&model));
 }}
 
-fn parse(input: &str) -> String {{
-    input.into()
+fn parse(input: Vec<String>) -> String {{
+    "unparsed".into()
 }}
 
 fn part1(_model: &str) -> String {{
