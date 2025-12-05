@@ -45,6 +45,38 @@ fn part1(rolls: &HashSet<Vec2D<usize>>) -> usize {
         .count()
 }
 
-fn part2(_rolls: &HashSet<Vec2D<usize>>) -> String {
-    "Unsolved".into()
+fn part2(rolls: &HashSet<Vec2D<usize>>) -> usize {
+    let mut removed = 0;
+    let mut rolls = rolls.clone();
+    loop {
+        let to_remove = find_removable(&rolls);
+        removed += to_remove.len();
+        rolls.retain(|roll| !to_remove.contains(roll));
+        if to_remove.is_empty() {
+            break;
+        }
+    }
+    removed
+}
+
+fn find_removable(rolls: &HashSet<Vec2D<usize>>) -> Vec<Vec2D<usize>> {
+    rolls
+        .iter()
+        .filter(|roll| {
+            Dir::<usize>::compass(roll)
+                .iter()
+                .filter_map(|n| {
+                    if let Some(a) = n
+                        && rolls.contains(a)
+                    {
+                        Some(1)
+                    } else {
+                        None
+                    }
+                })
+                .count()
+                < 4
+        })
+        .cloned()
+        .collect()
 }
