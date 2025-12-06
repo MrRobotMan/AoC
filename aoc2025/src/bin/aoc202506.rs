@@ -14,7 +14,7 @@ fn parse(mut input: Vec<String>) -> [Vec<Operation>; 2] {
     let mut part1 = vec![];
     let mut part2 = vec![];
     let mut breaks = vec![];
-    // Find the start indecies of the numbers. Operators are aligned with the left of each start.
+    // Find the start indicies of the numbers. Operators are aligned with the left of each start.
     let mut start = 0;
     for (idx, ch) in input.pop().unwrap().chars().enumerate() {
         if let Ok(op) = ch.try_into() {
