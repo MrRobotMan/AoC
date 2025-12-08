@@ -229,22 +229,22 @@ fn create_day(year: i32, day: u32) -> io::Result<String> {
         r#"
 fn main() {{
     println!("---- {year}: {day:02} ----");
-    let input = puzlib::read_lines("aoc{year}/inputs/day{day:02}.txt");
+    let input = "aoc{year}/inputs/day{day:02}.txt";
     println!("Parsing");
     let model = parse(input);
     println!("Part 1: {{}}", part1(&model));
     println!("Part 2: {{}}", part2(&model));
 }}
 
-fn parse(input: Vec<String>) -> String {{
-    "unparsed".into()
+fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> Vec<String> {{
+    puzlib::read_lines(input)
 }}
 
-fn part1(_model: &str) -> String {{
+fn part1(_model: &[String]) -> String {{
     "Unsolved".into()
 }}
 
-fn part2(_model: &str) -> String {{
+fn part2(_model: &[String]) -> String {{
     "Unsolved".into()
 }}
 
