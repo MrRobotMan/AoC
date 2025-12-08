@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use puzlib::Vec2D;
 
@@ -7,8 +7,9 @@ fn main() {
     let input = "aoc2025/inputs/day07.txt";
     println!("Parsing");
     let (grid, max_rows) = parse(input);
-    println!("Part 1: {}", part1(&grid, max_rows));
-    println!("Part 2: {}", part2(&grid));
+    let (splits, ends) = find_splits(&grid, max_rows);
+    println!("Part 1: {splits}");
+    println!("Part 2: {}", ends.iter().sum::<usize>());
 }
 
 fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(
@@ -25,40 +26,39 @@ fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(
     (grid, rows)
 }
 
-fn part1(grid: &HashSet<(Vec2D<i64>, char)>, max_rows: usize) -> usize {
+fn find_splits(grid: &HashSet<(Vec2D<i64>, char)>, max_rows: usize) -> (usize, Vec<usize>) {
     let mut splits = 0;
     let mut beams = grid
         .iter()
         .filter_map(|(Vec2D(r, c), ch)| {
             if ch == &'S' {
-                Some(Vec2D(*r, *c))
+                Some((Vec2D(*r, *c), 1))
             } else {
                 None
             }
         })
-        .collect::<HashSet<_>>();
+        .collect::<HashMap<_, _>>();
     'outer: loop {
-        let mut next_beams = HashSet::new();
-        for beam in beams {
+        let mut next_beams = HashMap::new();
+        for (beam, cnt) in &beams {
             if beam.0 > max_rows as i64 {
                 break 'outer;
             }
-            let next_row = beam + Vec2D(1, 0);
+            let next_row = *beam + Vec2D(1, 0);
             if grid.contains(&(next_row, '^')) {
                 splits += 1;
-                next_beams.insert(next_row + Vec2D(0, -1));
-                next_beams.insert(next_row + Vec2D(0, 1));
+                let n = next_beams.entry(next_row + Vec2D(0, -1)).or_insert(0);
+                *n += cnt;
+                let n = next_beams.entry(next_row + Vec2D(0, 1)).or_insert(0);
+                *n += cnt;
             } else {
-                next_beams.insert(next_row);
+                let n = next_beams.entry(next_row).or_insert(0);
+                *n += cnt;
             };
         }
         beams = next_beams;
     }
-    splits
-}
-
-fn part2(_model: &HashSet<(Vec2D<i64>, char)>) -> String {
-    "Unsolved".into()
+    (splits, beams.values().cloned().collect())
 }
 
 #[cfg(test)]
@@ -67,7 +67,8 @@ mod test {
 
     #[test]
     fn test_example1() {
-        let expected = 21;
+        let expected1 = 21;
+        let expected2 = 40;
         let model = parse(
             ".......S.......
 ...............
@@ -86,7 +87,9 @@ mod test {
 .^.^.^.^.^...^.
 ...............",
         );
-        let actual = part1(&model.0, model.1);
-        assert_eq!(expected, actual);
+        let (actual1, actual2) = find_splits(&model.0, model.1);
+        let actual2 = actual2.iter().sum::<usize>();
+        assert_eq!(expected1, actual1);
+        assert_eq!(expected2, actual2);
     }
 }
