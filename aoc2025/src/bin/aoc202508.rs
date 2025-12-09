@@ -11,7 +11,7 @@ fn main() {
     println!("Parsing");
     let (heap, boxes) = parse(input);
     println!("Part 1: {}", part1(heap.clone(), &boxes, 1000));
-    println!("Part 2: {}", part2(heap));
+    println!("Part 2: {}", part2(heap, &boxes));
 }
 type Points = BinaryHeap<Reverse<(MinNonNan, Vec3D<usize>, Vec3D<usize>)>>;
 
@@ -68,8 +68,37 @@ fn part1(mut points: Points, boxes: &[Vec3D<usize>], items: usize) -> usize {
     connected.iter().take(3).fold(1, |acc, v| acc * v.len())
 }
 
-fn part2(_model: Points) -> String {
-    "Unsolved".into()
+fn part2(mut points: Points, boxes: &[Vec3D<usize>]) -> usize {
+    let mut connected = boxes
+        .iter()
+        .map(|b| HashSet::from([*b]))
+        .collect::<Vec<_>>();
+    let mut last_pair = (boxes[0], boxes[1]);
+    while connected.len() > 1 {
+        let Reverse((_, a, b)) = points.pop().unwrap();
+        last_pair = (a, b);
+        let mut to_merge = HashSet::new();
+        for (idx, circuit) in connected.iter().enumerate() {
+            if circuit.contains(&a) {
+                to_merge.insert(idx);
+            }
+            if circuit.contains(&b) {
+                to_merge.insert(idx);
+            }
+        }
+        if to_merge.is_empty() {
+            connected.push(HashSet::from([a, b]));
+        } else {
+            let mut to_merge = to_merge.into_iter().collect::<Vec<_>>();
+            to_merge.sort();
+            for idx in to_merge.iter().skip(1).rev() {
+                let add = connected[*idx].clone();
+                connected.get_mut(to_merge[0]).unwrap().extend(add);
+                connected.remove(*idx);
+            }
+        }
+    }
+    last_pair.0.0 * last_pair.1.0
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
