@@ -9,20 +9,22 @@ fn main() {
     println!("---- 2025: 08 ----");
     let input = "aoc2025/inputs/day08.txt";
     println!("Parsing");
-    let points = parse(input);
-    println!("Part 1: {}", part1(points.clone(), 1000));
-    println!("Part 2: {}", part2(points));
+    let (heap, boxes) = parse(input);
+    println!("Part 1: {}", part1(heap.clone(), &boxes, 1000));
+    println!("Part 2: {}", part2(heap));
 }
 type Points = BinaryHeap<Reverse<(MinNonNan, Vec3D<usize>, Vec3D<usize>)>>;
 
-fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> Points {
+fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> (Points, Vec<Vec3D<usize>>) {
     let mut heap = BinaryHeap::new();
+    let mut boxes = vec![];
     let mut cur = 1;
     let points = read_number_lists::<S, usize>(input, ",")
         .iter()
         .map(|p| Vec3D(p[0], p[1], p[2]))
         .collect::<Vec<_>>();
     for point in &points[..points.len() - 1] {
+        boxes.push(*point);
         for other in &points[cur..] {
             let p = point.map(|v| v as i32);
             let o = other.map(|v| v as i32);
@@ -30,42 +32,36 @@ fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> Points {
         }
         cur += 1;
     }
-    heap
+    boxes.push(*points.last().unwrap());
+    (heap, boxes)
 }
 
-fn part1(mut points: Points, items: usize) -> usize {
-    let mut connected: Vec<HashSet<Vec3D<usize>>> = vec![];
-    'item: for _ in 0..items {
+fn part1(mut points: Points, boxes: &[Vec3D<usize>], items: usize) -> usize {
+    let mut connected = boxes
+        .iter()
+        .map(|b| HashSet::from([*b]))
+        .collect::<Vec<_>>();
+    for _ in 0..items {
         let Reverse((_, a, b)) = points.pop().unwrap();
-        for circuit in connected.iter_mut() {
+        let mut to_merge = HashSet::new();
+        for (idx, circuit) in connected.iter().enumerate() {
             if circuit.contains(&a) {
-                circuit.insert(b);
-                continue 'item;
+                to_merge.insert(idx);
             }
             if circuit.contains(&b) {
-                circuit.insert(a);
-                continue 'item;
+                to_merge.insert(idx);
             }
         }
-        connected.push(HashSet::from([a, b]));
-    }
-
-    loop {
-        let mut merged = false;
-        let mut next: Vec<HashSet<Vec3D<usize>>> = vec![];
-        'outer: for set in connected {
-            for other in next.iter_mut() {
-                if other.intersection(&set).count() > 0 {
-                    other.extend(set);
-                    merged = true;
-                    continue 'outer;
-                }
+        if to_merge.is_empty() {
+            connected.push(HashSet::from([a, b]));
+        } else {
+            let mut to_merge = to_merge.into_iter().collect::<Vec<_>>();
+            to_merge.sort();
+            for idx in to_merge.iter().skip(1).rev() {
+                let add = connected[*idx].clone();
+                connected.get_mut(to_merge[0]).unwrap().extend(add);
+                connected.remove(*idx);
             }
-            next.push(set);
-        }
-        connected = next;
-        if !merged {
-            break;
         }
     }
     connected.sort_by_key(|b| std::cmp::Reverse(b.len()));
@@ -99,9 +95,9 @@ mod test {
 
     #[test]
     fn test_example1() {
-        let heap = parse("inputs/test.txt");
+        let (heap, boxes) = parse("inputs/test.txt");
         let actual = heap.len();
         assert_eq!(190, actual);
-        assert_eq!(40, part1(heap, 10))
+        assert_eq!(40, part1(heap, &boxes, 10))
     }
 }
