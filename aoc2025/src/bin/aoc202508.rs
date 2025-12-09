@@ -36,44 +36,21 @@ fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> (Points, Ve
     (heap, boxes)
 }
 
-fn part1(mut points: Points, boxes: &[Vec3D<usize>], items: usize) -> usize {
-    let mut connected = boxes
-        .iter()
-        .map(|b| HashSet::from([*b]))
-        .collect::<Vec<_>>();
-    for _ in 0..items {
-        let Reverse((_, a, b)) = points.pop().unwrap();
-        let mut to_merge = HashSet::new();
-        for (idx, circuit) in connected.iter().enumerate() {
-            if circuit.contains(&a) {
-                to_merge.insert(idx);
-            }
-            if circuit.contains(&b) {
-                to_merge.insert(idx);
-            }
-        }
-        if to_merge.is_empty() {
-            connected.push(HashSet::from([a, b]));
-        } else {
-            let mut to_merge = to_merge.into_iter().collect::<Vec<_>>();
-            to_merge.sort();
-            for idx in to_merge.iter().skip(1).rev() {
-                let add = connected[*idx].clone();
-                connected.get_mut(to_merge[0]).unwrap().extend(add);
-                connected.remove(*idx);
-            }
-        }
-    }
-    connected.sort_by_key(|b| std::cmp::Reverse(b.len()));
-    connected.iter().take(3).fold(1, |acc, v| acc * v.len())
+fn part1(points: Points, boxes: &[Vec3D<usize>], items: usize) -> usize {
+    combine(points, boxes, Some(items))
 }
 
-fn part2(mut points: Points, boxes: &[Vec3D<usize>]) -> usize {
+fn part2(points: Points, boxes: &[Vec3D<usize>]) -> usize {
+    combine(points, boxes, None)
+}
+
+fn combine(mut points: Points, boxes: &[Vec3D<usize>], limit: Option<usize>) -> usize {
     let mut connected = boxes
         .iter()
         .map(|b| HashSet::from([*b]))
         .collect::<Vec<_>>();
     let mut last_pair = (boxes[0], boxes[1]);
+    let mut count = 0;
     while connected.len() > 1 {
         let Reverse((_, a, b)) = points.pop().unwrap();
         last_pair = (a, b);
@@ -96,6 +73,13 @@ fn part2(mut points: Points, boxes: &[Vec3D<usize>]) -> usize {
                 connected.get_mut(to_merge[0]).unwrap().extend(add);
                 connected.remove(*idx);
             }
+        }
+        count += 1;
+        if let Some(lim) = limit
+            && count == lim
+        {
+            connected.sort_by_key(|b| std::cmp::Reverse(b.len()));
+            return connected.iter().take(3).fold(1, |acc, v| acc * v.len());
         }
     }
     last_pair.0.0 * last_pair.1.0
