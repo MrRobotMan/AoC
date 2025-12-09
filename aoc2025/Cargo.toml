@@ -27,3 +27,6 @@ name = "aoc202506"
 
 [[bin]]
 name = "aoc202507"
+
+[[bin]]
+name = "aoc202508"
