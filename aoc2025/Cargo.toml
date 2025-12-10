@@ -33,3 +33,6 @@ name = "aoc202508"
 
 [[bin]]
 name = "aoc202509"
+
+[[bin]]
+name = "aoc202510"
