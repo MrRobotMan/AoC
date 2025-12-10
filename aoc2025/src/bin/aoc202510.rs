@@ -22,7 +22,7 @@ fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> Vec<Machine
 fn part1(machines: &[Machine]) -> usize {
     machines
         .iter()
-        .fold(0, |acc, machine| acc + machine.button_presses())
+        .fold(0, |acc, machine| acc + machine.configure_lights())
 }
 
 fn part2(_machines: &[Machine]) -> String {
@@ -37,7 +37,7 @@ struct Machine {
 }
 
 impl Machine {
-    fn button_presses(&self) -> usize {
+    fn configure_lights(&self) -> usize {
         let mut state = HashMap::new();
         let mut queue = VecDeque::new();
         queue.push_front((0, vec![]));
@@ -47,10 +47,8 @@ impl Machine {
                 let mut next = list.clone();
                 next.push(*button);
                 let value = button ^ cur;
-                if value == self.lights {
-                    if best.is_empty() || best.len() > next.len() {
-                        best = next.clone();
-                    }
+                if value == self.lights && (best.is_empty() || best.len() > next.len()) {
+                    best = next.clone();
                 }
                 let s = state.entry(value).or_insert(next.clone());
                 if s.len() > next.len() || *s == next {
@@ -111,6 +109,6 @@ mod test {
             .parse::<Machine>()
             .unwrap();
         assert_eq!(expected, actual);
-        assert_eq!(2, actual.button_presses())
+        assert_eq!(2, actual.configure_lights())
     }
 }
