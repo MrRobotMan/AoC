@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, VecDeque},
+    collections::{BinaryHeap, HashMap, VecDeque},
     str::FromStr,
 };
 
@@ -25,8 +25,10 @@ fn part1(machines: &[Machine]) -> usize {
         .fold(0, |acc, machine| acc + machine.configure_lights())
 }
 
-fn part2(_machines: &[Machine]) -> String {
-    "Unsolved".into()
+fn part2(machines: &[Machine]) -> usize {
+    machines
+        .iter()
+        .fold(0, |acc, machine| acc + machine.configure_joltage())
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -58,6 +60,40 @@ impl Machine {
             }
         }
         best.len()
+    }
+
+    fn configure_joltage(&self) -> usize {
+        let mut state = HashMap::new();
+        let mut queue = BinaryHeap::new();
+        let max_idx = self.jolts.len() - 1;
+        queue.push(State::new(&vec![0_usize; self.jolts.len()], &[]));
+        while let Some(State {
+            joltage: cur,
+            buttons: list,
+        }) = queue.pop()
+        {
+            for button in &self.buttons {
+                let mut next = list.clone();
+                next.push(*button);
+                let value = cur
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, val)| val + (1 << (max_idx - idx) & button).count_ones() as usize)
+                    .collect::<Vec<_>>();
+                if value.iter().enumerate().any(|(i, v)| v > &self.jolts[i]) {
+                    continue;
+                }
+                if value == self.jolts {
+                    return next.len();
+                }
+                let s = state.entry(value.clone()).or_insert(next.clone());
+                if s.len() > next.len() || *s == next {
+                    *s = next.clone();
+                    queue.push(State::new(&value, &next));
+                }
+            }
+        }
+        panic!("Can't get joltage.")
     }
 }
 
@@ -94,6 +130,41 @@ impl FromStr for Machine {
     }
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+struct State {
+    joltage: Vec<usize>,
+    buttons: Vec<usize>,
+}
+
+impl State {
+    fn new(joltage: &[usize], buttons: &[usize]) -> Self {
+        Self {
+            joltage: joltage.to_vec(),
+            buttons: buttons.to_vec(),
+        }
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // Min heap
+        match other.buttons.len().cmp(&self.buttons.len()) {
+            std::cmp::Ordering::Equal => self
+                .joltage
+                .iter()
+                .sum::<usize>()
+                .cmp(&other.joltage.iter().sum::<usize>()),
+            v => v,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -109,6 +180,7 @@ mod test {
             .parse::<Machine>()
             .unwrap();
         assert_eq!(expected, actual);
-        assert_eq!(2, actual.configure_lights())
+        assert_eq!(2, actual.configure_lights());
+        assert_eq!(10, actual.configure_joltage());
     }
 }

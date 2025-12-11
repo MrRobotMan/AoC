@@ -32,7 +32,7 @@ command = [
     "cargo", "test", 
     "--color", "always", 
     "--package", "aoc2025",
-    "--bin", "aoc202510",
+    "--bin", "aoc202511",
     "--", "--color", "always", # see https://github.com/Canop/bacon/issues/124
 ]
 need_stdout = true
@@ -60,7 +60,7 @@ command = [
     "cargo", "run",
     "--color", "always",
     "--package", "aoc2025",
-    "--bin", "aoc202510",
+    "--bin", "aoc202511",
     # put launch parameters for your program behind a `--` separator
 ]
 need_stdout = true
