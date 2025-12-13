@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::HashMap;
 
 fn main() {
     println!("---- 2025: 11 ----");
@@ -23,49 +23,49 @@ fn parse<S: AsRef<std::path::Path> + std::fmt::Display>(input: S) -> HashMap<Str
 }
 
 fn part1(outputs: &HashMap<String, Vec<String>>) -> usize {
-    find_paths(outputs, "you", "out").len()
+    find_paths(outputs, "you", "out", vec![], &mut HashMap::new())
 }
 
 fn part2(outputs: &HashMap<String, Vec<String>>) -> usize {
-    // let svr_to_dac = find_paths(outputs, "svr", "dac");
-    // let svr_to_fft = find_paths(outputs, "svr", "fft");
-    find_paths(outputs, "svr", "out");
-    0
+    find_paths(
+        outputs,
+        "svr",
+        "out",
+        vec![("dac".into(), false), ("fft".into(), false)],
+        &mut HashMap::new(),
+    )
 }
+
+type Cache<'a> = HashMap<(&'a str, Vec<(String, bool)>), usize>;
 
 fn find_paths<'a>(
     outputs: &'a HashMap<String, Vec<String>>,
     start: &'a str,
     end: &'a str,
-) -> HashSet<Vec<&'a str>> {
-    let mut res = HashSet::new();
-    let mut queue: VecDeque<(&str, HashSet<&str>)> = VecDeque::new();
-    queue.push_front((start, HashSet::new()));
-    while let Some((device, visited)) = queue.pop_front() {
-        for connection in &outputs[device] {
-            if connection == end {
-                let mut found = visited.clone();
-                found.insert(end);
-                res.insert(found.iter().copied().collect());
-            } else {
-                let mut next = visited.clone();
-                if next.insert(connection) {
-                    queue.push_back((connection, next));
-                }
+    required: Vec<(String, bool)>,
+    cache: &mut Cache<'a>,
+) -> usize {
+    if let Some(result) = cache.get(&(start, required.clone())) {
+        return *result;
+    }
+    if start == end {
+        if required.iter().all(|v| v.1) {
+            return 1;
+        } else {
+            return 0;
+        };
+    }
+    let mut res = 0;
+    for output in &outputs[start] {
+        let mut required = required.clone();
+        for (k, v) in required.iter_mut() {
+            if k == output {
+                *v = true;
             }
         }
+        let val = find_paths(outputs, output, end, required.clone(), cache);
+        cache.entry((output, required)).or_insert(val);
+        res += val
     }
     res
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn test_example1() {
-        let expected = 0;
-        let actual = 0;
-        assert_eq!(expected, actual);
-    }
 }
