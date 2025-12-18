@@ -78,8 +78,8 @@ fn solve<const N: usize>(rooms: &[[Amphipod; N]; ROOMS]) -> usize {
     let mut min_energy = usize::MAX;
 
     while let Some((burrow, cost)) = stack.pop() {
-        for t in (0..4).rev() {
-            if let Some((amph, target, moves)) = burrow.moves(t) {
+        for targ in (0..4).rev() {
+            if let Some((amph, target, moves)) = burrow.moves(targ) {
                 for (mask, price) in moves {
                     let mut burrow = burrow;
                     let cost = cost + price;
@@ -202,6 +202,7 @@ impl<const N: usize> Burrow<N> {
         let dist = right - left;
         let base_cost = dist * 2;
         let path_available = self.has_path(left, dist);
+        const MAX_OFFSET: usize = HALLWAY - ROOMS - 1;
 
         if path_available && self.rooms[target].is_empty() {
             moves.push((0, base_cost * energy));
@@ -210,7 +211,7 @@ impl<const N: usize> Burrow<N> {
                 moves.extend(
                     (0..left + 2)
                         .rev()
-                        .map(|offset| (1 << (6 - offset), COSTS[offset]))
+                        .map(|offset| (1 << (MAX_OFFSET - offset), COSTS[offset]))
                         .scan(0, |acc, (mask, weight)| {
                             *acc += weight;
                             let cost = if *acc == weight { 2 } else { *acc };
@@ -220,8 +221,8 @@ impl<const N: usize> Burrow<N> {
             }
             if path_available || pos > target {
                 moves.extend(
-                    (right + 2..7)
-                        .map(|offset| (1 << (6 - offset), COSTS[offset]))
+                    (right + 2..(HALLWAY - ROOMS))
+                        .map(|offset| (1 << (MAX_OFFSET - offset), COSTS[offset]))
                         .scan(0, |acc, (mask, weight)| {
                             *acc += weight;
                             let cost = if *acc == weight { 2 } else { *acc };
@@ -236,10 +237,9 @@ impl<const N: usize> Burrow<N> {
 
 type State = (Amphipod, usize, Vec<(u16, usize)>);
 
-#[derive(Default, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 enum RoomState {
     Occupied(Amphipod),
-    #[default]
     Empty,
 }
 
@@ -266,7 +266,7 @@ struct Room<const N: usize> {
 
 impl<const N: usize> Room<N> {
     fn peek(&self) -> Option<Amphipod> {
-        if self.position < self.occupants.len()
+        if self.position < N
             && let RoomState::Occupied(amph) = self.occupants[self.position]
         {
             Some(amph)
