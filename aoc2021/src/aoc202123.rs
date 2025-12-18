@@ -1,9 +1,13 @@
 use aoc::runner::{Runner, output};
 
+const ROOMS: usize = 4;
+const HALLWAY: usize = 11;
+const ROOM_LOCATIONS: [usize; ROOMS] = [3, 5, 7, 9];
+
 #[derive(Default)]
 pub struct AocDay {
     pub(crate) input: String,
-    rooms: [Room; 4],
+    rooms: [[Amphipod; 2]; ROOMS],
 }
 
 impl AocDay {
@@ -23,15 +27,15 @@ impl Runner for AocDay {
     fn parse(&mut self) {
         for line in puzlib::read_lines(&self.input) {
             let mut idx = 0;
-            for ch in line.chars() {
+            for (row, ch) in line.chars().enumerate() {
                 if let Some(amph) = match ch {
-                    'A' => Some(RoomState::Occupied(Amphipod::Amber)),
-                    'B' => Some(RoomState::Occupied(Amphipod::Bronze)),
-                    'C' => Some(RoomState::Occupied(Amphipod::Copper)),
-                    'D' => Some(RoomState::Occupied(Amphipod::Desert)),
+                    'A' => Some(Amphipod::Amber),
+                    'B' => Some(Amphipod::Bronze),
+                    'C' => Some(Amphipod::Copper),
+                    'D' => Some(Amphipod::Desert),
                     _ => None,
                 } {
-                    self.rooms[idx].occupants.push(amph);
+                    self.rooms[idx][row - 2] = amph;
                     idx += 1;
                 };
             }
@@ -48,19 +52,14 @@ impl Runner for AocDay {
     }
 }
 
-fn exit_energy(rooms: &[Room]) -> usize {
+fn exit_energy<const N: usize>(rooms: &[[Amphipod; N]]) -> usize {
     // Total energy needed to get to the hallway.
     rooms
         .iter()
         .flat_map(|room| {
-            room.occupants.iter().enumerate().map(|(depth, amph)| {
-                (depth + 1)
-                    * if let RoomState::Occupied(a) = amph {
-                        a.energy()
-                    } else {
-                        0
-                    }
-            })
+            room.iter()
+                .enumerate()
+                .map(|(depth, amph)| (depth + 1) * amph.energy())
         })
         .sum()
 }
@@ -74,7 +73,7 @@ fn entry_energy(depth: usize) -> usize {
             + Amphipod::Desert.energy())
 }
 
-fn solve(rooms: &[Room; 4]) -> usize {
+fn solve<const N: usize>(rooms: &[[Amphipod; N]; ROOMS]) -> usize {
     let mut stack = vec![(Burrow::new(rooms), 0)];
     let mut min_energy = usize::MAX;
 
@@ -82,7 +81,7 @@ fn solve(rooms: &[Room; 4]) -> usize {
         for t in (0..4).rev() {
             if let Some((amph, target, moves)) = burrow.moves(t) {
                 for (mask, price) in moves {
-                    let mut burrow = burrow.clone();
+                    let mut burrow = burrow;
                     let cost = cost + price;
                     if cost < min_energy {
                         burrow.commit(amph, target, mask);
@@ -101,14 +100,14 @@ fn solve(rooms: &[Room; 4]) -> usize {
 
 #[derive(Debug, Default, Copy, Clone)]
 struct Hallway {
-    amber: u8,
-    bronze: u8,
-    copper: u8,
-    desert: u8,
+    amber: u16,
+    bronze: u16,
+    copper: u16,
+    desert: u16,
 }
 
 impl Hallway {
-    fn flatten(&self) -> u8 {
+    fn flatten(&self) -> u16 {
         self.amber | self.bronze | self.copper | self.desert
     }
 
@@ -117,29 +116,44 @@ impl Hallway {
     }
 }
 
-#[derive(Debug, Default, Clone)]
-struct Burrow {
-    rooms: [Room; 4],
+#[derive(Debug, Clone, Copy)]
+struct Burrow<const N: usize> {
+    rooms: [Room<N>; ROOMS],
     hallway: Hallway,
 }
 
-impl Burrow {
-    fn new(rooms: &[Room; 4]) -> Self {
+impl<const N: usize> Burrow<N> {
+    fn new(rooms: &[[Amphipod; N]; ROOMS]) -> Self {
+        let mut r: Vec<Room<N>> = vec![];
+        for room in rooms {
+            r.push(Room {
+                occupants: room
+                    .iter()
+                    .map(|&a| RoomState::Occupied(a))
+                    .collect::<Vec<_>>()
+                    .try_into()
+                    .unwrap(),
+                position: 0,
+            });
+        }
         Self {
-            rooms: rooms.clone(),
-            ..Default::default()
+            rooms: r.try_into().unwrap(),
+            hallway: Hallway::default(),
         }
     }
     fn has_path(&self, start: usize, dist: usize) -> bool {
+        const HALLWAY_SLOTS: usize = HALLWAY - ROOMS;
+        const EXTENSION: usize = HALLWAY - ROOM_LOCATIONS[ROOMS - 1];
+        const MAX_STEPS: usize = HALLWAY_SLOTS - EXTENSION;
         if dist == 0 {
             true
         } else {
-            let mask = ((2 << (dist - 1)) - 1) << (5 - dist - start);
+            let mask = ((2 << (dist - 1)) - 1) << (MAX_STEPS - dist - start);
             self.hallway.flatten() & mask == 0
         }
     }
 
-    fn commit(&mut self, amph: Amphipod, target: usize, mask: u8) {
+    fn commit(&mut self, amph: Amphipod, target: usize, mask: u16) {
         self.rooms[target].step_out();
 
         match amph {
@@ -220,7 +234,7 @@ impl Burrow {
     }
 }
 
-type State = (Amphipod, usize, Vec<(u8, usize)>);
+type State = (Amphipod, usize, Vec<(u16, usize)>);
 
 #[derive(Default, Debug, Copy, Clone)]
 enum RoomState {
@@ -229,8 +243,9 @@ enum RoomState {
     Empty,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
 enum Amphipod {
+    #[default]
     Amber,
     Bronze,
     Copper,
@@ -243,13 +258,13 @@ impl Amphipod {
     }
 }
 
-#[derive(Debug, Clone, Default)]
-struct Room {
-    occupants: Vec<RoomState>,
+#[derive(Debug, Copy, Clone)]
+struct Room<const N: usize> {
+    occupants: [RoomState; N],
     position: usize,
 }
 
-impl Room {
+impl<const N: usize> Room<N> {
     fn peek(&self) -> Option<Amphipod> {
         if self.position < self.occupants.len()
             && let RoomState::Occupied(amph) = self.occupants[self.position]
@@ -261,7 +276,7 @@ impl Room {
     }
 
     fn step_out(&mut self) {
-        if self.position < self.occupants.len() {
+        if self.position < N {
             self.occupants[self.position] = RoomState::Empty;
             self.position += 1;
         }
@@ -269,5 +284,27 @@ impl Room {
 
     fn is_empty(&self) -> bool {
         self.peek().is_none()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example() {
+        use Amphipod::*;
+        let mut day = AocDay {
+            input: "".into(),
+            rooms: [
+                [Bronze, Amber],
+                [Copper, Desert],
+                [Bronze, Copper],
+                [Desert, Amber],
+            ],
+        };
+        let expected = 12521;
+        let actual = day.part1().parse().unwrap();
+        assert_eq!(expected, actual);
     }
 }
