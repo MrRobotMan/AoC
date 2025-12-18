@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 aoc = { version = "0.1.0", path = "../aoc" }
-puzlib = { git = "https://github.com/MrRobotMan/puzlib", version = "0.1.0" }
+puzlib = {workspace=true}
 
 [[bin]]
 name = "aoc202501"
