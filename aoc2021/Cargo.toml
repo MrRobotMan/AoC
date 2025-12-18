@@ -8,3 +8,4 @@ edition = "2024"
 [dependencies]
 aoc = {path="../aoc"}
 pathfinding = "4.14.0"
+puzlib = {workspace=true}
