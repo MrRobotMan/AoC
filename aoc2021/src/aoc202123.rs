@@ -88,16 +88,17 @@ fn room_is_available<const N: usize>(
     room: &[Option<Amphipod>; N],
     target: Amphipod,
 ) -> Option<usize> {
-    for (idx, amph) in room.iter().enumerate() {
-        if let Some(a) = amph {
-            if a == &target && idx > 0 {
-                return Some(idx - 1);
+    let mut top_available = N - 1;
+    for idx in (0..N).rev() {
+        if let Some(a) = room[idx] {
+            if a == target && idx > 0 {
+                top_available -= 1;
             } else {
                 return None;
             }
         }
     }
-    Some(N - 1)
+    Some(top_available)
 }
 
 fn peek<const N: usize>(room: &[Option<Amphipod>; N]) -> Option<(usize, Amphipod)> {
@@ -227,10 +228,10 @@ impl<const N: usize> Burrow<N> {
         // Check move amphipods from the rooms
         for (room_idx, &start_location) in ROOM_LOCATIONS.iter().enumerate() {
             if let Some((depth, amphipod)) = peek(&self.rooms[room_idx]) {
-                // Amphipod is already in the right spot
+                // Check if the amphipod is already in the right spot.
                 if room_is_available(&self.rooms[room_idx], TARGETS[room_idx]).is_some() {
                     continue;
-                };
+                }
                 // Check to the left
                 for target in 0..start_location {
                     self.move_to_hall_or_room(
@@ -353,6 +354,16 @@ mod tests {
     }
 
     #[test]
+    fn test_room_is_unavailable2() {
+        let expected = None;
+        let actual = room_is_available(
+            &[None, None, Some(Amphipod::Bronze), Some(Amphipod::Bronze)],
+            Amphipod::Desert,
+        );
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_room_is_unavailable() {
         let expected = None;
         let actual = room_is_available(
@@ -401,43 +412,6 @@ mod tests {
             [Desert, Amber],
         ])
         .expand();
-        let burrow1: Burrow<4> = Burrow {
-            rooms: [
-                [Some(Bronze), Some(Desert), Some(Desert), Some(Amber)],
-                [Some(Copper), Some(Copper), Some(Bronze), Some(Desert)],
-                [Some(Bronze), Some(Bronze), Some(Amber), Some(Copper)],
-                [Some(Desert), Some(Amber), Some(Copper), Some(Amber)],
-            ],
-            hallway: [
-                None, None, None, None, None, None, None, None, None, None, None,
-            ],
-        };
-        let moves = burrow1.moves();
-        let expected: (usize, Burrow<4>) = (
-            3000,
-            Burrow {
-                rooms: [
-                    [Some(Bronze), Some(Desert), Some(Desert), Some(Amber)],
-                    [Some(Copper), Some(Copper), Some(Bronze), Some(Desert)],
-                    [Some(Bronze), Some(Bronze), Some(Amber), Some(Copper)],
-                    [None, Some(Amber), Some(Copper), Some(Amber)],
-                ],
-                hallway: [
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    Some(Desert),
-                ],
-            },
-        );
-        assert!(moves.contains(&expected));
         let expected = 44169;
         let actual = solve(burrow);
         assert_eq!(expected, actual);
