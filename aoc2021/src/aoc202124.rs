@@ -38,7 +38,8 @@ impl Runner for AocDay {
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let divs = self.simplify();
+        output(self.find_models(divs, Find::Min))
     }
 }
 
@@ -70,18 +71,22 @@ impl AocDay {
     fn find_models(&self, divs: Vec<Addend>, find: Find) -> i64 {
         let mut model = [0; 14];
         let mut stack = vec![];
-        let start = match find {
-            Find::Min => 1,
-            Find::Max => 9,
-        };
         for (dig, addend) in divs.iter().enumerate() {
             match addend {
                 Addend::Div1(value) => stack.push((dig, *value)),
                 Addend::Div26(value) => {
                     if let Some((idx, v)) = stack.pop() {
                         let diff = v + value;
-                        model[idx] = start.min(start - diff);
-                        model[dig] = start.min(start + diff);
+                        match find {
+                            Find::Max => {
+                                model[idx] = 9.min(9 - diff);
+                                model[dig] = 9.min(9 + diff);
+                            }
+                            Find::Min => {
+                                model[idx] = 1.max(1 - diff);
+                                model[dig] = 1.max(1 + diff);
+                            }
+                        }
                     };
                 }
             }
