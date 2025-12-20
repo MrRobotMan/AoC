@@ -1,8 +1,20 @@
+use std::{
+    cmp::Reverse,
+    collections::{BinaryHeap, HashMap},
+    hash::Hash,
+};
+
 use aoc::runner::{Runner, output};
 
-const ROOMS: usize = 4;
 const HALLWAY: usize = 11;
-const ROOM_LOCATIONS: [usize; ROOMS] = [3, 5, 7, 9];
+const ROOM_LOCATIONS: [usize; 4] = [2, 4, 6, 8];
+const ROOMS: usize = ROOM_LOCATIONS.len();
+const TARGETS: [Amphipod; ROOMS] = [
+    Amphipod::Amber,
+    Amphipod::Bronze,
+    Amphipod::Copper,
+    Amphipod::Desert,
+];
 
 #[derive(Default)]
 pub struct AocDay {
@@ -25,9 +37,9 @@ impl Runner for AocDay {
     }
 
     fn parse(&mut self) {
-        for line in puzlib::read_lines(&self.input) {
+        for (row, line) in puzlib::read_lines(&self.input).into_iter().enumerate() {
             let mut idx = 0;
-            for (row, ch) in line.chars().enumerate() {
+            for ch in line.chars() {
                 if let Some(amph) = match ch {
                     'A' => Some(Amphipod::Amber),
                     'B' => Some(Amphipod::Bronze),
@@ -43,207 +55,271 @@ impl Runner for AocDay {
     }
 
     fn part1(&mut self) -> String {
-        let energy = exit_energy(&self.rooms) + entry_energy(2) + solve(&self.rooms);
-        output(energy)
+        output(solve(Burrow::new(&self.rooms)))
     }
 
     fn part2(&mut self) -> String {
-        output("Unsolved")
+        let burrow = Burrow::new(&self.rooms).expand();
+        output(solve(burrow))
     }
 }
 
-fn exit_energy<const N: usize>(rooms: &[[Amphipod; N]]) -> usize {
-    // Total energy needed to get to the hallway.
-    rooms
-        .iter()
-        .flat_map(|room| {
-            room.iter()
-                .enumerate()
-                .map(|(depth, amph)| (depth + 1) * amph.energy())
-        })
-        .sum()
-}
+fn solve<const N: usize>(burrow: Burrow<N>) -> usize {
+    let mut stack = BinaryHeap::from([Reverse((0, burrow))]);
+    let mut costs = HashMap::new();
 
-fn entry_energy(depth: usize) -> usize {
-    // Total energy to get from the hallway into the rooms
-    (depth * (depth + 1) / 2)
-        * (Amphipod::Amber.energy()
-            + Amphipod::Bronze.energy()
-            + Amphipod::Copper.energy()
-            + Amphipod::Desert.energy())
-}
-
-fn solve<const N: usize>(rooms: &[[Amphipod; N]; ROOMS]) -> usize {
-    let mut stack = vec![(Burrow::new(rooms), 0)];
-    let mut min_energy = usize::MAX;
-
-    while let Some((burrow, cost)) = stack.pop() {
-        for targ in (0..4).rev() {
-            if let Some((amph, target, moves)) = burrow.moves(targ) {
-                for (mask, price) in moves {
-                    let mut burrow = burrow;
-                    let cost = cost + price;
-                    if cost < min_energy {
-                        burrow.commit(amph, target, mask);
-                        if burrow.hallway.is_empty() {
-                            min_energy = cost;
-                        } else {
-                            stack.push((burrow, cost));
-                        }
-                    }
-                }
+    while let Some(Reverse((cost, burrow))) = stack.pop() {
+        if burrow.is_finished() {
+            return cost;
+        }
+        for (next_cost, next_state) in burrow.moves() {
+            let cost = cost + next_cost;
+            let energy = costs.entry(next_state).or_insert(usize::MAX);
+            if cost < *energy {
+                *energy = cost;
+                stack.push(Reverse((cost, next_state)));
             }
         }
     }
-    min_energy
+    0
 }
 
-#[derive(Debug, Default, Copy, Clone)]
-struct Hallway {
-    amber: u16,
-    bronze: u16,
-    copper: u16,
-    desert: u16,
-}
-
-impl Hallway {
-    fn flatten(&self) -> u16 {
-        self.amber | self.bronze | self.copper | self.desert
+fn room_is_available<const N: usize>(
+    room: &[Option<Amphipod>; N],
+    target: Amphipod,
+) -> Option<usize> {
+    for (idx, amph) in room.iter().enumerate() {
+        if let Some(a) = amph {
+            if a == &target && idx > 0 {
+                return Some(idx - 1);
+            } else {
+                return None;
+            }
+        }
     }
-
-    fn is_empty(&self) -> bool {
-        self.flatten() == 0
-    }
+    Some(N - 1)
 }
 
-#[derive(Debug, Clone, Copy)]
+fn peek<const N: usize>(room: &[Option<Amphipod>; N]) -> Option<(usize, Amphipod)> {
+    for (idx, amph) in room.iter().enumerate() {
+        if let Some(a) = amph {
+            return Some((idx, *a));
+        }
+    }
+    None
+}
+
+fn room_energy(room: &[Option<Amphipod>]) -> usize {
+    room.iter().fold(0, |acc, r| {
+        acc + if let Some(a) = r { a.energy() } else { 0 }
+    })
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 struct Burrow<const N: usize> {
-    rooms: [Room<N>; ROOMS],
-    hallway: Hallway,
+    rooms: [[Option<Amphipod>; N]; ROOMS],
+    hallway: [Option<Amphipod>; HALLWAY],
+}
+
+impl<const N: usize> PartialOrd for Burrow<N> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+impl<const N: usize> Ord for Burrow<N> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        let expected_energies = Self::complete()
+            .rooms
+            .iter()
+            .map(|r| room_energy(r))
+            .collect::<Vec<_>>();
+        let self_energies = self
+            .rooms
+            .iter()
+            .map(|r| room_energy(r))
+            .zip(expected_energies.iter())
+            .map(|(a, b)| a.max(*b) - a.min(*b))
+            .collect::<Vec<_>>();
+        let other_energies = other
+            .rooms
+            .iter()
+            .map(|r| room_energy(r))
+            .zip(expected_energies.iter())
+            .map(|(a, b)| a.max(*b) - a.min(*b))
+            .collect::<Vec<_>>();
+        match self_energies.cmp(&other_energies) {
+            std::cmp::Ordering::Equal => {
+                room_energy(&self.hallway).cmp(&room_energy(&other.hallway))
+            }
+            ord => ord,
+        }
+    }
 }
 
 impl<const N: usize> Burrow<N> {
     fn new(rooms: &[[Amphipod; N]; ROOMS]) -> Self {
-        let mut r: Vec<Room<N>> = vec![];
-        for room in rooms {
-            r.push(Room {
-                occupants: room
-                    .iter()
-                    .map(|&a| RoomState::Occupied(a))
+        let rooms = rooms
+            .iter()
+            .map(|room| {
+                room.iter()
+                    .map(|a| Some(*a))
                     .collect::<Vec<_>>()
                     .try_into()
-                    .unwrap(),
-                position: 0,
-            });
-        }
+                    .unwrap()
+            })
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
         Self {
-            rooms: r.try_into().unwrap(),
-            hallway: Hallway::default(),
-        }
-    }
-    fn has_path(&self, start: usize, dist: usize) -> bool {
-        const HALLWAY_SLOTS: usize = HALLWAY - ROOMS;
-        const EXTENSION: usize = HALLWAY - ROOM_LOCATIONS[ROOMS - 1];
-        const MAX_STEPS: usize = HALLWAY_SLOTS - EXTENSION;
-        if dist == 0 {
-            true
-        } else {
-            let mask = ((2 << (dist - 1)) - 1) << (MAX_STEPS - dist - start);
-            self.hallway.flatten() & mask == 0
+            rooms,
+            hallway: [None; HALLWAY],
         }
     }
 
-    fn commit(&mut self, amph: Amphipod, target: usize, mask: u16) {
-        self.rooms[target].step_out();
-
-        match amph {
-            Amphipod::Amber => {
-                self.hallway.amber |= mask;
-            }
-            Amphipod::Bronze => {
-                self.hallway.bronze |= mask;
-            }
-            Amphipod::Copper => {
-                self.hallway.copper |= mask;
-            }
-            Amphipod::Desert => {
-                self.hallway.desert |= mask;
-            }
-        }
-
-        if self.rooms[0].is_empty() {
-            self.hallway.amber = 0;
-        }
-        if self.rooms[1].is_empty() {
-            self.hallway.bronze = 0;
-        }
-        if self.rooms[2].is_empty() {
-            self.hallway.copper = 0;
-        }
-        if self.rooms[3].is_empty() {
-            self.hallway.desert = 0;
+    fn complete() -> Self {
+        Self {
+            hallway: [None; HALLWAY],
+            rooms: (0..ROOMS)
+                .map(|idx| [Some(TARGETS[idx]); N])
+                .collect::<Vec<_>>()
+                .try_into()
+                .unwrap(),
         }
     }
 
-    fn moves(&self, pos: usize) -> Option<State> {
-        let amph = self.rooms[pos].peek()?;
+    fn has_path(&self, start: usize, end: usize) -> bool {
+        self.hallway[start..=end].iter().all(|loc| loc.is_none())
+    }
 
-        const COSTS: [usize; 7] = [2, 2, 4, 4, 4, 2, 2];
-        let mut moves = Vec::with_capacity(7);
-        let hallway = self.hallway.flatten();
-        let energy = amph.energy();
-        let target = amph as usize;
-        let (left, right) = if pos < target {
-            (pos, target)
-        } else {
-            (target, pos)
+    fn is_finished(&self) -> bool {
+        self == &Self::complete()
+    }
+
+    fn moves(&self) -> Vec<(usize, Self)> {
+        let mut moves = vec![];
+
+        // Check if you can move an amphipod from the hallway to the room.
+        for (hall_spot, state) in self.hallway.iter().enumerate() {
+            if ROOM_LOCATIONS.contains(&hall_spot) {
+                // Should never had an amphipod at the room entrance
+                assert!(self.hallway[hall_spot].is_none());
+                continue;
+            }
+            if let Some(amphipod) = state {
+                let goal = ROOM_LOCATIONS[*amphipod as usize];
+                let (start, end, hallway_dist) = if hall_spot < goal {
+                    (hall_spot + 1, goal, goal - hall_spot)
+                } else {
+                    (goal, hall_spot - 1, hall_spot - goal)
+                };
+                let mut burrow = *self;
+                let hallway = &mut burrow.hallway;
+                let room = burrow.rooms.get_mut(*amphipod as usize).unwrap();
+                if let Some(depth) = room_is_available(room, TARGETS[*amphipod as usize])
+                    && self.has_path(start, end)
+                {
+                    room[depth] = hallway[hall_spot].take();
+                    moves.push(((hallway_dist + depth + 1) * amphipod.energy(), burrow));
+                }
+            }
+        }
+
+        // Check move amphipods from the rooms
+        for (room_idx, &start_location) in ROOM_LOCATIONS.iter().enumerate() {
+            if let Some((depth, amphipod)) = peek(&self.rooms[room_idx]) {
+                // Amphipod is already in the right spot
+                if room_is_available(&self.rooms[room_idx], TARGETS[room_idx]).is_some() {
+                    continue;
+                };
+                // Check to the left
+                for target in 0..start_location {
+                    self.move_to_hall_or_room(
+                        &mut moves,
+                        start_location,
+                        target,
+                        room_idx,
+                        amphipod,
+                        depth,
+                    );
+                }
+                // Check to the right
+                for target in start_location + 1..HALLWAY {
+                    self.move_to_hall_or_room(
+                        &mut moves,
+                        start_location,
+                        target,
+                        room_idx,
+                        amphipod,
+                        depth,
+                    );
+                }
+            }
+        }
+        moves
+    }
+
+    fn move_to_hall_or_room(
+        &self,
+        moves: &mut Vec<(usize, Self)>,
+        start: usize,
+        target: usize,
+        source: usize,
+        amphipod: Amphipod,
+        depth: usize,
+    ) {
+        let goal = ROOM_LOCATIONS[amphipod as usize];
+        // Skip rooms of other amphipods
+        if self.hallway[target].is_some() || (ROOM_LOCATIONS.contains(&target) && target != goal) {
+            return;
+        }
+        if !self.has_path(start.min(target), start.max(target)) {
+            return;
+        }
+        let mut burrow = *self;
+        let hallway = &mut burrow.hallway;
+        let hallway_dist = start.max(target) - start.min(target);
+        let source_room = &mut burrow.rooms[source];
+        // Check if we can move directly to the target room.
+        if target == goal
+            && let Some(depth2) =
+                room_is_available(&self.rooms[amphipod as usize], TARGETS[amphipod as usize])
+        {
+            burrow.rooms[amphipod as usize][depth2] = source_room[depth].take();
+            moves.push((
+                (hallway_dist + depth + depth2 + 2) * amphipod.energy(),
+                burrow,
+            ))
+        } else if target != goal {
+            hallway[target] = source_room[depth].take();
+            moves.push(((hallway_dist + depth + 1) * amphipod.energy(), burrow))
         };
-
-        let dist = right - left;
-        let base_cost = dist * 2;
-        let path_available = self.has_path(left, dist);
-        const MAX_OFFSET: usize = HALLWAY - ROOMS - 1;
-
-        if path_available && self.rooms[target].is_empty() {
-            moves.push((0, base_cost * energy));
-        } else {
-            if path_available || pos < target {
-                moves.extend(
-                    (0..left + 2)
-                        .rev()
-                        .map(|offset| (1 << (MAX_OFFSET - offset), COSTS[offset]))
-                        .scan(0, |acc, (mask, weight)| {
-                            *acc += weight;
-                            let cost = if *acc == weight { 2 } else { *acc };
-                            (mask & hallway == 0).then(|| (mask, (base_cost + cost) * energy))
-                        }),
-                );
-            }
-            if path_available || pos > target {
-                moves.extend(
-                    (right + 2..(HALLWAY - ROOMS))
-                        .map(|offset| (1 << (MAX_OFFSET - offset), COSTS[offset]))
-                        .scan(0, |acc, (mask, weight)| {
-                            *acc += weight;
-                            let cost = if *acc == weight { 2 } else { *acc };
-                            (mask & hallway == 0).then(|| (mask, (base_cost + cost) * energy))
-                        }),
-                );
-            }
-        };
-        Some((amph, pos, moves))
     }
 }
 
-type State = (Amphipod, usize, Vec<(u16, usize)>);
-
-#[derive(Debug, Copy, Clone)]
-enum RoomState {
-    Occupied(Amphipod),
-    Empty,
+impl Burrow<2> {
+    fn expand(&self) -> Burrow<4> {
+        let hidden = [
+            [Amphipod::Desert, Amphipod::Desert],
+            [Amphipod::Copper, Amphipod::Bronze],
+            [Amphipod::Bronze, Amphipod::Amber],
+            [Amphipod::Amber, Amphipod::Copper],
+        ];
+        let rooms = self
+            .rooms
+            .iter()
+            .enumerate()
+            .map(|(idx, r)| [r[0], Some(hidden[idx][0]), Some(hidden[idx][1]), r[1]])
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
+        Burrow {
+            rooms,
+            hallway: [None; HALLWAY],
+        }
+    }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Default, Hash)]
 enum Amphipod {
     #[default]
     Amber,
@@ -258,53 +334,112 @@ impl Amphipod {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
-struct Room<const N: usize> {
-    occupants: [RoomState; N],
-    position: usize,
-}
-
-impl<const N: usize> Room<N> {
-    fn peek(&self) -> Option<Amphipod> {
-        if self.position < N
-            && let RoomState::Occupied(amph) = self.occupants[self.position]
-        {
-            Some(amph)
-        } else {
-            None
-        }
-    }
-
-    fn step_out(&mut self) {
-        if self.position < N {
-            self.occupants[self.position] = RoomState::Empty;
-            self.position += 1;
-        }
-    }
-
-    fn is_empty(&self) -> bool {
-        self.peek().is_none()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
+    fn test_room_is_available() {
+        let expected = Some(0);
+        let actual = room_is_available(&[None, Some(Amphipod::Amber)], Amphipod::Amber);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_room_is_available_empty() {
+        let expected = Some(1);
+        let actual = room_is_available(&[None, None], Amphipod::Amber);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_room_is_unavailable() {
+        let expected = None;
+        let actual = room_is_available(
+            &[Some(Amphipod::Amber), Some(Amphipod::Copper)],
+            Amphipod::Amber,
+        );
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_peek() {
+        let expected = Some((1, Amphipod::Desert));
+        let actual = peek(&[None, Some(Amphipod::Desert), Some(Amphipod::Amber)]);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_no_peek() {
+        let expected = None;
+        let actual = peek(&[None, None]);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_example() {
         use Amphipod::*;
-        let mut day = AocDay {
-            input: "".into(),
+        let rooms = [
+            [Bronze, Amber],
+            [Copper, Desert],
+            [Bronze, Copper],
+            [Desert, Amber],
+        ];
+        let burrow = Burrow::new(&rooms);
+        let expected = 12521;
+        let actual = solve(burrow);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_example2() {
+        use Amphipod::*;
+        let burrow = Burrow::new(&[
+            [Bronze, Amber],
+            [Copper, Desert],
+            [Bronze, Copper],
+            [Desert, Amber],
+        ])
+        .expand();
+        let burrow1: Burrow<4> = Burrow {
             rooms: [
-                [Bronze, Amber],
-                [Copper, Desert],
-                [Bronze, Copper],
-                [Desert, Amber],
+                [Some(Bronze), Some(Desert), Some(Desert), Some(Amber)],
+                [Some(Copper), Some(Copper), Some(Bronze), Some(Desert)],
+                [Some(Bronze), Some(Bronze), Some(Amber), Some(Copper)],
+                [Some(Desert), Some(Amber), Some(Copper), Some(Amber)],
+            ],
+            hallway: [
+                None, None, None, None, None, None, None, None, None, None, None,
             ],
         };
-        let expected = 12521;
-        let actual = day.part1().parse().unwrap();
+        let moves = burrow1.moves();
+        let expected: (usize, Burrow<4>) = (
+            3000,
+            Burrow {
+                rooms: [
+                    [Some(Bronze), Some(Desert), Some(Desert), Some(Amber)],
+                    [Some(Copper), Some(Copper), Some(Bronze), Some(Desert)],
+                    [Some(Bronze), Some(Bronze), Some(Amber), Some(Copper)],
+                    [None, Some(Amber), Some(Copper), Some(Amber)],
+                ],
+                hallway: [
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    Some(Desert),
+                ],
+            },
+        );
+        assert!(moves.contains(&expected));
+        let expected = 44169;
+        let actual = solve(burrow);
         assert_eq!(expected, actual);
     }
 }
