@@ -60,7 +60,7 @@ command = [
     "cargo", "run",
     "--color", "always",
     "--package", "aoc2021",
-    "--", "24"
+    "--", "25"
     # "--bin", "aoc202123",
     # put launch parameters for your program behind a `--` separator
 ]
